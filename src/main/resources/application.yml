@@ -2,7 +2,7 @@ spring:
   application:
     name: base_spring_boot
   datasource:
-    url: jdbc:mysql://localhost:3307/job_portal?createDatabaseIfNotExist=true
+    url: jdbc:mysql://localhost:3306/job_portal?createDatabaseIfNotExist=true
     username: root
     password: 123456789
   jooq:
