@@ -12,6 +12,12 @@ import lombok.*;
 public class TypeJobRelation {
     @Id
     private String id;
-    private String job_id;
-    private String tyep_job_id;
+
+    @ManyToOne
+    @JoinColumn(name = "job_id")
+    private Job job;
+
+    @ManyToOne
+    @JoinColumn(name = "type_job_id")
+    private TypeJob typeJob;
 }

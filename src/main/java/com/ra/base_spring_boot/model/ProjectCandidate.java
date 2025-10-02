@@ -13,7 +13,11 @@ import java.util.Date;
 public class ProjectCandidate {
     @Id
     private String id;
-    private String candidate_id;
+
+    @ManyToOne
+    @JoinColumn(name = "candidate_id")
+    private Candidate candidate;
+
     private String name;
     private String link;
     @Temporal(TemporalType.DATE)

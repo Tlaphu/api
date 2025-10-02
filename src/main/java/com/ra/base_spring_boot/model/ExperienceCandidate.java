@@ -13,7 +13,9 @@ import java.util.Date;
 public class ExperienceCandidate {
     @Id
     private String id;
-    private String candidate_id;
+    @ManyToOne
+    @JoinColumn(name = "candidate_id")
+    private Candidate candidate;
     private String position;
     private String company;
     @Temporal(TemporalType.DATE)
