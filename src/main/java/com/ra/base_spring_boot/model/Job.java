@@ -13,11 +13,18 @@ import java.util.Date;
 public class Job {
     @Id
     private String id;
+
+    @ManyToOne
+    @JoinColumn(name = "company_id")
+    private Company company;
+
+    @ManyToOne
+    @JoinColumn(name = "location_id")
+    private Location location;
+
     private String title;
-    private String company_id;
     private String description;
     private String salary;
-    private String location_id;
     @Temporal(TemporalType.DATE)
     private Date expire_at;
     @Temporal(TemporalType.DATE)

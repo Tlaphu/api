@@ -12,8 +12,13 @@ import lombok.*;
 public class AddressCompany {
     @Id
     private String id;
-    private String company_id;
+    @ManyToOne
+    @JoinColumn(name = "company_id")
+    private Company company;
     private String address;
     private String map_url;
-    private String location_id;
+    @ManyToOne
+    @JoinColumn(name = "location_id")
+    private Location location;
+    
 }

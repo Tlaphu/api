@@ -13,7 +13,10 @@ import java.util.Date;
 public class EducationCandidate {
     @Id
     private String id;
-    private String candidate_id;
+    @ManyToOne
+    @JoinColumn(name = "candidate_id")
+    private Candidate candidate;
+    
     private String name_educatuon;
     private String major;
     @Temporal(TemporalType.DATE)

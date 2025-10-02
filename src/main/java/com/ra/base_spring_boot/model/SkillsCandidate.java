@@ -13,7 +13,9 @@ import java.util.Date;
 public class SkillsCandidate {
     @Id
     private String id;
-    private String candidate_id;
+    @ManyToOne
+    @JoinColumn(name = "candidate_id")
+    private Candidate candidate;
     private String name;
     private String level_job_id;
     @Temporal(TemporalType.DATE)
