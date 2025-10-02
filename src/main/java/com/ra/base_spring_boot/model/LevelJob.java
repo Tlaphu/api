@@ -21,6 +21,6 @@ public class LevelJob {
     @Temporal(TemporalType.DATE)
     private Date updated_at;
 
-    @OneToMany(mappedBy = "levelJob")
-    private List<LevelJobRelation> levelJobRelations;
+  @OneToMany(mappedBy = "levelJob", fetch = FetchType.EAGER)
+private List<LevelJobRelation> levelJobRelations;
 }

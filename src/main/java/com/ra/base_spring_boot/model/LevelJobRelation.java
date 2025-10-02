@@ -9,6 +9,7 @@ import lombok.*;
 @Getter
 @Setter
 @Builder
+@Table(name = "levels_jobs") 
 public class LevelJobRelation {
     @Id
     private String id;
