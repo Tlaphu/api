@@ -1,8 +1,10 @@
 package com.ra.base_spring_boot.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import java.util.Date;
+import java.util.List;
 
 @Entity
 @NoArgsConstructor
@@ -25,10 +27,22 @@ public class Job {
     private String title;
     private String description;
     private String salary;
+
     @Temporal(TemporalType.DATE)
     private Date expire_at;
+
     @Temporal(TemporalType.DATE)
     private Date created_at;
+
     @Temporal(TemporalType.DATE)
     private Date updated_at;
+
+
+    @OneToMany(mappedBy = "job", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<TypeJobRelation> typeJobRelations;
+    @OneToMany(mappedBy = "job", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<LevelJobRelation> levelJobRelations;
+
 }
