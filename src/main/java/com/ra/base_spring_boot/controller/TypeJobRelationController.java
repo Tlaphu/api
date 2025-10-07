@@ -17,13 +17,11 @@ public class TypeJobRelationController {
         this.service = service;
     }
 
-    // ✅ Lấy tất cả các liên kết Job - TypeJob
     @GetMapping
     public List<TypeJobRelation> getAll() {
         return service.getAll();
     }
 
-    // ✅ Lấy liên kết theo id
     @GetMapping("/{id}")
     public Object getById(@PathVariable String id) {
         TypeJobRelation relation = service.getById(id);
@@ -34,7 +32,6 @@ public class TypeJobRelationController {
         return relation;
     }
 
-    // ✅ Tạo mới liên kết giữa Job và TypeJob
     @PostMapping
     public Object create(@RequestBody TypeJobRelation relation) {
         TypeJobRelation existed = service.getById(relation.getId());
@@ -45,14 +42,13 @@ public class TypeJobRelationController {
         return service.save(relation);
     }
 
-    // ✅ Cập nhật liên kết
+
     @PutMapping("/{id}")
     public Object update(@PathVariable String id, @RequestBody TypeJobRelation relation) {
         relation.setId(id);
         return service.save(relation);
     }
 
-    // ✅ Xóa liên kết
     @DeleteMapping("/{id}")
     public Object delete(@PathVariable String id) {
         TypeJobRelation existed = service.getById(id);

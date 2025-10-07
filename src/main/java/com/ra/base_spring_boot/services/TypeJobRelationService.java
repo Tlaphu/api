@@ -34,7 +34,7 @@ public class TypeJobRelationService {
     }
 
     public TypeJobRelation save(TypeJobRelation relation) {
-        // Lấy Job và TypeJob thực thể từ database
+    
         if (relation.getJob() != null && relation.getJob().getId() != null) {
             Job job = jobRepository.findById(relation.getJob().getId()).orElse(null);
             relation.setJob(job);

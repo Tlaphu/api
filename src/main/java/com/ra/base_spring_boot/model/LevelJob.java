@@ -24,7 +24,7 @@ public class LevelJob {
     @Temporal(TemporalType.DATE)
     private Date updated_at;
 
-    // 🔹 Liên kết ngược tới LevelJobRelation
+
     @OneToMany(mappedBy = "levelJob", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private List<LevelJobRelation> levelJobRelations;
