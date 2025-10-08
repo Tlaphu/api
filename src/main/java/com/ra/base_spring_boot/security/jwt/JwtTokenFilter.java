@@ -1,6 +1,9 @@
 package com.ra.base_spring_boot.security.jwt;
 
 import com.ra.base_spring_boot.security.principle.MyUserDetailsService;
+import com.ra.base_spring_boot.security.principle.MyCompanyDetailsService;
+import com.ra.base_spring_boot.security.principle.MyUserDetails;
+import com.ra.base_spring_boot.security.principle.MyCompanyDetails;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -19,40 +22,61 @@ import java.io.IOException;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class JwtTokenFilter extends OncePerRequestFilter
-{
-    private final MyUserDetailsService userDetailsService;
+public class JwtTokenFilter extends OncePerRequestFilter {
+
+    private final MyUserDetailsService userDetailsService;       // Candidate
+    private final MyCompanyDetailsService companyDetailsService; // Company
     private final JwtProvider jwtProvider;
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException
-    {
-        try
-        {
+    protected void doFilterInternal(HttpServletRequest request,
+                                    HttpServletResponse response,
+                                    FilterChain filterChain) throws ServletException, IOException {
+        String path = request.getServletPath();
+        if (path.startsWith("/api/v1/auth/") ||
+                path.startsWith("/swagger") ||
+                path.startsWith("/v3/api-docs") ||
+                path.startsWith("/actuator")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+        try {
             String token = getTokenFromRequest(request);
-            if (token != null)
-            {
-                String username = jwtProvider.extractUsername(token);
-                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-                if (jwtProvider.validateToken(token, userDetails) )
-                {
-                    Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-                    SecurityContextHolder.getContext().setAuthentication(authentication);
+            if (token != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                String email = jwtProvider.extractEmail(token);
+                String type = jwtProvider.extractClaim(token, claims -> claims.get("type", String.class));
+                if (email != null && type != null) {
+                    if ("candidate".equals(type)) {
+                        UserDetails userDetails = userDetailsService.loadUserByUsername(email);
+                        if (jwtProvider.validateCandidateToken(token, ((MyUserDetails) userDetails).getCandidate())) {
+                            UsernamePasswordAuthenticationToken authentication =
+                                    new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                            SecurityContextHolder.getContext().setAuthentication(authentication);
+                        }
+                    } else if ("company".equals(type)) {
+                        UserDetails companyDetails = companyDetailsService.loadUserByUsername(email);
+                        if (jwtProvider.validateCompanyToken(token, ((MyCompanyDetails) companyDetails).getAccountCompany())) {
+                            UsernamePasswordAuthenticationToken authentication =
+                                    new UsernamePasswordAuthenticationToken(companyDetails, null, companyDetails.getAuthorities());
+                            SecurityContextHolder.getContext().setAuthentication(authentication);
+                        }
+                    } else {
+                        log.debug("JwtTokenFilter: unknown token type '{}'", type);
+                    }
                 }
             }
+        } catch (Exception e) {
+            log.error("JWT Authentication error: {}", e.getMessage());
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            return;
         }
-        catch (Exception e)
-        {
-            log.error("Un Authentication {}", e.getMessage());
-        }
+
         filterChain.doFilter(request, response);
     }
 
-    public String getTokenFromRequest(HttpServletRequest request)
-    {
+    private String getTokenFromRequest(HttpServletRequest request) {
         String header = request.getHeader("Authorization");
-        if (header != null && header.startsWith("Bearer "))
-        {
+        if (header != null && header.startsWith("Bearer ")) {
             return header.substring(7);
         }
         return null;

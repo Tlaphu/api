@@ -1,22 +1,21 @@
 package com.ra.base_spring_boot.security.jwt;
 
+import com.ra.base_spring_boot.model.Candidate;
+import com.ra.base_spring_boot.model.AccountCompany;
+import com.ra.base_spring_boot.security.principle.MyCompanyDetails;
+import com.ra.base_spring_boot.security.principle.MyUserDetails;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.stereotype.Component;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Component;
 
 import java.security.Key;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-import java.util.function.Function;
+import java.util.*;
 
 @Component
 public class JwtProvider {
@@ -26,7 +25,7 @@ public class JwtProvider {
     @Value("${jwt.expired.access}")
     private Long EXPIRED_ACCESS;
 
-    public String extractUsername(String token) {
+    public String extractEmail(String token) {
         return extractClaim(token, Claims::getSubject);
     }
 
@@ -34,7 +33,7 @@ public class JwtProvider {
         return extractClaim(token, Claims::getExpiration);
     }
 
-    public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
+    public <T> T extractClaim(String token, java.util.function.Function<Claims, T> claimsResolver) {
         final Claims claims = extractAllClaims(token);
         return claimsResolver.apply(claims);
     }
@@ -52,21 +51,36 @@ public class JwtProvider {
         return extractExpiration(token).before(new Date());
     }
 
-    public Boolean validateToken(String token, UserDetails userDetails) {
-        final String username = extractUsername(token);
-        return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
+    // ===== Candidate =====
+    public Boolean validateCandidateToken(String token, Candidate candidate) {
+        final String email = extractEmail(token);
+        return (email.equals(candidate.getEmail()) && !isTokenExpired(token));
     }
 
-    public String generateToken(String username) {
+    public String generateCandidateToken(Candidate candidate, Set<String> roles) {
         Map<String, Object> claims = new HashMap<>();
-        return createToken(claims, username);
+        claims.put("roles", roles);
+        claims.put("type", "candidate");
+        return createToken(claims, candidate.getEmail());
     }
 
-    private String createToken(Map<String, Object> claims, String username) {
+    // ===== Company =====
+    public Boolean validateCompanyToken(String token, AccountCompany accountCompany) {
+        final String email = extractEmail(token);
+        return (email.equals(accountCompany.getEmail()) && !isTokenExpired(token));
+    }
 
+    public String generateCompanyToken(AccountCompany accountCompany, Set<String> roles) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("roles", roles);
+        claims.put("type", "company");
+        return createToken(claims, accountCompany.getEmail());
+    }
+
+    private String createToken(Map<String, Object> claims, String subject) {
         return Jwts.builder()
                 .setClaims(claims)
-                .setSubject(username)
+                .setSubject(subject) // subject = email
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + EXPIRED_ACCESS))
                 .signWith(getSignKey(), SignatureAlgorithm.HS256)
@@ -74,16 +88,38 @@ public class JwtProvider {
     }
 
     private Key getSignKey() {
-        byte[] keyBytes = Decoders.BASE64.decode(SECRET_KEY);
-        return Keys.hmacShaKeyFor(keyBytes);
+        return Keys.hmacShaKeyFor(Decoders.BASE64.decode(SECRET_KEY));
     }
 
-    public String getUsernameFromCurrentToken() {
+
+
+    public Candidate getCurrentCandidate() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null && authentication.isAuthenticated()) {
-            return authentication.getName();
+        if (authentication != null && authentication.isAuthenticated()
+                && authentication.getPrincipal() instanceof com.ra.base_spring_boot.security.principle.MyUserDetails userDetails) {
+            return userDetails.getCandidate();
         }
         return null;
+    }
+
+    public AccountCompany getCurrentCompany() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.isAuthenticated()
+                && authentication.getPrincipal() instanceof com.ra.base_spring_boot.security.principle.MyCompanyDetails companyDetails) {
+            return companyDetails.getAccountCompany();
+        }
+        return null;
+    }
+
+
+    public String getCandidateUsername() {
+        Candidate candidate = getCurrentCandidate();
+        return candidate != null ? candidate.getEmail() : null;
+    }
+
+    public String getCompanyUsername() {
+        AccountCompany company = getCurrentCompany();
+        return company != null ? company.getEmail() : null;
     }
 
 }

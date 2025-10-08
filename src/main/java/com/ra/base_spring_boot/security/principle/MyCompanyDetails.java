@@ -1,6 +1,6 @@
 package com.ra.base_spring_boot.security.principle;
 
-import com.ra.base_spring_boot.model.Candidate;
+import com.ra.base_spring_boot.model.AccountCompany;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -11,14 +11,14 @@ import java.util.Collection;
 @Getter
 @Setter
 @Builder
-@ToString(exclude = "candidate")
-public class MyUserDetails implements UserDetails {
+@ToString(exclude = "accountCompany")
+public class MyCompanyDetails implements UserDetails {
 
-    private Candidate candidate;
+    private AccountCompany accountCompany;
     private Collection<? extends GrantedAuthority> authorities;
 
-    public Candidate getCandidate() {
-        return this.candidate;
+    public AccountCompany getAccountCompany() {
+        return this.accountCompany;
     }
 
     @Override
@@ -28,12 +28,12 @@ public class MyUserDetails implements UserDetails {
 
     @Override
     public String getPassword() {
-        return this.candidate.getPassword();
+        return this.accountCompany.getPassword();
     }
 
     @Override
     public String getUsername() {
-        return this.candidate.getEmail();
+        return this.accountCompany.getEmail();
     }
 
     @Override
@@ -43,7 +43,8 @@ public class MyUserDetails implements UserDetails {
 
     @Override
     public boolean isAccountNonLocked() {
-        return this.candidate.getIsOpen() != null && this.candidate.getIsOpen() == 1;
+
+        return true;
     }
 
     @Override
@@ -53,6 +54,8 @@ public class MyUserDetails implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return this.candidate.getIsOpen() != null && this.candidate.getIsOpen() == 1;
+
+        return true;
     }
 }
+

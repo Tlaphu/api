@@ -1,8 +1,8 @@
 package com.ra.base_spring_boot.dto.req;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 import java.util.Date;
@@ -12,7 +12,7 @@ import java.util.Date;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class FormUpdateProfile {
+public class FormRegisterCandidate {
 
     @NotBlank(message = "Full name is required")
     private String name;
@@ -21,19 +21,24 @@ public class FormUpdateProfile {
     @NotBlank(message = "Email is required")
     private String email;
 
+    @NotBlank(message = "Password is required")
+    private String password;
+
+    @NotBlank(message = "Confirm Password is required")
+    private String confirmPassword;
+
+    @NotBlank(message = "Phone is required")
     private String phone;
 
     private String address;
 
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+    @NotNull(message = "Date of birth is required")
     private Date dob;
 
+    @NotNull(message = "Gender is required")
     private Integer gender; // 0 = female, 1 = male, 2 = other
 
-    private String linkFb;
-    private String linkLinkedin;
-    private String linkGit;
-
-    // Nếu muốn cho phép update trạng thái tìm việc
-    private Integer isOpen; // 0 = đóng, 1 = mở
+    private String link_fb;
+    private String link_linkedin;
+    private String link_git;
 }
