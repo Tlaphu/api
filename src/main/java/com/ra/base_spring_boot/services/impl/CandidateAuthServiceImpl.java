@@ -1,0 +1,152 @@
+package com.ra.base_spring_boot.services.impl;
+
+import com.ra.base_spring_boot.dto.req.*;
+import com.ra.base_spring_boot.dto.resp.JwtResponse;
+import com.ra.base_spring_boot.exception.HttpBadRequest;
+import com.ra.base_spring_boot.model.Candidate;
+import com.ra.base_spring_boot.model.Role;
+import com.ra.base_spring_boot.model.constants.RoleName;
+import com.ra.base_spring_boot.repository.ICandidateRepository;
+import com.ra.base_spring_boot.security.jwt.JwtProvider;
+import com.ra.base_spring_boot.security.principle.MyUserDetails;
+import com.ra.base_spring_boot.services.ICandidateAuthService;
+import com.ra.base_spring_boot.services.IRoleService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
+import java.util.*;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+public class CandidateAuthServiceImpl implements ICandidateAuthService {
+
+    private final IRoleService roleService;
+    private final ICandidateRepository candidateRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final AuthenticationManager candidateAuthManager;
+    private final JwtProvider jwtProvider;
+
+    @Override
+    public void register(FormRegisterCandidate formRegisterCandidate) {
+        if (candidateRepository.existsByEmail(formRegisterCandidate.getEmail())) {
+            throw new HttpBadRequest("Email is already registered");
+        }
+
+        if (!formRegisterCandidate.getPassword().equals(formRegisterCandidate.getConfirmPassword())) {
+            throw new HttpBadRequest("Passwords do not match");
+        }
+
+        Set<Role> roles = new HashSet<>();
+        roles.add(roleService.findByRoleName(RoleName.ROLE_CANDIDATE));
+
+        Candidate candidate = Candidate.builder()
+                .name(formRegisterCandidate.getName())
+                .email(formRegisterCandidate.getEmail())
+                .password(passwordEncoder.encode(formRegisterCandidate.getPassword()))
+                .phone(formRegisterCandidate.getPhone())
+                .address(formRegisterCandidate.getAddress())
+                .dob(formRegisterCandidate.getDob())
+                .gender(formRegisterCandidate.getGender())
+                .link_fb(formRegisterCandidate.getLink_fb())
+                .link_linkedin(formRegisterCandidate.getLink_linkedin())
+                .link_git(formRegisterCandidate.getLink_git())
+                .isOpen(1)
+                .roles(roles)
+                .created_at(new Date())
+                .updated_at(new Date())
+                .build();
+
+        candidateRepository.save(candidate);
+    }
+
+    @Override
+    public JwtResponse login(FormLogin formLogin) {
+        try {
+            Authentication authentication = candidateAuthManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(formLogin.getEmail(), formLogin.getPassword())
+            );
+
+            MyUserDetails userDetails = (MyUserDetails) authentication.getPrincipal();
+            Candidate candidate = userDetails.getCandidate();
+
+            Set<String> roles = userDetails.getAuthorities().stream()
+                    .map(GrantedAuthority::getAuthority)
+                    .collect(Collectors.toSet());
+
+            String token = jwtProvider.generateCandidateToken(candidate, roles);
+
+            return JwtResponse.builder()
+                    .accessToken(token)
+                    .candidate(candidate)
+                    .roles(roles)
+                    .build();
+
+        } catch (AuthenticationException e) {
+            throw new HttpBadRequest("Email or password wrong");
+        }
+    }
+
+
+
+    @Override
+    public void logout(String token) {
+        System.out.println("Logout token: " + token);
+    }
+
+    @Override
+    public String forgotPassword(FormForgotPassword form) {
+        Candidate candidate = candidateRepository.findByEmailAndRoles_RoleName(form.getEmail(), RoleName.ROLE_CANDIDATE)
+                .orElseThrow(() -> new HttpBadRequest("Candidate not found with email and role"));
+
+        String resetToken = UUID.randomUUID().toString();
+        System.out.println("Send reset password token to email: " + candidate.getEmail());
+
+        return resetToken;
+    }
+
+    @Override
+    public void changePassword(FormChangePassword form) {
+        Candidate candidate = jwtProvider.getCurrentCandidate();
+        if (candidate == null) {
+            throw new HttpBadRequest("Unauthorized: Candidate not found");
+        }
+
+        if (!passwordEncoder.matches(form.getOldPassword(), candidate.getPassword())) {
+            throw new HttpBadRequest("Old password is incorrect");
+        }
+
+        candidate.setPassword(passwordEncoder.encode(form.getNewPassword()));
+        candidate.setUpdated_at(new Date());
+
+        candidateRepository.save(candidate);
+    }
+
+
+    @Override
+    public void updateProfile(FormUpdateProfile form) {
+        String email = jwtProvider.getCandidateUsername();
+        Candidate candidate = candidateRepository.findByEmail(email)
+                .orElseThrow(() -> new HttpBadRequest("Candidate not found"));
+
+        candidate.setName(form.getName());
+        candidate.setEmail(form.getEmail());
+        candidate.setPhone(form.getPhone());
+        candidate.setAddress(form.getAddress());
+        candidate.setDob(form.getDob());
+        candidate.setGender(form.getGender());
+        candidate.setLink_fb(form.getLinkFb());
+        candidate.setLink_linkedin(form.getLinkLinkedin());
+        candidate.setLink_git(form.getLinkGit());
+        candidate.setIsOpen(form.getIsOpen());
+        candidate.setUpdated_at(new Date());
+
+        candidateRepository.save(candidate);
+    }
+}

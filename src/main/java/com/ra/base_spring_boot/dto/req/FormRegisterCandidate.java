@@ -1,0 +1,44 @@
+package com.ra.base_spring_boot.dto.req;
+
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import lombok.*;
+
+import java.util.Date;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class FormRegisterCandidate {
+
+    @NotBlank(message = "Full name is required")
+    private String name;
+
+    @Email(message = "Email is invalid")
+    @NotBlank(message = "Email is required")
+    private String email;
+
+    @NotBlank(message = "Password is required")
+    private String password;
+
+    @NotBlank(message = "Confirm Password is required")
+    private String confirmPassword;
+
+    @NotBlank(message = "Phone is required")
+    private String phone;
+
+    private String address;
+
+    @NotNull(message = "Date of birth is required")
+    private Date dob;
+
+    @NotNull(message = "Gender is required")
+    private Integer gender; // 0 = female, 1 = male, 2 = other
+
+    private String link_fb;
+    private String link_linkedin;
+    private String link_git;
+}

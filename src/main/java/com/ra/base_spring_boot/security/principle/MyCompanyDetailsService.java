@@ -1,7 +1,8 @@
 package com.ra.base_spring_boot.security.principle;
 
-import com.ra.base_spring_boot.model.Candidate;
-import com.ra.base_spring_boot.repository.ICandidateRepository;
+
+import com.ra.base_spring_boot.model.AccountCompany;
+import com.ra.base_spring_boot.repository.IAccountCompanyRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -11,20 +12,21 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-public class MyUserDetailsService implements UserDetailsService {
+public class MyCompanyDetailsService implements UserDetailsService {
 
-    private final ICandidateRepository candidateRepository;
+    private final IAccountCompanyRepository accountCompanyRepository;
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        Candidate candidate = candidateRepository.findByEmail(email)
+        AccountCompany accountCompany = accountCompanyRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException(email + " not found"));
 
-        return MyUserDetails.builder()
-                .candidate(candidate)
-                .authorities(candidate.getRoles().stream()
+        return MyCompanyDetails.builder()
+                .accountCompany(accountCompany)
+                .authorities(accountCompany.getRoles().stream()
                         .map(role -> new SimpleGrantedAuthority(role.getRoleName().toString()))
                         .toList())
                 .build();
     }
 }
+

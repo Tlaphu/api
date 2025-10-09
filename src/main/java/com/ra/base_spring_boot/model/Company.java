@@ -1,5 +1,6 @@
 package com.ra.base_spring_boot.model;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 import java.util.Date;
@@ -15,14 +16,15 @@ public class Company {
     @Id
     private String id;
 
-    @ManyToOne
+    @OneToOne
     @JoinColumn(name = "account_company_id")
+    @JsonManagedReference
     private AccountCompany accountCompany;
 
     @ManyToOne
     @JoinColumn(name = "typeCompany_id")
     private TypeCompany typeCompany;
-
+    private String phone;
     private String name;
     private String logo;
     private String website;
@@ -37,6 +39,7 @@ public class Company {
     private Date updated_at;
 
     @OneToMany(mappedBy = "company")
+    @JsonManagedReference
     private List<AddressCompany> addresses;
 
     @OneToMany(mappedBy = "company")
