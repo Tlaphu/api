@@ -25,7 +25,7 @@ public class TypeJob {
     private Date updated_at;
 
 
-    @OneToMany(mappedBy = "typeJob", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "typeJob", cascade = CascadeType.ALL)
     @JsonIgnore
     private List<TypeJobRelation> typeJobRelations;
 }

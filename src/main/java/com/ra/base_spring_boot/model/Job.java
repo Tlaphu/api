@@ -38,11 +38,12 @@ public class Job {
     private Date updated_at;
 
 
-    @OneToMany(mappedBy = "job", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "job", cascade = CascadeType.ALL)
     @JsonIgnore
     private List<TypeJobRelation> typeJobRelations;
-    @OneToMany(mappedBy = "job", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "job", cascade = CascadeType.ALL)
     @JsonIgnore
     private List<LevelJobRelation> levelJobRelations;
+
 
 }

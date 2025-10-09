@@ -8,14 +8,26 @@ import java.util.List;
 
 @Service
 public class TypeCompanyService {
+
     private final TypeCompanyRepository repo;
 
     public TypeCompanyService(TypeCompanyRepository repo) {
         this.repo = repo;
     }
 
-    public List<TypeCompany> getAll() { return repo.findAll(); }
-    public TypeCompany getById(String id) { return repo.findById(id).orElse(null); }
-    public TypeCompany save(TypeCompany tc) { return repo.save(tc); }
-    public void delete(String id) { repo.deleteById(id); }
+    public List<TypeCompany> getAll() {
+        return repo.findAll();
+    }
+
+    public TypeCompany getById(String id) {
+        return repo.findById(id).orElse(null);
+    }
+
+    public TypeCompany save(TypeCompany tc) {
+        return repo.save(tc);
+    }
+
+    public void delete(String id) {
+        repo.deleteById(id);
+    }
 }

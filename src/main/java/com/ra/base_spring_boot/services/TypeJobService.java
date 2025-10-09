@@ -8,14 +8,26 @@ import java.util.List;
 
 @Service
 public class TypeJobService {
+
     private final TypeJobRepository repo;
 
     public TypeJobService(TypeJobRepository repo) {
         this.repo = repo;
     }
 
-    public List<TypeJob> getAll() { return repo.findAll(); }
-    public TypeJob getById(String id) { return repo.findById(id).orElse(null); }
-    public TypeJob save(TypeJob tj) { return repo.save(tj); }
-    public void delete(String id) { repo.deleteById(id); }
+    public List<TypeJob> getAll() {
+        return repo.findAll();
+    }
+
+    public TypeJob getById(String id) {
+        return repo.findById(id).orElse(null);
+    }
+
+    public TypeJob save(TypeJob tj) {
+        return repo.save(tj);
+    }
+
+    public void delete(String id) {
+        repo.deleteById(id);
+    }
 }
