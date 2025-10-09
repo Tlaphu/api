@@ -1,7 +1,7 @@
 package com.ra.base_spring_boot.services;
 
 import com.ra.base_spring_boot.model.TypeCompany;
-import com.ra.base_spring_boot.repository.TypeCompanyRepository;
+import com.ra.base_spring_boot.repository.ITypeCompanyRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -9,9 +9,9 @@ import java.util.List;
 @Service
 public class TypeCompanyService {
 
-    private final TypeCompanyRepository repo;
+    private final ITypeCompanyRepository repo;
 
-    public TypeCompanyService(TypeCompanyRepository repo) {
+    public TypeCompanyService(ITypeCompanyRepository repo) {
         this.repo = repo;
     }
 

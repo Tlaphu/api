@@ -27,15 +27,12 @@ public class FormRegisterCandidate {
     @NotBlank(message = "Confirm Password is required")
     private String confirmPassword;
 
-    @NotBlank(message = "Phone is required")
     private String phone;
 
     private String address;
 
-    @NotNull(message = "Date of birth is required")
     private Date dob;
 
-    @NotNull(message = "Gender is required")
     private Integer gender; // 0 = female, 1 = male, 2 = other
 
     private String link_fb;
