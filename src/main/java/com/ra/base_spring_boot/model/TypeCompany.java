@@ -14,9 +14,6 @@ import java.util.List;
 public class TypeCompany {
     @Id
     private String id;
-    public void setId(String id) {
-        this.id = id;
-    }
     private String name;
     @Temporal(TemporalType.DATE)
     private Date created_at;
