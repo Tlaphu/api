@@ -1,71 +1,218 @@
 package com.ra.base_spring_boot.controller;
 
-import com.ra.base_spring_boot.model.Job;
-import com.ra.base_spring_boot.services.JobService;
+import com.ra.base_spring_boot.model.*;
+import com.ra.base_spring_boot.repository.ICompanyRepository;
+import com.ra.base_spring_boot.repository.LocationRepository;
+import com.ra.base_spring_boot.repository.JobRepository;
+import com.ra.base_spring_boot.dto.req.FormJob;
+import com.ra.base_spring_boot.dto.req.FormJobResponseDTO;
+import com.ra.base_spring_boot.services.ICompanyAuthService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import java.util.List;
+
+import java.util.*; 
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/job")
 @CrossOrigin(origins = "*")
 public class JobController {
 
-    private final JobService service;
+    @Autowired
+    private JobRepository jobRepository;
 
-    public JobController(JobService service) {
-        this.service = service;
+    @Autowired
+    private ICompanyRepository companyRepository;
+
+    @Autowired
+    private LocationRepository locationRepository;
+
+    @Autowired
+    private ICompanyAuthService companyAuthService;
+
+    // ✅ CREATE JOB
+    @PostMapping
+    public ResponseEntity<?> create(@RequestBody FormJob form) {
+        Optional<Location> locationOpt = locationRepository.findById(form.getLocationId());
+        if (locationOpt.isEmpty()) {
+            return ResponseEntity.status(404).body("Location not found");
+        }
+
+        Optional<Company> companyOpt = companyRepository.findById(form.getCompanyId());
+        if (companyOpt.isEmpty()) {
+            return ResponseEntity.status(404).body("Company not found");
+        }
+
+        Location location = locationOpt.get();
+        Company company = companyOpt.get();
+
+        Job job = Job.builder()
+                .id(UUID.randomUUID().toString())
+                .title(form.getTitle())
+                .description(form.getDescription())
+                .salary(form.getSalary())
+                .requirements(form.getRequirements())
+                .desirable(form.getDesirable())
+                .benefits(form.getBenefits())
+                .workTime(form.getWorkTime())
+                .location(location)
+                .company(company)
+                .created_at(new Date())
+                .expire_at(form.getExpire_at()) // ✅ đúng tên getter
+                .build();
+
+        jobRepository.save(job);
+
+        FormJobResponseDTO response = FormJobResponseDTO.builder()
+                .id(job.getId())
+                .title(job.getTitle())
+                .description(job.getDescription())
+                .salary(job.getSalary())
+                .requirements(job.getRequirements())
+                .desirable(job.getDesirable())
+                .benefits(job.getBenefits())
+                .workTime(job.getWorkTime())
+                .companyName(company.getName())
+                .locationName(location.getName())
+                .build();
+
+        return ResponseEntity.status(201).body(response);
     }
 
-    @GetMapping
-    public List<Job> getAll() {
-        return service.getAll();
-    }
+ 
+@GetMapping
+public ResponseEntity<?> getAll() {
+    List<FormJobResponseDTO> jobs = jobRepository.findAll().stream()
+            .map(job -> FormJobResponseDTO.builder()
+                    .id(job.getId())
+                    .title(job.getTitle())
+                    .description(job.getDescription())
+                    .salary(job.getSalary())
+                    .requirements(job.getRequirements())
+                    .desirable(job.getDesirable())
+                    .benefits(job.getBenefits())
+                    .workTime(job.getWorkTime())
+                    .companyName(job.getCompany() != null ? job.getCompany().getName() : "N/A")
+                    .locationName(job.getLocation() != null ? job.getLocation().getName() : "N/A")
+                    .build())
+            .collect(Collectors.toList());
+
+    return ResponseEntity.ok(jobs);
+}
 
     @GetMapping("/{id}")
-    public Object getById(@PathVariable("id") String id) {
-        Job job = service.getById(id);
-        if (job == null) {
-            return ResponseEntity.status(404).body("Job not found with id: " + id);
-        }
-        return ResponseEntity.ok(job);
+public ResponseEntity<?> getById(@PathVariable String id) {
+    Optional<Job> jobOpt = jobRepository.findById(id);
+    if (jobOpt.isEmpty()) {
+        return ResponseEntity.status(404).body("Job not found");
     }
 
-    @PostMapping
-    public Object create(@RequestBody Job job) {
-        Job existed = service.getById(job.getId());
-        if (existed != null) {
-            return ResponseEntity.status(409).body("Job already exists with id: " + job.getId());
-        }
-        return ResponseEntity.status(201).body(service.save(job));
-    }
+    Job job = jobOpt.get();
 
+    FormJobResponseDTO dto = FormJobResponseDTO.builder()
+            .id(job.getId())
+            .title(job.getTitle())
+            .description(job.getDescription())
+            .salary(job.getSalary())
+            .requirements(job.getRequirements())
+            .desirable(job.getDesirable())
+            .benefits(job.getBenefits())
+            .workTime(job.getWorkTime())
+            .companyName(job.getCompany() != null ? job.getCompany().getName() : null)
+            .locationName(job.getLocation() != null ? job.getLocation().getName() : null)
+            .build();
+
+    return ResponseEntity.ok(dto);
+}
+    // ✅ UPDATE JOB
     @PutMapping("/{id}")
-    public Object update(@PathVariable String id, @RequestBody Job job) {
-        Job existed = service.getById(id);
-        if (existed == null) {
-            return ResponseEntity
-                    .status(404)
-                    .body("Job not found with id: " + id);
+    public ResponseEntity<?> update(@PathVariable String id, @RequestBody FormJob form) {
+        Optional<Job> jobOpt = jobRepository.findById(id);
+        if (jobOpt.isEmpty()) {
+            return ResponseEntity.status(404).body("Job not found");
         }
-        job.setId(id);
-        return ResponseEntity.ok(service.save(job));
+
+        Job job = jobOpt.get();
+
+        Optional<Location> locationOpt = locationRepository.findById(form.getLocationId());
+        if (locationOpt.isEmpty()) {
+            return ResponseEntity.status(404).body("Location not found");
+        }
+
+        Optional<Company> companyOpt = companyRepository.findById(form.getCompanyId());
+        if (companyOpt.isEmpty()) {
+            return ResponseEntity.status(404).body("Company not found");
+        }
+
+        Location location = locationOpt.get();
+        Company company = companyOpt.get();
+
+        job.setTitle(form.getTitle());
+        job.setDescription(form.getDescription());
+        job.setSalary(form.getSalary());
+        job.setRequirements(form.getRequirements());
+        job.setDesirable(form.getDesirable());
+        job.setBenefits(form.getBenefits());
+        job.setWorkTime(form.getWorkTime());
+        job.setLocation(location);
+        job.setCompany(company);
+        job.setExpire_at(form.getExpire_at());
+        job.setUpdated_at(new Date());
+
+        jobRepository.save(job);
+
+        FormJobResponseDTO response = FormJobResponseDTO.builder()
+                .id(job.getId())
+                .title(job.getTitle())
+                .description(job.getDescription())
+                .salary(job.getSalary())
+                .requirements(job.getRequirements())
+                .desirable(job.getDesirable())
+                .benefits(job.getBenefits())
+                .workTime(job.getWorkTime())
+                .companyName(company.getName())
+                .locationName(location.getName())
+                .build();
+
+        return ResponseEntity.ok(response);
     }
 
-
-
+    // ✅ DELETE JOB
     @DeleteMapping("/{id}")
-    public Object delete(@PathVariable("id") String id) {
-        Job existed = service.getById(id);
-        if (existed == null) {
-            return ResponseEntity.status(404).body("No Job to delete with id: " + id);
+    public ResponseEntity<?> delete(@PathVariable String id) {
+        Optional<Job> jobOpt = jobRepository.findById(id);
+        if (jobOpt.isEmpty()) {
+            return ResponseEntity.status(404).body("Job not found");
         }
-        service.delete(id);
-        return ResponseEntity.ok("Successfully deleted Job with id: " + id);
+
+        jobRepository.deleteById(id);
+        return ResponseEntity.ok("Deleted Job successfully with id: " + id);
     }
 
-    @GetMapping("/featured")
-    public List<Job> getFeaturedJobs() {
-        return service.getFeaturedJobs();
-    }
+   @GetMapping("/featured")
+public ResponseEntity<?> getFeaturedJobs() {
+    List<FormJobResponseDTO> jobs = jobRepository.findAll().stream()
+            .sorted((a, b) -> Double.compare(
+                    b.getSalary() != null ? b.getSalary() : 0,
+                    a.getSalary() != null ? a.getSalary() : 0
+            ))
+            .limit(10)
+            .map(job -> FormJobResponseDTO.builder()
+                    .id(job.getId())
+                    .title(job.getTitle())
+                    .description(job.getDescription())
+                    .salary(job.getSalary())
+                    .requirements(job.getRequirements())
+                    .desirable(job.getDesirable())
+                    .benefits(job.getBenefits())
+                    .workTime(job.getWorkTime())
+                    .companyName(job.getCompany() != null ? job.getCompany().getName() : "N/A")
+                    .locationName(job.getLocation() != null ? job.getLocation().getName() : "N/A")
+                    .build())
+            .collect(Collectors.toList());
+
+    return ResponseEntity.ok(jobs);
+}
+
 }

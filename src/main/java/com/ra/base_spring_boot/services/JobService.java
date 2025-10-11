@@ -36,6 +36,6 @@ public class JobService {
 
 
     public List<Job> getFeaturedJobs() {
-        return repo.findTop5ByOrderBySalaryDesc();
+        return repo.findTop10ByOrderBySalaryDesc();
     }
 }

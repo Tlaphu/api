@@ -1,5 +1,6 @@
 package com.ra.base_spring_boot.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
@@ -42,6 +43,8 @@ public class Company {
     @JsonManagedReference
     private List<AddressCompany> addresses;
 
-    @OneToMany(mappedBy = "company")
-    private List<Job> jobs;
+   @OneToMany(mappedBy = "company")
+@JsonIgnore
+private List<Job> jobs;
+
 }
