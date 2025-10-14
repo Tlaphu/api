@@ -1,55 +1,82 @@
 package com.ra.base_spring_boot.controller;
 
-import com.ra.base_spring_boot.model.LevelJob;
-import com.ra.base_spring_boot.model.TypeCompany;
-import com.ra.base_spring_boot.services.TypeCompanyService;
-
+import com.ra.base_spring_boot.dto.req.FormTypeCompany;
+import com.ra.base_spring_boot.dto.resp.FormTypeCompanyResponse; 
+import com.ra.base_spring_boot.services.ITypeCompanyService; 
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/type-company")
+@RequiredArgsConstructor
 public class TypeCompanyController {
-    private final TypeCompanyService service;
 
-    public TypeCompanyController(TypeCompanyService service) {
-        this.service = service;
+    private final ITypeCompanyService service;
+
+    
+    @GetMapping
+    public ResponseEntity<List<FormTypeCompanyResponse>> getAll() {
+        return ResponseEntity.ok(service.getAll());
     }
 
-    @GetMapping
-    public List<TypeCompany> getAll() { return service.getAll(); }
 
     @GetMapping("/{id}")
-    public TypeCompany getById(@PathVariable String id) { return service.getById(id); }
+    public ResponseEntity<FormTypeCompanyResponse> getById(@PathVariable String id) {
+        FormTypeCompanyResponse response = service.getById(id);
+        if (response == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(response);
+    }
 
+
+   
+    @PreAuthorize("hasAuthority('ROLE_COMPANY')") 
     @PostMapping
-    public Object create(@RequestBody TypeCompany tc) {
-    TypeCompany existed = service.getById(tc.getId());
-    if (existed != null) {
-        return ResponseEntity
-            .status(409)
-            .body("TypeCompany has existed with id: " + tc.getId());
-    }
-    return service.save(tc);
+    public ResponseEntity<FormTypeCompanyResponse> create(@RequestBody FormTypeCompany form, Principal principal) { 
+        
+        String creatorEmail = principal.getName();
+        FormTypeCompanyResponse createdType = service.create(form, creatorEmail);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdType);
     }
 
+
+    // THAY ĐỔI: Quyền ROLE_ADMIN, sửa lỗi cú pháp
+    @PreAuthorize("hasAuthority('ROLE_COMPANY')") 
     @PutMapping("/{id}")
-    public TypeCompany update(@PathVariable String id, @RequestBody TypeCompany tc) {
-        tc.setId(id);
-        return service.save(tc);
+    public ResponseEntity<FormTypeCompanyResponse> update(@PathVariable String id, 
+                                                          @RequestBody FormTypeCompany form,
+                                                          Principal principal) {
+        
+        String updaterEmail = principal.getName();
+        FormTypeCompanyResponse updatedType = service.update(id, form, updaterEmail);
+        
+        if (updatedType == null) {
+             return ResponseEntity.notFound().build(); 
+        }
+        
+        return ResponseEntity.ok(updatedType); // Đã sửa lỗi cú pháp ở đây
     }
 
-      @DeleteMapping("/{id}")
-public Object delete(@PathVariable String id) {
-    TypeCompany existed = service.getById(id);
-    if (existed == null) {
-        return ResponseEntity
-            .status(404)
-            .body("No TypeCompany exists to delete with id: " + id);
+
+    
+    @PreAuthorize("hasAuthority('ROLE_COMPANY')")
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable String id, Principal principal) {
+        
+        String deleterEmail = principal.getName();
+        boolean deleted = service.delete(id, deleterEmail);
+        
+        if (!deleted) {
+            return ResponseEntity.notFound().build(); 
+        }
+        
+        return ResponseEntity.noContent().build();
     }
-    service.delete(id);
-    return ResponseEntity.ok("Successfully deleted TypeCompany with id: " + id);
-}
 }

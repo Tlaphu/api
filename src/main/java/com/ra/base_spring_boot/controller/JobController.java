@@ -9,6 +9,7 @@ import com.ra.base_spring_boot.dto.req.FormJobResponseDTO;
 import com.ra.base_spring_boot.services.ICompanyAuthService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*; 
@@ -31,7 +32,7 @@ public class JobController {
     @Autowired
     private ICompanyAuthService companyAuthService;
 
-    // ✅ CREATE JOB
+    @PreAuthorize("hasAuthority('ROLE_COMPANY')")
     @PostMapping
     public ResponseEntity<?> create(@RequestBody FormJob form) {
         Optional<Location> locationOpt = locationRepository.findById(form.getLocationId());
@@ -48,7 +49,7 @@ public class JobController {
         Company company = companyOpt.get();
 
         Job job = Job.builder()
-                .id(UUID.randomUUID().toString())
+                .id(form.getId())
                 .title(form.getTitle())
                 .description(form.getDescription())
                 .salary(form.getSalary())
@@ -59,7 +60,7 @@ public class JobController {
                 .location(location)
                 .company(company)
                 .created_at(new Date())
-                .expire_at(form.getExpire_at()) // ✅ đúng tên getter
+                .expire_at(form.getExpire_at()) 
                 .build();
 
         jobRepository.save(job);
@@ -125,7 +126,7 @@ public ResponseEntity<?> getById(@PathVariable String id) {
 
     return ResponseEntity.ok(dto);
 }
-    // ✅ UPDATE JOB
+    @PreAuthorize("hasAuthority('ROLE_COMPANY')")
     @PutMapping("/{id}")
     public ResponseEntity<?> update(@PathVariable String id, @RequestBody FormJob form) {
         Optional<Job> jobOpt = jobRepository.findById(id);

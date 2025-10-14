@@ -7,6 +7,7 @@ import java.util.Date;
 import java.util.List;
 
 @Entity
+@Table(name = "job")
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
@@ -33,6 +34,7 @@ public class Job {
     private String desirable;
     private String benefits;
      private String workTime;
+     
     @Temporal(TemporalType.DATE)
     private Date expire_at;
 
