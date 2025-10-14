@@ -47,7 +47,7 @@ public class TypeCompanyController {
     }
 
 
-    // THAY ĐỔI: Quyền ROLE_ADMIN, sửa lỗi cú pháp
+   
     @PreAuthorize("hasAuthority('ROLE_COMPANY')") 
     @PutMapping("/{id}")
     public ResponseEntity<FormTypeCompanyResponse> update(@PathVariable String id, 
@@ -61,7 +61,7 @@ public class TypeCompanyController {
              return ResponseEntity.notFound().build(); 
         }
         
-        return ResponseEntity.ok(updatedType); // Đã sửa lỗi cú pháp ở đây
+        return ResponseEntity.ok(updatedType); 
     }
 
 

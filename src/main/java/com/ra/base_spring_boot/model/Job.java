@@ -15,7 +15,8 @@ import java.util.List;
 @Builder
 public class Job {
     @Id
-    private String id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY) 
+    private Long id;
 
     @ManyToOne
     @JoinColumn(name = "company_id")

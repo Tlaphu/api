@@ -7,7 +7,7 @@ import lombok.*;
 @NoArgsConstructor
 @Builder
 public class FormJobResponseDTO {
-    private String id;
+    private long id;
     private String title;
     private String description;
     private Double salary;

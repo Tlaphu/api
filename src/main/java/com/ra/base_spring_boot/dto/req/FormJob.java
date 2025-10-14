@@ -4,7 +4,7 @@ import lombok.Data;
 
 @Data
 public class FormJob {
-    private String id;           
+               
     private String title;
     private String description;
     private Double salary;
