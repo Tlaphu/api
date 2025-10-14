@@ -75,6 +75,7 @@ public class JobController {
                 .benefits(job.getBenefits())
                 .workTime(job.getWorkTime())
                 .companyName(company.getName())
+                .companyLogo(company.getLogo())
                 .locationName(location.getName())
                 .build();
 
@@ -95,6 +96,7 @@ public ResponseEntity<?> getAll() {
                     .benefits(job.getBenefits())
                     .workTime(job.getWorkTime())
                     .companyName(job.getCompany() != null ? job.getCompany().getName() : "N/A")
+                    .companyLogo(job.getCompany()!= null ? job.getCompany().getLogo() : "N/A")
                     .locationName(job.getLocation() != null ? job.getLocation().getName() : "N/A")
                     .build())
             .collect(Collectors.toList());
@@ -121,6 +123,7 @@ public ResponseEntity<?> getById(@PathVariable String id) {
             .benefits(job.getBenefits())
             .workTime(job.getWorkTime())
             .companyName(job.getCompany() != null ? job.getCompany().getName() : null)
+            .companyLogo(job.getCompany() != null ? job.getCompany().getLogo() : null)
             .locationName(job.getLocation() != null ? job.getLocation().getName() : null)
             .build();
 
@@ -173,13 +176,14 @@ public ResponseEntity<?> getById(@PathVariable String id) {
                 .benefits(job.getBenefits())
                 .workTime(job.getWorkTime())
                 .companyName(company.getName())
+                .companyLogo(company.getLogo())
                 .locationName(location.getName())
                 .build();
 
         return ResponseEntity.ok(response);
     }
 
-    // ✅ DELETE JOB
+    @PreAuthorize("hasAuthority('ROLE_COMPANY')")
     @DeleteMapping("/{id}")
     public ResponseEntity<?> delete(@PathVariable String id) {
         Optional<Job> jobOpt = jobRepository.findById(id);
@@ -209,6 +213,7 @@ public ResponseEntity<?> getFeaturedJobs() {
                     .benefits(job.getBenefits())
                     .workTime(job.getWorkTime())
                     .companyName(job.getCompany() != null ? job.getCompany().getName() : "N/A")
+                    .companyLogo(job.getCompany()!= null ? job.getCompany().getLogo() : "N/A")
                     .locationName(job.getLocation() != null ? job.getLocation().getName() : "N/A")
                     .build())
             .collect(Collectors.toList());

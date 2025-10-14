@@ -16,5 +16,6 @@ public class FormJobResponseDTO {
     private String benefits;
     private String workTime;
     private String companyName;
+    private String companyLogo;
     private String locationName;
 }

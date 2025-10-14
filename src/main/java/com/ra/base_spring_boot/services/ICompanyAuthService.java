@@ -2,7 +2,8 @@ package com.ra.base_spring_boot.services;
 
 import com.ra.base_spring_boot.dto.req.*;
 import com.ra.base_spring_boot.dto.resp.JwtResponse;
-
+import com.ra.base_spring_boot.model.Company;
+import java.util.List;
 public interface ICompanyAuthService {
 
     /**
@@ -34,6 +35,6 @@ public interface ICompanyAuthService {
      * Update company profile
      */
     void updateProfile(FormUpdateCompany form);
-
+    List<Company> findTop20ByFollower();
 }
 

@@ -3,13 +3,14 @@ package com.ra.base_spring_boot.controller;
 import com.ra.base_spring_boot.dto.ResponseWrapper;
 import com.ra.base_spring_boot.dto.req.*;
 import com.ra.base_spring_boot.dto.resp.JwtResponse;
+import com.ra.base_spring_boot.model.Company;
 import com.ra.base_spring_boot.services.ICompanyAuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
+import java.util.List;
 import java.net.URI;
 
 @RestController
@@ -77,6 +78,16 @@ public class CompanyAuthController {
                 .status(HttpStatus.OK)
                 .code(200)
                 .data("Company profile updated successfully")
+                .build());
+    }
+    @GetMapping("/top-followers")
+    public ResponseEntity<?> getTop20Companies() {
+        List<Company> topCompanies = companyAuthService.findTop20ByFollower();
+        
+        return ResponseEntity.ok(ResponseWrapper.builder()
+                .status(HttpStatus.OK)
+                .code(200)
+                .data(topCompanies)
                 .build());
     }
 }

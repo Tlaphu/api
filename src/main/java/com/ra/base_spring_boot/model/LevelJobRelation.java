@@ -16,14 +16,13 @@ import lombok.*;
 public class LevelJobRelation {
     @Id
     private String id;
+@ManyToOne(fetch = FetchType.EAGER) 
+@JoinColumn(name = "job_id", referencedColumnName = "id")
 
- @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "job_id", referencedColumnName = "id")
-    @JsonIgnore 
-    private Job job;
+private Job job;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "level_id", referencedColumnName = "id")
-    @JsonIgnore 
-    private LevelJob levelJob;
+@ManyToOne(fetch = FetchType.EAGER) 
+@JoinColumn(name = "level_id", referencedColumnName = "id")
+
+private LevelJob levelJob;
 }
