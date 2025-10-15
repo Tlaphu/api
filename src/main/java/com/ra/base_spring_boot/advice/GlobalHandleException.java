@@ -162,6 +162,21 @@ public class GlobalHandleException
                         .build()
         );
     }
+    /**
+     * @param ex HttpAccessDenied
+     * @apiNote handle access denied (403)
+     */
+    @ExceptionHandler(HttpAccessDenied.class)
+    public ResponseEntity<?> handleHttpAccessDenied(HttpAccessDenied ex)
+    {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
+                ResponseWrapper.builder()
+                        .data(ex.getMessage())
+                        .code(HttpStatus.FORBIDDEN.value())
+                        .status(HttpStatus.FORBIDDEN)
+                        .build()
+        );
+    }
 
 
 }

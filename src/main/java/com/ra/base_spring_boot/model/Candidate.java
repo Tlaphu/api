@@ -64,9 +64,11 @@ public class Candidate extends BaseObject {
     private List<EducationCandidate> educationCandidates;
 
     @OneToMany(mappedBy = "candidate", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
     private List<ExperienceCandidate> experienceCandidates;
 
     @OneToMany(mappedBy = "candidate", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
     private List<CertificateCandidate> certificateCandidates;
 
     @OneToMany(mappedBy = "candidate", cascade = CascadeType.ALL, orphanRemoval = true)
