@@ -11,11 +11,8 @@ public class LocationService {
 
     private final ILocationRepository repo;
 
-<<<<<<< HEAD
+    // Sửa xung đột và chuẩn hóa cú pháp
     public LocationService(ILocationRepository repo) {
-=======
-    public LocationService(ILocationRepository   repo) {
->>>>>>> 215340914a830849723a589eea450b87f01dc786
         this.repo = repo;
     }
 
@@ -23,11 +20,8 @@ public class LocationService {
         return repo.findAll();
     }
 
-<<<<<<< HEAD
-    public Location getById(long id) {
-=======
-    public Location getById(Long id) {
->>>>>>> 215340914a830849723a589eea450b87f01dc786
+    // Thống nhất dùng kiểu đối tượng Long cho ID
+    public Location getById(Long id) { 
         return repo.findById(id).orElse(null);
     }
 
@@ -35,11 +29,8 @@ public class LocationService {
         return repo.save(location);
     }
 
-<<<<<<< HEAD
-    public void delete(long id) {
-=======
-    public void delete(Long id) {
->>>>>>> 215340914a830849723a589eea450b87f01dc786
+    // Thống nhất dùng kiểu đối tượng Long cho ID
+    public void delete(Long id) { 
         repo.deleteById(id);
     }
 }

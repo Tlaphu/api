@@ -32,24 +32,20 @@ public class JobController {
     @Autowired
     private ICompanyAuthService companyAuthService;
 
+    // --- 1. POST: CREATE (Đã sửa lỗi) ---
     @PreAuthorize("hasAuthority('ROLE_COMPANY')")
     @PostMapping
     public ResponseEntity<?> create(@RequestBody FormJob form) {
         
-      
-        Long locationId;
-        try {
-            locationId = Long.parseLong(form.getLocationId());
-        } catch (NumberFormatException e) {
-            return ResponseEntity.badRequest().body("Invalid Location ID format. Must be a number.");
-        }
+        // ❗ Đã sửa: Lấy ID kiểu Long trực tiếp từ Form
+        Long locationId = form.getLocationId();
         Optional<Location> locationOpt = locationRepository.findById(locationId);
         if (locationOpt.isEmpty()) {
             return ResponseEntity.status(404).body("Location not found");
         }
 
-      
-        String companyId = form.getCompanyId();
+        // ❗ Đã sửa: Lấy ID kiểu Long trực tiếp từ Form
+        Long companyId = form.getCompanyId();
         Optional<Company> companyOpt = companyRepository.findById(companyId); 
         if (companyOpt.isEmpty()) {
             return ResponseEntity.status(404).body("Company not found");
@@ -92,6 +88,7 @@ public class JobController {
     }
 
     
+    // --- 2. GET: ALL ---
     @GetMapping
     public ResponseEntity<?> getAll() {
         List<FormJobResponseDTO> jobs = jobRepository.findAll().stream()
@@ -113,6 +110,7 @@ public class JobController {
         return ResponseEntity.ok(jobs);
     }
 
+    // --- 3. GET: BY ID ---
     @GetMapping("/{id}")
     public ResponseEntity<?> getById(@PathVariable Long id) {
         Optional<Job> jobOpt = jobRepository.findById(id);
@@ -139,6 +137,7 @@ public class JobController {
         return ResponseEntity.ok(dto);
     }
     
+    // --- 4. PUT: UPDATE (Đã sửa lỗi) ---
     @PreAuthorize("hasAuthority('ROLE_COMPANY')")
     @PutMapping("/{id}")
     public ResponseEntity<?> update(@PathVariable Long id, @RequestBody FormJob form) {
@@ -150,41 +149,22 @@ public class JobController {
 
         Job job = jobOpt.get();
 
-        
-<<<<<<< HEAD
-        String locationIdStr = form.getLocationId();
-        if (locationIdStr == null || locationIdStr.isEmpty()) {
-=======
+        // ❗ Đã sửa: Lấy ID kiểu Long trực tiếp từ Form
         Long locationId = form.getLocationId();
-        if (locationId == null ) {
->>>>>>> 215340914a830849723a589eea450b87f01dc786
+        if (locationId == null) {
             return ResponseEntity.status(400).body("Location ID must be provided in the request body.");
-        }
- 
-        Long locationId;
-        try {
-            locationId = Long.parseLong(locationIdStr);
-        } catch (NumberFormatException e) {
-            return ResponseEntity.badRequest().body("Invalid Location ID format. Must be a number.");
         }
         Optional<Location> locationOpt = locationRepository.findById(locationId);
         if (locationOpt.isEmpty()) {
             return ResponseEntity.status(404).body("Location not found");
         }
 
-        
-<<<<<<< HEAD
-        String companyIdStr = form.getCompanyId();
-        if (companyIdStr == null || companyIdStr.isEmpty()) {
-=======
+        // ❗ Đã sửa: Lấy ID kiểu Long trực tiếp từ Form
         Long companyId = form.getCompanyId();
-        if (companyId == null ) {
->>>>>>> 215340914a830849723a589eea450b87f01dc786
+        if (companyId == null) {
             return ResponseEntity.status(400).body("Company ID must be provided in the request body.");
         }
- 
-        String companyId = companyIdStr;
-        Optional<Company> companyOpt = companyRepository.findById(companyId);
+        Optional<Company> companyOpt = companyRepository.findById(companyId); 
         if (companyOpt.isEmpty()) {
             return ResponseEntity.status(404).body("Company not found");
         }
@@ -226,6 +206,7 @@ public class JobController {
         return ResponseEntity.ok(response);
     }
     
+    // --- 5. DELETE ---
     @PreAuthorize("hasAuthority('ROLE_COMPANY')")
     @DeleteMapping("/{id}")
     public ResponseEntity<?> delete(@PathVariable Long id) {
@@ -238,6 +219,7 @@ public class JobController {
         return ResponseEntity.ok("Deleted Job successfully with id: " + id);
     }
 
+    // --- 6. GET: FEATURED ---
     @GetMapping("/featured")
     public ResponseEntity<?> getFeaturedJobs() {
         List<FormJobResponseDTO> jobs = jobRepository.findAll().stream()
