@@ -15,6 +15,7 @@ import com.ra.base_spring_boot.services.ICompanyAuthService;
 import com.ra.base_spring_boot.services.IRoleService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -22,7 +23,7 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
+import org.springframework.data.domain.Pageable;    
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -185,5 +186,12 @@ public class CompanyAuthServiceImpl implements ICompanyAuthService {
                 .orElseThrow(() -> new HttpBadRequest("Company not found"));
 
         accountCompanyRepository.save(accountCompany);
+    }
+    @Override
+    public List<Company> findTop20ByFollower() {
+       
+        Pageable topTwenty = PageRequest.of(0, 20); 
+        
+        return companyRepository.findAllByOrderByFollowerDesc(topTwenty);
     }
 }

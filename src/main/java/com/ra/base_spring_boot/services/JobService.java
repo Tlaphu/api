@@ -11,6 +11,7 @@ public class JobService {
 
     private final JobRepository repo;
 
+    
     public JobService(JobRepository repo) {
         this.repo = repo;
     }
@@ -20,8 +21,8 @@ public class JobService {
         return repo.findAll();
     }
 
-
-    public Job getById(String id) {
+    
+    public Job getById(Long id) {
         return repo.findById(id).orElse(null);
     }
 
@@ -30,11 +31,13 @@ public class JobService {
         return repo.save(job);
     }
 
-    public void delete(String id) {
+  
+    public void delete(Long id) {
         repo.deleteById(id);
     }
 
 
+    
     public List<Job> getFeaturedJobs() {
         return repo.findTop10ByOrderBySalaryDesc();
     }

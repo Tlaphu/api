@@ -9,6 +9,7 @@ import com.ra.base_spring_boot.dto.req.FormJobResponseDTO;
 import com.ra.base_spring_boot.services.ICompanyAuthService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*; 
@@ -31,7 +32,7 @@ public class JobController {
     @Autowired
     private ICompanyAuthService companyAuthService;
 
-    // ✅ CREATE JOB
+    @PreAuthorize("hasAuthority('ROLE_COMPANY')")
     @PostMapping
     public ResponseEntity<?> create(@RequestBody FormJob form) {
         Optional<Location> locationOpt = locationRepository.findById(form.getLocationId());
@@ -48,7 +49,6 @@ public class JobController {
         Company company = companyOpt.get();
 
         Job job = Job.builder()
-                .id(UUID.randomUUID().toString())
                 .title(form.getTitle())
                 .description(form.getDescription())
                 .salary(form.getSalary())
@@ -59,7 +59,7 @@ public class JobController {
                 .location(location)
                 .company(company)
                 .created_at(new Date())
-                .expire_at(form.getExpire_at()) // ✅ đúng tên getter
+                .expire_at(form.getExpire_at()) 
                 .build();
 
         jobRepository.save(job);
@@ -74,60 +74,37 @@ public class JobController {
                 .benefits(job.getBenefits())
                 .workTime(job.getWorkTime())
                 .companyName(company.getName())
+                .companyLogo(company.getLogo())
                 .locationName(location.getName())
                 .build();
 
         return ResponseEntity.status(201).body(response);
     }
 
- 
-@GetMapping
-public ResponseEntity<?> getAll() {
-    List<FormJobResponseDTO> jobs = jobRepository.findAll().stream()
-            .map(job -> FormJobResponseDTO.builder()
-                    .id(job.getId())
-                    .title(job.getTitle())
-                    .description(job.getDescription())
-                    .salary(job.getSalary())
-                    .requirements(job.getRequirements())
-                    .desirable(job.getDesirable())
-                    .benefits(job.getBenefits())
-                    .workTime(job.getWorkTime())
-                    .companyName(job.getCompany() != null ? job.getCompany().getName() : "N/A")
-                    .locationName(job.getLocation() != null ? job.getLocation().getName() : "N/A")
-                    .build())
-            .collect(Collectors.toList());
+    
+    @GetMapping
+    public ResponseEntity<?> getAll() {
+        List<FormJobResponseDTO> jobs = jobRepository.findAll().stream()
+                .map(job -> FormJobResponseDTO.builder()
+                        .id(job.getId())
+                        .title(job.getTitle())
+                        .description(job.getDescription())
+                        .salary(job.getSalary())
+                        .requirements(job.getRequirements())
+                        .desirable(job.getDesirable())
+                        .benefits(job.getBenefits())
+                        .workTime(job.getWorkTime())
+                        .companyName(job.getCompany() != null ? job.getCompany().getName() : "N/A")
+                        .companyLogo(job.getCompany()!= null ? job.getCompany().getLogo() : "N/A")
+                        .locationName(job.getLocation() != null ? job.getLocation().getName() : "N/A")
+                        .build())
+                .collect(Collectors.toList());
 
-    return ResponseEntity.ok(jobs);
-}
-
-    @GetMapping("/{id}")
-public ResponseEntity<?> getById(@PathVariable String id) {
-    Optional<Job> jobOpt = jobRepository.findById(id);
-    if (jobOpt.isEmpty()) {
-        return ResponseEntity.status(404).body("Job not found");
+        return ResponseEntity.ok(jobs);
     }
 
-    Job job = jobOpt.get();
-
-    FormJobResponseDTO dto = FormJobResponseDTO.builder()
-            .id(job.getId())
-            .title(job.getTitle())
-            .description(job.getDescription())
-            .salary(job.getSalary())
-            .requirements(job.getRequirements())
-            .desirable(job.getDesirable())
-            .benefits(job.getBenefits())
-            .workTime(job.getWorkTime())
-            .companyName(job.getCompany() != null ? job.getCompany().getName() : null)
-            .locationName(job.getLocation() != null ? job.getLocation().getName() : null)
-            .build();
-
-    return ResponseEntity.ok(dto);
-}
-    // ✅ UPDATE JOB
-    @PutMapping("/{id}")
-    public ResponseEntity<?> update(@PathVariable String id, @RequestBody FormJob form) {
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getById(@PathVariable Long id) { // ĐÃ SỬA: BỎ **
         Optional<Job> jobOpt = jobRepository.findById(id);
         if (jobOpt.isEmpty()) {
             return ResponseEntity.status(404).body("Job not found");
@@ -135,18 +112,58 @@ public ResponseEntity<?> getById(@PathVariable String id) {
 
         Job job = jobOpt.get();
 
-        Optional<Location> locationOpt = locationRepository.findById(form.getLocationId());
+        FormJobResponseDTO dto = FormJobResponseDTO.builder()
+                .id(job.getId())
+                .title(job.getTitle())
+                .description(job.getDescription())
+                .salary(job.getSalary())
+                .requirements(job.getRequirements())
+                .desirable(job.getDesirable())
+                .benefits(job.getBenefits())
+                .workTime(job.getWorkTime())
+                .companyName(job.getCompany() != null ? job.getCompany().getName() : null)
+                .companyLogo(job.getCompany() != null ? job.getCompany().getLogo() : null)
+                .locationName(job.getLocation() != null ? job.getLocation().getName() : null)
+                .build();
+
+        return ResponseEntity.ok(dto);
+    }
+    
+    @PreAuthorize("hasAuthority('ROLE_COMPANY')")
+    @PutMapping("/{id}")
+    public ResponseEntity<?> update(@PathVariable Long id, @RequestBody FormJob form) { // ĐÃ SỬA: BỎ **
+        
+        Optional<Job> jobOpt = jobRepository.findById(id);
+        if (jobOpt.isEmpty()) {
+            return ResponseEntity.status(404).body("Job not found");
+        }
+
+        Job job = jobOpt.get();
+
+        
+        String locationId = form.getLocationId();
+        if (locationId == null || locationId.isEmpty()) {
+            return ResponseEntity.status(400).body("Location ID must be provided in the request body.");
+        }
+        Optional<Location> locationOpt = locationRepository.findById(locationId);
         if (locationOpt.isEmpty()) {
             return ResponseEntity.status(404).body("Location not found");
         }
 
-        Optional<Company> companyOpt = companyRepository.findById(form.getCompanyId());
+        
+        String companyId = form.getCompanyId();
+        if (companyId == null || companyId.isEmpty()) {
+            return ResponseEntity.status(400).body("Company ID must be provided in the request body.");
+        }
+        Optional<Company> companyOpt = companyRepository.findById(companyId);
         if (companyOpt.isEmpty()) {
             return ResponseEntity.status(404).body("Company not found");
         }
 
+        
         Location location = locationOpt.get();
         Company company = companyOpt.get();
+
 
         job.setTitle(form.getTitle());
         job.setDescription(form.getDescription());
@@ -162,6 +179,7 @@ public ResponseEntity<?> getById(@PathVariable String id) {
 
         jobRepository.save(job);
 
+        
         FormJobResponseDTO response = FormJobResponseDTO.builder()
                 .id(job.getId())
                 .title(job.getTitle())
@@ -172,15 +190,16 @@ public ResponseEntity<?> getById(@PathVariable String id) {
                 .benefits(job.getBenefits())
                 .workTime(job.getWorkTime())
                 .companyName(company.getName())
+                .companyLogo(company.getLogo())
                 .locationName(location.getName())
                 .build();
 
         return ResponseEntity.ok(response);
     }
-
-    // ✅ DELETE JOB
+    
+    @PreAuthorize("hasAuthority('ROLE_COMPANY')")
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> delete(@PathVariable String id) {
+    public ResponseEntity<?> delete(@PathVariable Long id) { // ĐÃ SỬA: BỎ **
         Optional<Job> jobOpt = jobRepository.findById(id);
         if (jobOpt.isEmpty()) {
             return ResponseEntity.status(404).body("Job not found");
@@ -190,29 +209,29 @@ public ResponseEntity<?> getById(@PathVariable String id) {
         return ResponseEntity.ok("Deleted Job successfully with id: " + id);
     }
 
-   @GetMapping("/featured")
-public ResponseEntity<?> getFeaturedJobs() {
-    List<FormJobResponseDTO> jobs = jobRepository.findAll().stream()
-            .sorted((a, b) -> Double.compare(
-                    b.getSalary() != null ? b.getSalary() : 0,
-                    a.getSalary() != null ? a.getSalary() : 0
-            ))
-            .limit(10)
-            .map(job -> FormJobResponseDTO.builder()
-                    .id(job.getId())
-                    .title(job.getTitle())
-                    .description(job.getDescription())
-                    .salary(job.getSalary())
-                    .requirements(job.getRequirements())
-                    .desirable(job.getDesirable())
-                    .benefits(job.getBenefits())
-                    .workTime(job.getWorkTime())
-                    .companyName(job.getCompany() != null ? job.getCompany().getName() : "N/A")
-                    .locationName(job.getLocation() != null ? job.getLocation().getName() : "N/A")
-                    .build())
-            .collect(Collectors.toList());
+    @GetMapping("/featured")
+    public ResponseEntity<?> getFeaturedJobs() {
+        List<FormJobResponseDTO> jobs = jobRepository.findAll().stream()
+                .sorted((a, b) -> Double.compare(
+                        b.getSalary() != null ? b.getSalary() : 0,
+                        a.getSalary() != null ? a.getSalary() : 0
+                ))
+                .limit(10)
+                .map(job -> FormJobResponseDTO.builder()
+                        .id(job.getId())
+                        .title(job.getTitle())
+                        .description(job.getDescription())
+                        .salary(job.getSalary())
+                        .requirements(job.getRequirements())
+                        .desirable(job.getDesirable())
+                        .benefits(job.getBenefits())
+                        .workTime(job.getWorkTime())
+                        .companyName(job.getCompany() != null ? job.getCompany().getName() : "N/A")
+                        .companyLogo(job.getCompany()!= null ? job.getCompany().getLogo() : "N/A")
+                        .locationName(job.getLocation() != null ? job.getLocation().getName() : "N/A")
+                        .build())
+                .collect(Collectors.toList());
 
-    return ResponseEntity.ok(jobs);
-}
-
+        return ResponseEntity.ok(jobs);
+    }
 }

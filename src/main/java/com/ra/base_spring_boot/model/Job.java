@@ -7,6 +7,7 @@ import java.util.Date;
 import java.util.List;
 
 @Entity
+@Table(name = "job")
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
@@ -14,7 +15,8 @@ import java.util.List;
 @Builder
 public class Job {
     @Id
-    private String id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY) 
+    private Long id;
 
     @ManyToOne
     @JoinColumn(name = "company_id")
@@ -33,6 +35,7 @@ public class Job {
     private String desirable;
     private String benefits;
      private String workTime;
+     
     @Temporal(TemporalType.DATE)
     private Date expire_at;
 
