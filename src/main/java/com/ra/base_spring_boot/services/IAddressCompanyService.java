@@ -8,6 +8,6 @@ import java.util.List;
 public interface IAddressCompanyService {
     List<AddressCompanyResponse> getByCompanyEmail(String email);
     AddressCompanyResponse createForCompany(String email, FormAddressCompany form);
-    AddressCompanyResponse updateForCompany(String email, String id, FormAddressCompany form);
-    void deleteForCompany(String email, String id);
+    AddressCompanyResponse updateForCompany(String email, Long id, FormAddressCompany form);
+    void deleteForCompany(String email, Long id);
 }

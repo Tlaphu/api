@@ -1,6 +1,7 @@
 package com.ra.base_spring_boot.dto.resp;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.ra.base_spring_boot.model.AccountCompany;
 import com.ra.base_spring_boot.model.Candidate;
 import com.ra.base_spring_boot.model.Company;
 import lombok.AllArgsConstructor;
@@ -21,7 +22,13 @@ public class JwtResponse {
     @JsonIgnoreProperties({"roles","password"})
     private Candidate candidate;
 
-    @JsonIgnoreProperties({"roles","password"})
-    private Company company;
+    @JsonIgnoreProperties({
+            "password",
+            "roles",
+            "company.accounts",
+            "company.jobs",
+            "company.addresses"
+    })
+    private AccountCompanyResponse accountCompany;
     private Set<String> roles;
 }

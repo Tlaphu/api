@@ -12,13 +12,16 @@ import lombok.*;
 @Builder
 public class AddressCompany {
     @Id
-    private String id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    private String address;
+    private String map_url;
+
     @ManyToOne
     @JoinColumn(name = "company_id")
     @JsonBackReference
     private Company company;
-    private String address;
-    private String map_url;
+
     @ManyToOne
     @JoinColumn(name = "location_id")
     private Location location;

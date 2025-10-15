@@ -16,12 +16,14 @@ import java.util.Set;
 @Builder
 public class AccountCompany {
     @Id
-    private String id;
-
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    private String fullName;
     private String email;
     private String password;
 
-    @OneToOne(mappedBy = "accountCompany", cascade = CascadeType.ALL)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "company_id")
     @JsonBackReference
     private Company company;
     @ManyToMany(fetch = FetchType.EAGER)

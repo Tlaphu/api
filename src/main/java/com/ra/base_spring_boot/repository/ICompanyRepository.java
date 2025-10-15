@@ -4,6 +4,10 @@ import com.ra.base_spring_boot.model.Company;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.domain.Pageable;
 import java.util.List;
-public interface ICompanyRepository extends JpaRepository<Company, String> {
+import java.util.Optional;
+
+public interface ICompanyRepository extends JpaRepository<Company, Long> {
      List<Company> findAllByOrderByFollowerDesc(Pageable pageable);
+    Optional<Company> findByEmail(String email);
+
 }

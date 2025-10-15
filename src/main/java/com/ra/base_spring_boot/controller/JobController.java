@@ -2,7 +2,7 @@ package com.ra.base_spring_boot.controller;
 
 import com.ra.base_spring_boot.model.*;
 import com.ra.base_spring_boot.repository.ICompanyRepository;
-import com.ra.base_spring_boot.repository.LocationRepository;
+import com.ra.base_spring_boot.repository.ILocationRepository;
 import com.ra.base_spring_boot.repository.JobRepository;
 import com.ra.base_spring_boot.dto.req.FormJob;
 import com.ra.base_spring_boot.dto.req.FormJobResponseDTO;
@@ -27,7 +27,7 @@ public class JobController {
     private ICompanyRepository companyRepository;
 
     @Autowired
-    private LocationRepository locationRepository;
+    private ILocationRepository locationRepository;
 
     @Autowired
     private ICompanyAuthService companyAuthService;
@@ -141,8 +141,8 @@ public class JobController {
         Job job = jobOpt.get();
 
         
-        String locationId = form.getLocationId();
-        if (locationId == null || locationId.isEmpty()) {
+        Long locationId = form.getLocationId();
+        if (locationId == null ) {
             return ResponseEntity.status(400).body("Location ID must be provided in the request body.");
         }
         Optional<Location> locationOpt = locationRepository.findById(locationId);
@@ -151,8 +151,8 @@ public class JobController {
         }
 
         
-        String companyId = form.getCompanyId();
-        if (companyId == null || companyId.isEmpty()) {
+        Long companyId = form.getCompanyId();
+        if (companyId == null ) {
             return ResponseEntity.status(400).body("Company ID must be provided in the request body.");
         }
         Optional<Company> companyOpt = companyRepository.findById(companyId);

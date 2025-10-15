@@ -38,7 +38,7 @@ public class AddressCompanyController {
 
     @PreAuthorize("hasAuthority('ROLE_COMPANY')")
     @PutMapping("/{id}")
-    public ResponseEntity<AddressCompanyResponse> update(@PathVariable String id,
+    public ResponseEntity<AddressCompanyResponse> update(@PathVariable Long id,
                                                          @RequestBody FormAddressCompany form,
                                                          Principal principal) {
         String email = principal.getName();
@@ -48,7 +48,7 @@ public class AddressCompanyController {
 
     @PreAuthorize("hasAuthority('ROLE_COMPANY')")
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable String id, Principal principal) {
+    public ResponseEntity<Void> delete(@PathVariable Long id, Principal principal) {
         String email = principal.getName();
         service.deleteForCompany(email, id);
         return ResponseEntity.noContent().build();

@@ -7,14 +7,12 @@ import com.ra.base_spring_boot.model.Company;
 import com.ra.base_spring_boot.model.Location;
 import com.ra.base_spring_boot.repository.*;
 import com.ra.base_spring_boot.repository.IAddressCompanyRepository;
-import com.ra.base_spring_boot.repository.IAddressCompanyRepository;
 import com.ra.base_spring_boot.services.IAddressCompanyService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -47,7 +45,6 @@ public class AddressCompanyServiceImpl implements IAddressCompanyService {
                 .orElseThrow(() -> new RuntimeException("Cannot found company location" + form.getLocationId()));
 
         AddressCompany address = AddressCompany.builder()
-                .id(UUID.randomUUID().toString())
                 .company(company)
                 .address(form.getAddress())
                 .map_url(form.getMapUrl())
@@ -59,7 +56,7 @@ public class AddressCompanyServiceImpl implements IAddressCompanyService {
     }
 
     @Override
-    public AddressCompanyResponse updateForCompany(String email, String id, FormAddressCompany form) {
+    public AddressCompanyResponse updateForCompany(String email, Long id, FormAddressCompany form) {
         var accountCompany = companyRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Company" + email + " not found"));
         Company company = accountCompany.getCompany();
@@ -83,7 +80,7 @@ public class AddressCompanyServiceImpl implements IAddressCompanyService {
     }
 
     @Override
-    public void deleteForCompany(String email, String id) {
+    public void deleteForCompany(String email, Long id) {
         var accountCompany = companyRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Company" + email + " not found"));
         Company company = accountCompany.getCompany();

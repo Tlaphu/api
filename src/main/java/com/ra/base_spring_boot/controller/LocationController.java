@@ -27,7 +27,7 @@ public class LocationController {
 
     // 🔹 GET BY ID
     @GetMapping("/{id}")
-    public Object getById(@PathVariable String id) {
+    public Object getById(@PathVariable Long id) {
         Location location = service.getById(id);
         if (location == null) {
             return ResponseEntity.status(404).body("Location not found with id: " + id);
@@ -50,7 +50,7 @@ public class LocationController {
 
     // 🔹 UPDATE
     @PutMapping("/{id}")
-    public Object update(@PathVariable String id, @RequestBody Location form) {
+    public Object update(@PathVariable Long id, @RequestBody Location form) {
         Location existed = service.getById(id);
         if (existed == null) {
             return ResponseEntity.status(404).body("Location not found with id: " + id);
@@ -62,7 +62,7 @@ public class LocationController {
 
     // 🔹 DELETE
     @DeleteMapping("/{id}")
-    public Object delete(@PathVariable String id) {
+    public Object delete(@PathVariable Long id) {
         Location existed = service.getById(id);
         if (existed == null) {
             return ResponseEntity.status(404).body("No location to delete with id: " + id);
