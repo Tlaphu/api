@@ -1,8 +1,9 @@
 package com.ra.base_spring_boot.dto.req;
 import java.util.Date;
 import lombok.Data;
-
+import lombok.Getter;
 @Data
+@Getter 
 public class FormJob {
                
     private String title;

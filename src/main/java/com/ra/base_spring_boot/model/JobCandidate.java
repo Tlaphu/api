@@ -13,7 +13,8 @@ import lombok.*;
 @Builder
 public class JobCandidate {
     @Id
-    private String id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY) 
+    private Long id;
 
     @ManyToOne
     @JoinColumn(name = "job_id")

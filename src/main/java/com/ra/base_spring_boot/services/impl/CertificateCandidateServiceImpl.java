@@ -14,9 +14,10 @@ import org.springframework.stereotype.Service;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
+
 @Service
 @RequiredArgsConstructor
-public class CertificateCandidateServiceImpl implements ICertificateCandidateService{
+public class CertificateCandidateServiceImpl implements ICertificateCandidateService {
     private final ICertificateCandidateRepository iCertificateCandidateRepository;
     private final JwtProvider jwtProvider;
 
@@ -50,9 +51,10 @@ public class CertificateCandidateServiceImpl implements ICertificateCandidateSer
     @Override
     public CertificateCandidateResponse updateCertificate(String id, FormCertificateCandidate req) {
         Candidate current = jwtProvider.getCurrentCandidate();
-        CertificateCandidate exp = iCertificateCandidateRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("certificate not found"));
-
+        // FIX: Convert String ID from controller to Long ID for repository
+        CertificateCandidate exp = iCertificateCandidateRepository.findById(Long.parseLong(id))
+                .orElseThrow(() -> new RuntimeException("Certificate not found"));
+                
         if (!exp.getCandidate().getId().equals(current.getId())) {
             throw new HttpAccessDenied("Access denied: You can only update your own certificate");
         }
@@ -70,8 +72,9 @@ public class CertificateCandidateServiceImpl implements ICertificateCandidateSer
     @Override
     public void deleteCertificate(String id) {
         Candidate current = jwtProvider.getCurrentCandidate();
-        CertificateCandidate exp = iCertificateCandidateRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("certificate not found"));
+        // FIX: Convert String ID from controller to Long ID for repository
+        CertificateCandidate exp = iCertificateCandidateRepository.findById(Long.parseLong(id))
+                .orElseThrow(() -> new RuntimeException("Certificate not found"));
 
         if (!exp.getCandidate().getId().equals(current.getId())) {
             throw new HttpAccessDenied("Access denied: You can only delete your own certificate");
@@ -87,7 +90,7 @@ public class CertificateCandidateServiceImpl implements ICertificateCandidateSer
                 .organization(cer.getOrganization())
                 .started_at(cer.getStarted_at())
                 .end_at(cer.getEnd_at())
-                .organization(cer.getOrganization())
+                // NOTE: Removed duplicate '.organization(cer.getOrganization())' line here.
                 .info(cer.getInfo())
                 .created_at(cer.getCreated_at())
                 .updated_at(cer.getUpdated_at())

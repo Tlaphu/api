@@ -13,7 +13,8 @@ import java.util.Date;
 @Builder
 public class ExperienceCandidate {
     @Id
-    private String id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
     @ManyToOne
     @JoinColumn(name = "candidate_id")
     @JsonBackReference
