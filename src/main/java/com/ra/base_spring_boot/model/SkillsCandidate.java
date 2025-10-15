@@ -12,7 +12,8 @@ import java.util.Date;
 @Builder
 public class SkillsCandidate {
     @Id
-    private String id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY) 
+    private Long id; 
     @ManyToOne
     @JoinColumn(name = "candidate_id")
     private Candidate candidate;

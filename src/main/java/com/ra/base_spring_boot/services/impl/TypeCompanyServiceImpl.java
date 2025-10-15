@@ -4,7 +4,7 @@ import com.ra.base_spring_boot.dto.req.FormTypeCompany;
 import com.ra.base_spring_boot.dto.resp.FormTypeCompanyResponse;
 import com.ra.base_spring_boot.model.TypeCompany;
 import com.ra.base_spring_boot.repository.ITypeCompanyRepository;
-import com.ra.base_spring_boot.services.ITypeCompanyService; // Import interface
+import com.ra.base_spring_boot.services.ITypeCompanyService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -15,7 +15,6 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-// Đã triển khai ITypeCompanyService
 public class TypeCompanyServiceImpl implements ITypeCompanyService {
 
     private final ITypeCompanyRepository repository;
@@ -23,14 +22,14 @@ public class TypeCompanyServiceImpl implements ITypeCompanyService {
     private FormTypeCompanyResponse mapToResponse(TypeCompany model) {
         if (model == null) return null;
         return FormTypeCompanyResponse.builder()
-                .id(model.getId())
+                .id(model.getId()) 
                 .name(model.getName())
                 .createdAt(model.getCreated_at())
                 .updatedAt(model.getUpdated_at())
                 .build();
     }
 
-    // --- Implementations ---
+  
 
     @Override
     public List<FormTypeCompanyResponse> getAll() {
@@ -40,20 +39,18 @@ public class TypeCompanyServiceImpl implements ITypeCompanyService {
     }
 
     @Override
-    public FormTypeCompanyResponse getById(String id) {
+    public FormTypeCompanyResponse getById(Long id) { 
         Optional<TypeCompany> typeCompany = repository.findById(id);
         return typeCompany.map(this::mapToResponse)
-                         .orElse(null);
+                             .orElse(null);
     }
 
     @Override
     public FormTypeCompanyResponse create(FormTypeCompany form, String creatorEmail) {
-        if (repository.existsById(form.getId())) {
-             throw new RuntimeException("TypeCompany ID đã tồn tại: " + form.getId());
-        }
+        
         
         TypeCompany newType = TypeCompany.builder()
-                .id(form.getId())
+                
                 .name(form.getName())
                 .created_at(new Date())
                 .updated_at(new Date())
@@ -64,7 +61,7 @@ public class TypeCompanyServiceImpl implements ITypeCompanyService {
     }
 
     @Override
-    public FormTypeCompanyResponse update(String id, FormTypeCompany form, String updaterEmail) {
+    public FormTypeCompanyResponse update(Long id, FormTypeCompany form, String updaterEmail) { 
         TypeCompany existingType = repository.findById(id)
                 .orElse(null);
         
@@ -80,7 +77,7 @@ public class TypeCompanyServiceImpl implements ITypeCompanyService {
     }
 
     @Override
-    public boolean delete(String id, String deleterEmail) {
+    public boolean delete(Long id, String deleterEmail) { 
         if (!repository.existsById(id)) {
             return false;
         }

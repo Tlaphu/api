@@ -2,7 +2,7 @@ package com.ra.base_spring_boot.controller;
 
 import com.ra.base_spring_boot.model.*;
 import com.ra.base_spring_boot.repository.ICompanyRepository;
-import com.ra.base_spring_boot.repository.LocationRepository;
+import com.ra.base_spring_boot.repository.ILocationRepository;
 import com.ra.base_spring_boot.repository.JobRepository;
 import com.ra.base_spring_boot.dto.req.FormJob;
 import com.ra.base_spring_boot.dto.req.FormJobResponseDTO;
@@ -27,7 +27,7 @@ public class JobController {
     private ICompanyRepository companyRepository;
 
     @Autowired
-    private LocationRepository locationRepository;
+    private ILocationRepository locationRepository;
 
     @Autowired
     private ICompanyAuthService companyAuthService;
@@ -35,12 +35,22 @@ public class JobController {
     @PreAuthorize("hasAuthority('ROLE_COMPANY')")
     @PostMapping
     public ResponseEntity<?> create(@RequestBody FormJob form) {
-        Optional<Location> locationOpt = locationRepository.findById(form.getLocationId());
+        
+      
+        Long locationId;
+        try {
+            locationId = Long.parseLong(form.getLocationId());
+        } catch (NumberFormatException e) {
+            return ResponseEntity.badRequest().body("Invalid Location ID format. Must be a number.");
+        }
+        Optional<Location> locationOpt = locationRepository.findById(locationId);
         if (locationOpt.isEmpty()) {
             return ResponseEntity.status(404).body("Location not found");
         }
 
-        Optional<Company> companyOpt = companyRepository.findById(form.getCompanyId());
+      
+        String companyId = form.getCompanyId();
+        Optional<Company> companyOpt = companyRepository.findById(companyId); 
         if (companyOpt.isEmpty()) {
             return ResponseEntity.status(404).body("Company not found");
         }
@@ -104,7 +114,7 @@ public class JobController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getById(@PathVariable Long id) { // ĐÃ SỬA: BỎ **
+    public ResponseEntity<?> getById(@PathVariable Long id) {
         Optional<Job> jobOpt = jobRepository.findById(id);
         if (jobOpt.isEmpty()) {
             return ResponseEntity.status(404).body("Job not found");
@@ -131,7 +141,7 @@ public class JobController {
     
     @PreAuthorize("hasAuthority('ROLE_COMPANY')")
     @PutMapping("/{id}")
-    public ResponseEntity<?> update(@PathVariable Long id, @RequestBody FormJob form) { // ĐÃ SỬA: BỎ **
+    public ResponseEntity<?> update(@PathVariable Long id, @RequestBody FormJob form) {
         
         Optional<Job> jobOpt = jobRepository.findById(id);
         if (jobOpt.isEmpty()) {
@@ -141,9 +151,16 @@ public class JobController {
         Job job = jobOpt.get();
 
         
-        String locationId = form.getLocationId();
-        if (locationId == null || locationId.isEmpty()) {
+        String locationIdStr = form.getLocationId();
+        if (locationIdStr == null || locationIdStr.isEmpty()) {
             return ResponseEntity.status(400).body("Location ID must be provided in the request body.");
+        }
+ 
+        Long locationId;
+        try {
+            locationId = Long.parseLong(locationIdStr);
+        } catch (NumberFormatException e) {
+            return ResponseEntity.badRequest().body("Invalid Location ID format. Must be a number.");
         }
         Optional<Location> locationOpt = locationRepository.findById(locationId);
         if (locationOpt.isEmpty()) {
@@ -151,10 +168,12 @@ public class JobController {
         }
 
         
-        String companyId = form.getCompanyId();
-        if (companyId == null || companyId.isEmpty()) {
+        String companyIdStr = form.getCompanyId();
+        if (companyIdStr == null || companyIdStr.isEmpty()) {
             return ResponseEntity.status(400).body("Company ID must be provided in the request body.");
         }
+ 
+        String companyId = companyIdStr;
         Optional<Company> companyOpt = companyRepository.findById(companyId);
         if (companyOpt.isEmpty()) {
             return ResponseEntity.status(404).body("Company not found");
@@ -199,7 +218,7 @@ public class JobController {
     
     @PreAuthorize("hasAuthority('ROLE_COMPANY')")
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> delete(@PathVariable Long id) { // ĐÃ SỬA: BỎ **
+    public ResponseEntity<?> delete(@PathVariable Long id) {
         Optional<Job> jobOpt = jobRepository.findById(id);
         if (jobOpt.isEmpty()) {
             return ResponseEntity.status(404).body("Job not found");

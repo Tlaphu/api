@@ -20,34 +20,29 @@ public class LevelJobController {
     @GetMapping
     public List<LevelJob> getAll() { return service.getAll(); }
 
-    @GetMapping("/{id}")
-    public LevelJob getById(@PathVariable String id) { return service.getById(id); }
-
-    @PostMapping
-    public Object create(@RequestBody LevelJob lj) {
-    LevelJob existed = service.getById(lj.getId());
-    if (existed != null) {
-        return ResponseEntity
-            .status(409)
-            .body("LevelJob has existed with id: " + lj.getId());
+     @GetMapping("/{id}")
+    public LevelJob getById(@PathVariable Long id) { 
+        return service.getById(id); 
     }
-    return service.save(lj);
+   @PostMapping
+    public LevelJob create(@RequestBody LevelJob lj) {
+       
+        return service.save(lj);
     }
-    @PutMapping("/{id}")
-    public LevelJob update(@PathVariable String id, @RequestBody LevelJob lj) {
+ @PutMapping("/{id}")
+    public LevelJob update(@PathVariable Long id, @RequestBody LevelJob lj) { 
         lj.setId(id);
         return service.save(lj);
     }
-
    @DeleteMapping("/{id}")
-public Object delete(@PathVariable String id) {
-    LevelJob existed = service.getById(id);
-    if (existed == null) {
-        return ResponseEntity
-            .status(404)
-            .body("No LevelJob exists to delete with id: " + id);
+    public Object delete(@PathVariable Long id) { 
+        LevelJob existed = service.getById(id);
+        if (existed == null) {
+            return ResponseEntity
+                .status(404)
+                .body("No LevelJob exists to delete with id: " + id);
+        }
+        service.delete(id);
+        return ResponseEntity.ok("Successfully deleted LevelJob with id: " + id);
     }
-    service.delete(id);
-    return ResponseEntity.ok("Successfully deleted LevelJob with id: " + id);
-}
 }

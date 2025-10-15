@@ -9,11 +9,11 @@ public interface ITypeCompanyService {
     
     List<FormTypeCompanyResponse> getAll();
     
-    FormTypeCompanyResponse getById(String id);
+    FormTypeCompanyResponse getById(Long id); 
     
     FormTypeCompanyResponse create(FormTypeCompany form, String creatorEmail);
     
-    FormTypeCompanyResponse update(String id, FormTypeCompany form, String updaterEmail);
+    FormTypeCompanyResponse update(Long id, FormTypeCompany form, String updaterEmail); 
     
-    boolean delete(String id, String deleterEmail);
+    boolean delete(Long id, String deleterEmail); 
 }

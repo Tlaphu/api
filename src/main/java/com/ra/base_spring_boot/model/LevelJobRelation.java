@@ -15,7 +15,8 @@ import lombok.*;
 @Table(name = "levels_jobs")
 public class LevelJobRelation {
     @Id
-    private String id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY) 
+    private Long id;
 @ManyToOne(fetch = FetchType.EAGER) 
 @JoinColumn(name = "job_id", referencedColumnName = "id")
 

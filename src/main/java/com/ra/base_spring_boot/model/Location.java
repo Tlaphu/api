@@ -12,7 +12,8 @@ import java.util.Date;
 @Builder
 public class Location {
     @Id
-    private String id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY) 
+    private Long id;
     private String name;
     @Temporal(TemporalType.DATE)
     private Date created_at;

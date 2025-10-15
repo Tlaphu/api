@@ -19,15 +19,14 @@ public class LocationController {
         this.service = service;
     }
 
-    // 🔹 GET ALL
     @GetMapping
     public List<Location> getAll() {
         return service.getAll();
     }
 
-    // 🔹 GET BY ID
+
     @GetMapping("/{id}")
-    public Object getById(@PathVariable String id) {
+    public Object getById(@PathVariable long id) {
         Location location = service.getById(id);
         if (location == null) {
             return ResponseEntity.status(404).body("Location not found with id: " + id);
@@ -35,22 +34,21 @@ public class LocationController {
         return ResponseEntity.ok(location);
     }
 
-    // 🔹 CREATE — tự nhập id
+  
     @PostMapping
     public Object create(@RequestBody Location location) {
-        // kiểm tra nếu đã tồn tại id
-        if (service.getById(location.getId()) != null) {
-            return ResponseEntity.status(409).body("Location already exists with id: " + location.getId());
-        }
-
-        location.setCreated_at(new Date());
-        location.setUpdated_at(new Date());
+        
+        
+     
+        Date now = new Date();
+        location.setCreated_at(now);
+        location.setUpdated_at(now);
+        
         return ResponseEntity.status(201).body(service.save(location));
     }
 
-    // 🔹 UPDATE
     @PutMapping("/{id}")
-    public Object update(@PathVariable String id, @RequestBody Location form) {
+    public Object update(@PathVariable long id, @RequestBody Location form) {
         Location existed = service.getById(id);
         if (existed == null) {
             return ResponseEntity.status(404).body("Location not found with id: " + id);
@@ -60,9 +58,9 @@ public class LocationController {
         return ResponseEntity.ok(service.save(existed));
     }
 
-    // 🔹 DELETE
+   
     @DeleteMapping("/{id}")
-    public Object delete(@PathVariable String id) {
+    public Object delete(@PathVariable long id) {
         Location existed = service.getById(id);
         if (existed == null) {
             return ResponseEntity.status(404).body("No location to delete with id: " + id);

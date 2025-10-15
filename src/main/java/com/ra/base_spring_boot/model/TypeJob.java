@@ -14,7 +14,8 @@ import java.util.List;
 @Builder
 public class TypeJob {
     @Id
-    private String id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY) 
+    private Long id;
 
     private String name;
 

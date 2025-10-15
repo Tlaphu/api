@@ -29,7 +29,7 @@ public class TypeJobRelationService {
         return repository.findAll();
     }
 
-    public TypeJobRelation getById(String id) {
+    public TypeJobRelation getById(long id) {
         return repository.findById(id).orElse(null);
     }
 
@@ -48,7 +48,7 @@ public class TypeJobRelationService {
         return repository.save(relation);
     }
 
-    public void delete(String id) {
+    public void delete(long id) {
         repository.deleteById(id);
     }
 }

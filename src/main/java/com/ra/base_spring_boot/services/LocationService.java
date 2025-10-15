@@ -1,7 +1,7 @@
 package com.ra.base_spring_boot.services;
 
 import com.ra.base_spring_boot.model.Location;
-import com.ra.base_spring_boot.repository.LocationRepository;
+import com.ra.base_spring_boot.repository.ILocationRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -9,9 +9,9 @@ import java.util.List;
 @Service
 public class LocationService {
 
-    private final LocationRepository repo;
+    private final ILocationRepository repo;
 
-    public LocationService(LocationRepository repo) {
+    public LocationService(ILocationRepository repo) {
         this.repo = repo;
     }
 
@@ -19,7 +19,7 @@ public class LocationService {
         return repo.findAll();
     }
 
-    public Location getById(String id) {
+    public Location getById(long id) {
         return repo.findById(id).orElse(null);
     }
 
@@ -27,7 +27,7 @@ public class LocationService {
         return repo.save(location);
     }
 
-    public void delete(String id) {
+    public void delete(long id) {
         repo.deleteById(id);
     }
 }
