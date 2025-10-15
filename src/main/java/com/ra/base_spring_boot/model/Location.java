@@ -12,7 +12,11 @@ import java.util.Date;
 @Builder
 public class Location {
     @Id
+<<<<<<< HEAD
     @GeneratedValue(strategy = GenerationType.IDENTITY) 
+=======
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+>>>>>>> 215340914a830849723a589eea450b87f01dc786
     private Long id;
     private String name;
     @Temporal(TemporalType.DATE)

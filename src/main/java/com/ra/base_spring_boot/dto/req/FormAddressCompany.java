@@ -13,5 +13,5 @@ public class FormAddressCompany {
     private String mapUrl;
 
     @NotNull(message = "Location ID not null")
-    private String locationId;
+    private Long locationId;
 }

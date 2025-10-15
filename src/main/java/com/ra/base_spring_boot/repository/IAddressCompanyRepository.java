@@ -6,6 +6,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
 
-public interface IAddressCompanyRepository extends JpaRepository<AddressCompany, String> {
+public interface IAddressCompanyRepository extends JpaRepository<AddressCompany, Long> {
     List<AddressCompany> findByCompany(Company company);
+    boolean existsByCompany(Company company);
+
 }

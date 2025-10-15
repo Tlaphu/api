@@ -1,21 +1,20 @@
 package com.ra.base_spring_boot.services.impl;
 
 import com.ra.base_spring_boot.dto.req.*;
-import com.ra.base_spring_boot.dto.resp.JwtResponse;
+import com.ra.base_spring_boot.dto.resp.*;
 import com.ra.base_spring_boot.exception.HttpBadRequest;
 import com.ra.base_spring_boot.model.*;
 import com.ra.base_spring_boot.model.constants.RoleName;
-import com.ra.base_spring_boot.repository.IAccountCompanyRepository;
-import com.ra.base_spring_boot.repository.IAddressCompanyRepository;
-import com.ra.base_spring_boot.repository.ICompanyRepository;
-import com.ra.base_spring_boot.repository.ITypeCompanyRepository;
+import com.ra.base_spring_boot.repository.*;
 import com.ra.base_spring_boot.security.jwt.JwtProvider;
 import com.ra.base_spring_boot.security.principle.MyCompanyDetails;
 import com.ra.base_spring_boot.services.ICompanyAuthService;
 import com.ra.base_spring_boot.services.IRoleService;
+import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -23,7 +22,7 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.data.domain.Pageable;    
+
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -42,7 +41,9 @@ public class CompanyAuthServiceImpl implements ICompanyAuthService {
 
     public CompanyAuthServiceImpl(
             IRoleService roleService,
-            IAccountCompanyRepository accountCompanyRepository, ICompanyRepository companyRepository, IAddressCompanyRepository addressCompanyRepository,
+            IAccountCompanyRepository accountCompanyRepository,
+            ICompanyRepository companyRepository,
+            IAddressCompanyRepository addressCompanyRepository,
             PasswordEncoder passwordEncoder,
             ITypeCompanyRepository typeCompanyRepository,
             @Qualifier("companyAuthManager") AuthenticationManager companyAuthManager,
@@ -53,8 +54,8 @@ public class CompanyAuthServiceImpl implements ICompanyAuthService {
         this.companyRepository = companyRepository;
         this.addressCompanyRepository = addressCompanyRepository;
         this.passwordEncoder = passwordEncoder;
-        this.companyAuthManager = companyAuthManager;
         this.typeCompanyRepository = typeCompanyRepository;
+        this.companyAuthManager = companyAuthManager;
         this.jwtProvider = jwtProvider;
     }
 
@@ -68,57 +69,42 @@ public class CompanyAuthServiceImpl implements ICompanyAuthService {
             throw new HttpBadRequest("Passwords do not match");
         }
 
+
         Set<Role> roles = new HashSet<>();
         roles.add(roleService.findByRoleName(RoleName.ROLE_COMPANY));
 
+        Optional<Company> existingCompanyOpt = companyRepository.findByEmail(form.getCompanyEmail());
+        Company company;
+
+        if (existingCompanyOpt.isPresent()) {
+            company = existingCompanyOpt.get();
+        } else {
+
+            company = Company.builder()
+                    .name(form.getFullName())
+                    .email(form.getCompanyEmail())
+                    .phone(form.getPhone())
+                    .created_at(new Date())
+                    .updated_at(new Date())
+                    .build();
+            companyRepository.save(company);
+        }
 
         AccountCompany accountCompany = AccountCompany.builder()
-                .id(UUID.randomUUID().toString())
                 .email(form.getEmail())
                 .password(passwordEncoder.encode(form.getPassword()))
                 .roles(roles)
+                .company(company)
                 .build();
-
-        TypeCompany typeCompany = null;
-        if (form.getTypeCompanyId() != null) {
-            typeCompany = typeCompanyRepository.findById(form.getTypeCompanyId())
-                    .orElseThrow(() -> new HttpBadRequest("Invalid typeCompanyId"));
-        }
-        Company company = Company.builder()
-                .id(UUID.randomUUID().toString())
-                .name(form.getName())
-                .phone(form.getPhone())
-                .logo(form.getLogo())
-                .website(form.getWebsite())
-                .link_fb(form.getLinkFb())
-                .link_linkedin(form.getLinkLinkedin())
-                .description(form.getDescription())
-                .size(form.getSize())
-                .follower(form.getFollower())
-                .typeCompany(typeCompany)
-                .accountCompany(accountCompany)
-                .created_at(new Date())
-                .updated_at(new Date())
-                .build();
-
-        accountCompany.setCompany(company);
 
         accountCompanyRepository.save(accountCompany);
 
-        if (form.getAddress() != null) {
-            FormAddressCompany addr = form.getAddress();
-
-            AddressCompany addressCompany = AddressCompany.builder()
-                    .id(UUID.randomUUID().toString())
-                    .company(company)
-                    .address(addr.getAddress())
-                    .map_url(addr.getMapUrl())
-                    .build();
-
-            addressCompanyRepository.save(addressCompany);
-        }
+        AddressCompany address = AddressCompany.builder()
+                .company(company)
+                .address(form.getAddress())
+                .build();
+        addressCompanyRepository.save(address);
     }
-
 
 
     @Override
@@ -134,24 +120,25 @@ public class CompanyAuthServiceImpl implements ICompanyAuthService {
 
         MyCompanyDetails companyDetails = (MyCompanyDetails) authentication.getPrincipal();
         AccountCompany accountCompany = companyDetails.getAccountCompany();
+        Company company = accountCompany.getCompany();
 
         Set<String> roles = companyDetails.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.toSet());
 
-        Company company = accountCompany.getCompany();
-
         return JwtResponse.builder()
                 .accessToken(jwtProvider.generateCompanyToken(accountCompany, roles))
-                .company(company)
+                .accountCompany(toAccountResponse(accountCompany))
                 .roles(roles)
                 .build();
     }
+
 
     @Override
     public void logout(String token) {
         System.out.println("Logout token: " + token);
     }
+
 
     @Override
     public String forgotPassword(FormForgotPassword form) {
@@ -164,9 +151,10 @@ public class CompanyAuthServiceImpl implements ICompanyAuthService {
         return resetToken;
     }
 
+
     @Override
     public void changePassword(FormChangePassword form) {
-        AccountCompany accountCompany = jwtProvider.getCurrentCompany();
+        AccountCompany accountCompany = jwtProvider.getCurrentAccountCompany();
         if (accountCompany == null) {
             throw new HttpBadRequest("Unauthorized: Company not found");
         }
@@ -179,19 +167,130 @@ public class CompanyAuthServiceImpl implements ICompanyAuthService {
         accountCompanyRepository.save(accountCompany);
     }
 
+
     @Override
     public void updateProfile(FormUpdateCompany form) {
         String email = jwtProvider.getCompanyUsername();
         AccountCompany accountCompany = accountCompanyRepository.findByEmail(email)
                 .orElseThrow(() -> new HttpBadRequest("Company not found"));
 
-        accountCompanyRepository.save(accountCompany);
+        Company company = accountCompany.getCompany();
+        company.setName(form.getName());
+        company.setPhone(form.getPhone());
+        company.setWebsite(form.getWebsite());
+        company.setLogo(form.getLogo());
+        company.setLink_fb(form.getLinkFb());
+        company.setLink_linkedin(form.getLinkLinkedin());
+        company.setDescription(form.getDescription());
+        company.setUpdated_at(new Date());
+
+        companyRepository.save(company);
     }
+
+
     @Override
-    public List<Company> findTop20ByFollower() {
-       
-        Pageable topTwenty = PageRequest.of(0, 20); 
-        
-        return companyRepository.findAllByOrderByFollowerDesc(topTwenty);
+    public List<CompanyResponse> findTop20ByFollower() {
+        Pageable topTwenty = PageRequest.of(0, 20);
+        List<Company> companies = companyRepository.findAllByOrderByFollowerDesc(topTwenty);
+
+        return companies.stream()
+                .map(this::toCompanyResponse)
+                .collect(Collectors.toList());
     }
+
+
+
+    @Override
+    public List<CompanyResponse> findAll() {
+        return companyRepository.findAll()
+                .stream().map(this::toResponse)
+                .collect(Collectors.toList());
+    }
+
+
+    @Override
+    public CompanyResponse findById(Long id) {
+        Company company = companyRepository.findById(id)
+                .orElseThrow(() -> new HttpBadRequest("Company not found"));
+        return toResponse(company);
+    }
+
+
+    private CompanyResponse toResponse(Company company) {
+        List<AddressCompanyResponse> addresses = addressCompanyRepository.findByCompany(company)
+                .stream()
+                .map(addr -> AddressCompanyResponse.builder()
+                        .id(addr.getId())
+                        .address(addr.getAddress())
+                        .mapUrl(addr.getMap_url())
+                        .locationName(addr.getLocation() != null ? addr.getLocation().getName() : null)
+                        .build())
+                .collect(Collectors.toList());
+
+        return CompanyResponse.builder()
+                .id(company.getId())
+                .name(company.getName())
+                .email(company.getEmail())
+                .phone(company.getPhone())
+                .logo(company.getLogo())
+                .website(company.getWebsite())
+                .link_fb(company.getLink_fb())
+                .link_linkedin(company.getLink_linkedin())
+                .follower(company.getFollower())
+                .size(company.getSize())
+                .description(company.getDescription())
+                .created_at(company.getCreated_at())
+                .updated_at(company.getUpdated_at())
+                .typeCompanyName(company.getTypeCompany() != null ? company.getTypeCompany().getName() : null)
+                .addresses(addresses)
+                .build();
+    }
+
+    private AccountCompanyResponse toAccountResponse(AccountCompany accountCompany) {
+        Company company = accountCompany.getCompany();
+
+        return AccountCompanyResponse.builder()
+                .id(accountCompany.getId())
+                .email(accountCompany.getEmail())
+                .fullName(accountCompany.getFullName())
+                .phone(company.getPhone())
+                .company(CompanyResponse.builder()
+                        .id(company.getId())
+                        .name(company.getName())
+                        .email(company.getEmail())
+                        .phone(company.getPhone())
+                        .logo(company.getLogo())
+                        .website(company.getWebsite())
+                        .link_fb(company.getLink_fb())
+                        .link_linkedin(company.getLink_linkedin())
+                        .follower(company.getFollower())
+                        .size(company.getSize())
+                        .description(company.getDescription())
+                        .created_at(company.getCreated_at())
+                        .updated_at(company.getUpdated_at())
+                        .typeCompanyName(company.getTypeCompany() != null ? company.getTypeCompany().getName() : null)
+                        .build())
+                .build();
+    }
+    private CompanyResponse toCompanyResponse(Company company) {
+        return CompanyResponse.builder()
+                .id(company.getId())
+                .name(company.getName())
+                .email(company.getEmail())
+                .phone(company.getPhone())
+                .logo(company.getLogo())
+                .website(company.getWebsite())
+                .link_fb(company.getLink_fb())
+                .link_linkedin(company.getLink_linkedin())
+                .follower(company.getFollower())
+                .size(company.getSize())
+                .description(company.getDescription())
+                .created_at(company.getCreated_at())
+                .updated_at(company.getUpdated_at())
+                .typeCompanyName(
+                        company.getTypeCompany() != null ? company.getTypeCompany().getName() : null
+                )
+                .build();
+    }
+
 }

@@ -151,8 +151,13 @@ public class JobController {
         Job job = jobOpt.get();
 
         
+<<<<<<< HEAD
         String locationIdStr = form.getLocationId();
         if (locationIdStr == null || locationIdStr.isEmpty()) {
+=======
+        Long locationId = form.getLocationId();
+        if (locationId == null ) {
+>>>>>>> 215340914a830849723a589eea450b87f01dc786
             return ResponseEntity.status(400).body("Location ID must be provided in the request body.");
         }
  
@@ -168,8 +173,13 @@ public class JobController {
         }
 
         
+<<<<<<< HEAD
         String companyIdStr = form.getCompanyId();
         if (companyIdStr == null || companyIdStr.isEmpty()) {
+=======
+        Long companyId = form.getCompanyId();
+        if (companyId == null ) {
+>>>>>>> 215340914a830849723a589eea450b87f01dc786
             return ResponseEntity.status(400).body("Company ID must be provided in the request body.");
         }
  

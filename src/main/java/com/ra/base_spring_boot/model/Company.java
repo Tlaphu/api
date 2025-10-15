@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -15,18 +17,14 @@ import java.util.List;
 @Builder
 public class Company {
     @Id
-    private String id;
-
-    @OneToOne
-    @JoinColumn(name = "account_company_id")
-    @JsonManagedReference
-    private AccountCompany accountCompany;
-
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    private String name;
+    private String email;
     @ManyToOne
     @JoinColumn(name = "typeCompany_id")
     private TypeCompany typeCompany;
     private String phone;
-    private String name;
     private String logo;
     private String website;
     private String link_fb;
@@ -39,12 +37,18 @@ public class Company {
     @Temporal(TemporalType.DATE)
     private Date updated_at;
 
-    @OneToMany(mappedBy = "company")
-    @JsonManagedReference
-    private List<AddressCompany> addresses;
+    @OneToMany(mappedBy = "company", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @Builder.Default
+    @JsonIgnore
+    private List<AccountCompany> accounts = new ArrayList<>();
 
-   @OneToMany(mappedBy = "company")
-@JsonIgnore
-private List<Job> jobs;
+    @OneToMany(mappedBy = "company", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @Builder.Default
+    @JsonIgnore
+    private List<AddressCompany> addresses = new ArrayList<>();
 
+    @OneToMany(mappedBy = "company", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @Builder.Default
+    @JsonIgnore
+    private List<Job> jobs = new ArrayList<>();
 }

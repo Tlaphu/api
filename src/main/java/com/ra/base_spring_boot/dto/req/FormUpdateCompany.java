@@ -10,7 +10,6 @@ import lombok.NoArgsConstructor;
 @Data
 @Builder
 public class FormUpdateCompany {
-    private String email;
     private String name;
     private String logo;
     private String phone;

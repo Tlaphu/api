@@ -1,125 +1,125 @@
-package com.ra.base_spring_boot.security.jwt;
+    package com.ra.base_spring_boot.security.jwt;
 
-import com.ra.base_spring_boot.model.Candidate;
-import com.ra.base_spring_boot.model.AccountCompany;
-import com.ra.base_spring_boot.security.principle.MyCompanyDetails;
-import com.ra.base_spring_boot.security.principle.MyUserDetails;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.io.Decoders;
-import io.jsonwebtoken.security.Keys;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.stereotype.Component;
+    import com.ra.base_spring_boot.model.Candidate;
+    import com.ra.base_spring_boot.model.AccountCompany;
+    import com.ra.base_spring_boot.security.principle.MyCompanyDetails;
+    import com.ra.base_spring_boot.security.principle.MyUserDetails;
+    import io.jsonwebtoken.Claims;
+    import io.jsonwebtoken.Jwts;
+    import io.jsonwebtoken.SignatureAlgorithm;
+    import io.jsonwebtoken.io.Decoders;
+    import io.jsonwebtoken.security.Keys;
+    import org.springframework.beans.factory.annotation.Value;
+    import org.springframework.security.core.Authentication;
+    import org.springframework.security.core.context.SecurityContextHolder;
+    import org.springframework.stereotype.Component;
 
-import java.security.Key;
-import java.util.*;
+    import java.security.Key;
+    import java.util.*;
 
-@Component
-public class JwtProvider {
-    @Value("${jwt.secret.key}")
-    private String SECRET_KEY;
+    @Component
+    public class JwtProvider {
+        @Value("${jwt.secret.key}")
+        private String SECRET_KEY;
 
-    @Value("${jwt.expired.access}")
-    private Long EXPIRED_ACCESS;
+        @Value("${jwt.expired.access}")
+        private Long EXPIRED_ACCESS;
 
-    public String extractEmail(String token) {
-        return extractClaim(token, Claims::getSubject);
-    }
-
-    public Date extractExpiration(String token) {
-        return extractClaim(token, Claims::getExpiration);
-    }
-
-    public <T> T extractClaim(String token, java.util.function.Function<Claims, T> claimsResolver) {
-        final Claims claims = extractAllClaims(token);
-        return claimsResolver.apply(claims);
-    }
-
-    private Claims extractAllClaims(String token) {
-        return Jwts
-                .parserBuilder()
-                .setSigningKey(getSignKey())
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
-    }
-
-    private Boolean isTokenExpired(String token) {
-        return extractExpiration(token).before(new Date());
-    }
-
-    // ===== Candidate =====
-    public Boolean validateCandidateToken(String token, Candidate candidate) {
-        final String email = extractEmail(token);
-        return (email.equals(candidate.getEmail()) && !isTokenExpired(token));
-    }
-
-    public String generateCandidateToken(Candidate candidate, Set<String> roles) {
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("roles", roles);
-        claims.put("type", "candidate");
-        return createToken(claims, candidate.getEmail());
-    }
-
-    // ===== Company =====
-    public Boolean validateCompanyToken(String token, AccountCompany accountCompany) {
-        final String email = extractEmail(token);
-        return (email.equals(accountCompany.getEmail()) && !isTokenExpired(token));
-    }
-
-    public String generateCompanyToken(AccountCompany accountCompany, Set<String> roles) {
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("roles", roles);
-        claims.put("type", "company");
-        return createToken(claims, accountCompany.getEmail());
-    }
-
-    private String createToken(Map<String, Object> claims, String subject) {
-        return Jwts.builder()
-                .setClaims(claims)
-                .setSubject(subject) // subject = email
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + EXPIRED_ACCESS))
-                .signWith(getSignKey(), SignatureAlgorithm.HS256)
-                .compact();
-    }
-
-    private Key getSignKey() {
-        return Keys.hmacShaKeyFor(Decoders.BASE64.decode(SECRET_KEY));
-    }
-
-
-
-    public Candidate getCurrentCandidate() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null && authentication.isAuthenticated()
-                && authentication.getPrincipal() instanceof com.ra.base_spring_boot.security.principle.MyUserDetails userDetails) {
-            return userDetails.getCandidate();
+        public String extractEmail(String token) {
+            return extractClaim(token, Claims::getSubject);
         }
-        return null;
-    }
 
-    public AccountCompany getCurrentCompany() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null && authentication.isAuthenticated()
-                && authentication.getPrincipal() instanceof com.ra.base_spring_boot.security.principle.MyCompanyDetails companyDetails) {
-            return companyDetails.getAccountCompany();
+        public Date extractExpiration(String token) {
+            return extractClaim(token, Claims::getExpiration);
         }
-        return null;
+
+        public <T> T extractClaim(String token, java.util.function.Function<Claims, T> claimsResolver) {
+            final Claims claims = extractAllClaims(token);
+            return claimsResolver.apply(claims);
+        }
+
+        private Claims extractAllClaims(String token) {
+            return Jwts
+                    .parserBuilder()
+                    .setSigningKey(getSignKey())
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
+        }
+
+        private Boolean isTokenExpired(String token) {
+            return extractExpiration(token).before(new Date());
+        }
+
+        // ===== Candidate =====
+        public Boolean validateCandidateToken(String token, Candidate candidate) {
+            final String email = extractEmail(token);
+            return (email.equals(candidate.getEmail()) && !isTokenExpired(token));
+        }
+
+        public String generateCandidateToken(Candidate candidate, Set<String> roles) {
+            Map<String, Object> claims = new HashMap<>();
+            claims.put("roles", roles);
+            claims.put("type", "candidate");
+            return createToken(claims, candidate.getEmail());
+        }
+
+        // ===== Company =====
+        public Boolean validateCompanyToken(String token, AccountCompany accountCompany) {
+            final String email = extractEmail(token);
+            return (email.equals(accountCompany.getEmail()) && !isTokenExpired(token));
+        }
+
+        public String generateCompanyToken(AccountCompany accountCompany, Set<String> roles) {
+            Map<String, Object> claims = new HashMap<>();
+            claims.put("roles", roles);
+            claims.put("type", "company");
+            return createToken(claims, accountCompany.getEmail());
+        }
+
+        private String createToken(Map<String, Object> claims, String subject) {
+            return Jwts.builder()
+                    .setClaims(claims)
+                    .setSubject(subject) // subject = email
+                    .setIssuedAt(new Date(System.currentTimeMillis()))
+                    .setExpiration(new Date(System.currentTimeMillis() + EXPIRED_ACCESS))
+                    .signWith(getSignKey(), SignatureAlgorithm.HS256)
+                    .compact();
+        }
+
+        private Key getSignKey() {
+            return Keys.hmacShaKeyFor(Decoders.BASE64.decode(SECRET_KEY));
+        }
+
+
+
+        public Candidate getCurrentCandidate() {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication != null && authentication.isAuthenticated()
+                    && authentication.getPrincipal() instanceof com.ra.base_spring_boot.security.principle.MyUserDetails userDetails) {
+                return userDetails.getCandidate();
+            }
+            return null;
+        }
+
+        public AccountCompany getCurrentAccountCompany() {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication != null && authentication.isAuthenticated()
+                    && authentication.getPrincipal() instanceof com.ra.base_spring_boot.security.principle.MyCompanyDetails companyDetails) {
+                return companyDetails.getAccountCompany();
+            }
+            return null;
+        }
+
+
+        public String getCandidateUsername() {
+            Candidate candidate = getCurrentCandidate();
+            return candidate != null ? candidate.getEmail() : null;
+        }
+
+        public String getCompanyUsername() {
+            AccountCompany company = getCurrentAccountCompany();
+            return company != null ? company.getEmail() : null;
+        }
+
     }
-
-
-    public String getCandidateUsername() {
-        Candidate candidate = getCurrentCandidate();
-        return candidate != null ? candidate.getEmail() : null;
-    }
-
-    public String getCompanyUsername() {
-        AccountCompany company = getCurrentCompany();
-        return company != null ? company.getEmail() : null;
-    }
-
-}
