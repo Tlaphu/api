@@ -24,8 +24,8 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class JwtTokenFilter extends OncePerRequestFilter {
 
-    private final MyUserDetailsService userDetailsService;       // Candidate
-    private final MyCompanyDetailsService companyDetailsService; // Company
+    private final MyUserDetailsService userDetailsService; 
+    private final MyCompanyDetailsService companyDetailsService; 
     private final JwtProvider jwtProvider;
 
     @Override
@@ -33,13 +33,21 @@ public class JwtTokenFilter extends OncePerRequestFilter {
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
         String path = request.getServletPath();
-        if (path.startsWith("/api/v1/auth/") ||
-                path.startsWith("/swagger") ||
-                path.startsWith("/v3/api-docs") ||
-                path.startsWith("/actuator")) {
+        String method = request.getMethod();
+
+        boolean isPublicJobGet = method.equalsIgnoreCase("GET") && path.startsWith("/api/job");
+        
+
+        if (isPublicJobGet ||
+            path.startsWith("/api/v1/auth/") ||
+            path.startsWith("/swagger") ||
+            path.startsWith("/v3/api-docs") ||
+            path.startsWith("/actuator")) {
+            
             filterChain.doFilter(request, response);
             return;
         }
+
         try {
             String token = getTokenFromRequest(request);
             if (token != null && SecurityContextHolder.getContext().getAuthentication() == null) {
@@ -66,6 +74,7 @@ public class JwtTokenFilter extends OncePerRequestFilter {
                 }
             }
         } catch (Exception e) {
+            
             log.error("JWT Authentication error: {}", e.getMessage());
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             return;

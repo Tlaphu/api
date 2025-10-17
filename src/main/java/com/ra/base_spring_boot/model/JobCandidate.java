@@ -2,6 +2,8 @@ package com.ra.base_spring_boot.model;
 
 
 
+
+
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -27,4 +29,5 @@ public class JobCandidate {
     private String cv_url;
     private String cover_letter;
     private String status;
+
 }

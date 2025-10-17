@@ -7,6 +7,9 @@ import com.ra.base_spring_boot.repository.JobRepository;
 import com.ra.base_spring_boot.dto.req.FormJob;
 import com.ra.base_spring_boot.dto.req.FormJobResponseDTO;
 import com.ra.base_spring_boot.services.ICompanyAuthService;
+
+import lombok.RequiredArgsConstructor;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -17,7 +20,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/job")
-@CrossOrigin(origins = "*")
+@RequiredArgsConstructor
 public class JobController {
 
     @Autowired
@@ -219,7 +222,7 @@ public class JobController {
         return ResponseEntity.ok("Deleted Job successfully with id: " + id);
     }
 
-    // --- 6. GET: FEATURED ---
+    
     @GetMapping("/featured")
     public ResponseEntity<?> getFeaturedJobs() {
         List<FormJobResponseDTO> jobs = jobRepository.findAll().stream()
