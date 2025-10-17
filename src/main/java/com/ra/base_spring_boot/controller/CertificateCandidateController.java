@@ -71,6 +71,7 @@ public class CertificateCandidateController {
     /**
      * @apiNote
      */
+<<<<<<< HEAD
 @DeleteMapping("/{id}")
 public ResponseEntity<?> deleteCertificate(@PathVariable Long id) {
     certificateCandidateService.deleteCertificate(id);
@@ -82,5 +83,18 @@ public ResponseEntity<?> deleteCertificate(@PathVariable Long id) {
                 .build()
     );
 }
+=======
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteExperience(@PathVariable Long id) {
+        certificateCandidateService.deleteCertificate(id);
+        return ResponseEntity.ok(
+                ResponseWrapper.<String>builder()
+                        .status(HttpStatus.OK)
+                        .code(200)
+                        .data("Certificate deleted successfully")
+                        .build()
+        );
+    }
+>>>>>>> c876afb33c3b978f6114945f8dff771b5bf1c26b
 }
 

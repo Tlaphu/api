@@ -8,7 +8,7 @@ import java.util.List;
 public interface IExperienceCandidateService {
     List<ExperienceCandidateResponse> getMyExperiences();
     ExperienceCandidateResponse createExperience(FromExperienceCandidate req);
-    ExperienceCandidateResponse updateExperience(String id, FromExperienceCandidate req);
-    void deleteExperience(String id);
+    ExperienceCandidateResponse updateExperience(Long id, FromExperienceCandidate req);
+    void deleteExperience(Long id);
 }
 

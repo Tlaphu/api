@@ -54,7 +54,7 @@ public class ExperienceCandidateServiceImpl implements IExperienceCandidateServi
     }
 
     @Override
-    public ExperienceCandidateResponse updateExperience(String id, FromExperienceCandidate req) {
+    public ExperienceCandidateResponse updateExperience(Long id, FromExperienceCandidate req) {
         Candidate current = jwtProvider.getCurrentCandidate();
         
         // FIX: Convert String ID from HTTP path to Long ID for the repository.
@@ -76,7 +76,7 @@ public class ExperienceCandidateServiceImpl implements IExperienceCandidateServi
     }
 
     @Override
-    public void deleteExperience(String id) {
+    public void deleteExperience(Long id) {
         Candidate current = jwtProvider.getCurrentCandidate();
         
         // FIX: Convert String ID from HTTP path to Long ID for the repository.

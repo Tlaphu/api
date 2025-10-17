@@ -54,7 +54,7 @@ public class ExperienceCandidateController {
      */
     @PutMapping("/{id}")
     public ResponseEntity<?> updateExperience(
-            @PathVariable String id,
+            @PathVariable Long id,
             @RequestBody FromExperienceCandidate request) {
 
         ExperienceCandidateResponse updated = experienceService.updateExperience(id, request);
@@ -71,7 +71,7 @@ public class ExperienceCandidateController {
      * @apiNote
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteExperience(@PathVariable String id) {
+    public ResponseEntity<?> deleteExperience(@PathVariable Long id) {
         experienceService.deleteExperience(id);
         return ResponseEntity.ok(
                 ResponseWrapper.<String>builder()
