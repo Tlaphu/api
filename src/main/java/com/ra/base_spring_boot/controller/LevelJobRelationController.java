@@ -23,28 +23,24 @@ public class LevelJobRelationController {
     }
 
     @GetMapping("/{id}")
-    public LevelJobRelation getById(@PathVariable String id) {
+    public LevelJobRelation getById(@PathVariable Long id) { 
         return service.getById(id);
     }
 
     @PostMapping
     public ResponseEntity<?> create(@RequestBody LevelJobRelation relation) {
-        LevelJobRelation existed = service.getById(relation.getId());
-        if (existed != null) {
-            return ResponseEntity.status(409)
-                    .body("Relation already exists with id: " + relation.getId());
-        }
+        
         return ResponseEntity.ok(service.save(relation));
     }
 
     @PutMapping("/{id}")
-    public LevelJobRelation update(@PathVariable String id, @RequestBody LevelJobRelation relation) {
+    public LevelJobRelation update(@PathVariable Long id, @RequestBody LevelJobRelation relation) { // <--- Đã sửa String -> Long
         relation.setId(id);
         return service.save(relation);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> delete(@PathVariable String id) {
+    public ResponseEntity<?> delete(@PathVariable Long id) { 
         LevelJobRelation existed = service.getById(id);
         if (existed == null) {
             return ResponseEntity.status(404)

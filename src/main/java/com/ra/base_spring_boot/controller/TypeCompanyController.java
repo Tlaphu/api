@@ -27,7 +27,7 @@ public class TypeCompanyController {
 
 
     @GetMapping("/{id}")
-    public ResponseEntity<FormTypeCompanyResponse> getById(@PathVariable String id) {
+    public ResponseEntity<FormTypeCompanyResponse> getById(@PathVariable Long id) { 
         FormTypeCompanyResponse response = service.getById(id);
         if (response == null) {
             return ResponseEntity.notFound().build();
@@ -36,23 +36,23 @@ public class TypeCompanyController {
     }
 
 
-   
+    
     @PreAuthorize("hasAuthority('ROLE_COMPANY')") 
     @PostMapping
     public ResponseEntity<FormTypeCompanyResponse> create(@RequestBody FormTypeCompany form, Principal principal) { 
-        
+      
         String creatorEmail = principal.getName();
         FormTypeCompanyResponse createdType = service.create(form, creatorEmail);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdType);
     }
 
 
-   
+    
     @PreAuthorize("hasAuthority('ROLE_COMPANY')") 
     @PutMapping("/{id}")
-    public ResponseEntity<FormTypeCompanyResponse> update(@PathVariable String id, 
-                                                          @RequestBody FormTypeCompany form,
-                                                          Principal principal) {
+    public ResponseEntity<FormTypeCompanyResponse> update(@PathVariable Long id, 
+                                                        @RequestBody FormTypeCompany form,
+                                                        Principal principal) {
         
         String updaterEmail = principal.getName();
         FormTypeCompanyResponse updatedType = service.update(id, form, updaterEmail);
@@ -68,7 +68,7 @@ public class TypeCompanyController {
     
     @PreAuthorize("hasAuthority('ROLE_COMPANY')")
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable String id, Principal principal) {
+    public ResponseEntity<Void> delete(@PathVariable Long id, Principal principal) { 
         
         String deleterEmail = principal.getName();
         boolean deleted = service.delete(id, deleterEmail);

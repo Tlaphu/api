@@ -2,17 +2,24 @@ package com.ra.base_spring_boot.model;
 
 
 import jakarta.persistence.*;
-import lombok.Getter;  
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;  
 
 @Entity
 @Table(name = "types_jobs")
 @Getter 
 @Setter 
+@NoArgsConstructor 
+@AllArgsConstructor 
+@Builder 
 public class TypeJobRelation {
     
     @Id
-    private String id; 
+    @GeneratedValue(strategy = GenerationType.IDENTITY) 
+    private Long id;
 
 
     @ManyToOne(fetch = FetchType.EAGER)

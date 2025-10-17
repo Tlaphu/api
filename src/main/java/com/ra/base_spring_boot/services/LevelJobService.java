@@ -5,7 +5,7 @@ import com.ra.base_spring_boot.repository.LevelJobRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-
+import java.util.Optional;
 @Service
 public class LevelJobService {
 
@@ -19,7 +19,7 @@ public class LevelJobService {
         return repo.findAll();
     }
 
-    public LevelJob getById(String id) {
+    public LevelJob getById(long id) {
         return repo.findById(id).orElse(null);
     }
 
@@ -27,7 +27,7 @@ public class LevelJobService {
         return repo.save(lj);
     }
 
-    public void delete(String id) {
+    public void delete(long id) {
         repo.deleteById(id);
     }
 }

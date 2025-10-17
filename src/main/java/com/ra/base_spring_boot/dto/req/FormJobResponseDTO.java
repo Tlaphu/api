@@ -1,7 +1,8 @@
 package com.ra.base_spring_boot.dto.req;
 
 import lombok.*;
-
+import lombok.Builder;
+import lombok.Getter;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor

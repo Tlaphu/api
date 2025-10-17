@@ -20,27 +20,22 @@ public class TypeJobController {
     public List<TypeJob> getAll() { return service.getAll(); }
 
     @GetMapping("/{id}")
-    public TypeJob getById(@PathVariable String id) { return service.getById(id); }
+    public TypeJob getById(@PathVariable Long id) { return service.getById(id); } 
 
     @PostMapping
-    public Object create(@RequestBody TypeJob tj) {
-        TypeJob existed = service.getById(tj.getId());
-        if (existed != null) {
-            return ResponseEntity
-                .status(409)
-                .body("TypeJob already exists with id: " + tj.getId());
-        }
+    public TypeJob create(@RequestBody TypeJob tj) {
+        
         return service.save(tj);
     }
 
     @PutMapping("/{id}")
-    public TypeJob update(@PathVariable String id, @RequestBody TypeJob tj) {
+    public TypeJob update(@PathVariable Long id, @RequestBody TypeJob tj) { 
         tj.setId(id);
         return service.save(tj);
     }
 
     @DeleteMapping("/{id}")
-    public Object delete(@PathVariable String id) {
+    public Object delete(@PathVariable Long id) { 
         TypeJob existed = service.getById(id);
         if (existed == null) {
             return ResponseEntity

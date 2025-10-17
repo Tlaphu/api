@@ -7,6 +7,9 @@ import com.ra.base_spring_boot.repository.JobRepository;
 import com.ra.base_spring_boot.dto.req.FormJob;
 import com.ra.base_spring_boot.dto.req.FormJobResponseDTO;
 import com.ra.base_spring_boot.services.ICompanyAuthService;
+
+import lombok.RequiredArgsConstructor;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -17,7 +20,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/job")
-@CrossOrigin(origins = "*")
+@RequiredArgsConstructor
 public class JobController {
 
     @Autowired
@@ -32,15 +35,21 @@ public class JobController {
     @Autowired
     private ICompanyAuthService companyAuthService;
 
+    // --- 1. POST: CREATE (Đã sửa lỗi) ---
     @PreAuthorize("hasAuthority('ROLE_COMPANY')")
     @PostMapping
     public ResponseEntity<?> create(@RequestBody FormJob form) {
-        Optional<Location> locationOpt = locationRepository.findById(form.getLocationId());
+        
+        // ❗ Đã sửa: Lấy ID kiểu Long trực tiếp từ Form
+        Long locationId = form.getLocationId();
+        Optional<Location> locationOpt = locationRepository.findById(locationId);
         if (locationOpt.isEmpty()) {
             return ResponseEntity.status(404).body("Location not found");
         }
 
-        Optional<Company> companyOpt = companyRepository.findById(form.getCompanyId());
+        // ❗ Đã sửa: Lấy ID kiểu Long trực tiếp từ Form
+        Long companyId = form.getCompanyId();
+        Optional<Company> companyOpt = companyRepository.findById(companyId); 
         if (companyOpt.isEmpty()) {
             return ResponseEntity.status(404).body("Company not found");
         }
@@ -82,6 +91,7 @@ public class JobController {
     }
 
     
+    // --- 2. GET: ALL ---
     @GetMapping
     public ResponseEntity<?> getAll() {
         List<FormJobResponseDTO> jobs = jobRepository.findAll().stream()
@@ -103,8 +113,9 @@ public class JobController {
         return ResponseEntity.ok(jobs);
     }
 
+    // --- 3. GET: BY ID ---
     @GetMapping("/{id}")
-    public ResponseEntity<?> getById(@PathVariable Long id) { // ĐÃ SỬA: BỎ **
+    public ResponseEntity<?> getById(@PathVariable Long id) {
         Optional<Job> jobOpt = jobRepository.findById(id);
         if (jobOpt.isEmpty()) {
             return ResponseEntity.status(404).body("Job not found");
@@ -129,9 +140,10 @@ public class JobController {
         return ResponseEntity.ok(dto);
     }
     
+    // --- 4. PUT: UPDATE (Đã sửa lỗi) ---
     @PreAuthorize("hasAuthority('ROLE_COMPANY')")
     @PutMapping("/{id}")
-    public ResponseEntity<?> update(@PathVariable Long id, @RequestBody FormJob form) { // ĐÃ SỬA: BỎ **
+    public ResponseEntity<?> update(@PathVariable Long id, @RequestBody FormJob form) {
         
         Optional<Job> jobOpt = jobRepository.findById(id);
         if (jobOpt.isEmpty()) {
@@ -140,9 +152,9 @@ public class JobController {
 
         Job job = jobOpt.get();
 
-        
+        // ❗ Đã sửa: Lấy ID kiểu Long trực tiếp từ Form
         Long locationId = form.getLocationId();
-        if (locationId == null ) {
+        if (locationId == null) {
             return ResponseEntity.status(400).body("Location ID must be provided in the request body.");
         }
         Optional<Location> locationOpt = locationRepository.findById(locationId);
@@ -150,12 +162,12 @@ public class JobController {
             return ResponseEntity.status(404).body("Location not found");
         }
 
-        
+        // ❗ Đã sửa: Lấy ID kiểu Long trực tiếp từ Form
         Long companyId = form.getCompanyId();
-        if (companyId == null ) {
+        if (companyId == null) {
             return ResponseEntity.status(400).body("Company ID must be provided in the request body.");
         }
-        Optional<Company> companyOpt = companyRepository.findById(companyId);
+        Optional<Company> companyOpt = companyRepository.findById(companyId); 
         if (companyOpt.isEmpty()) {
             return ResponseEntity.status(404).body("Company not found");
         }
@@ -197,9 +209,10 @@ public class JobController {
         return ResponseEntity.ok(response);
     }
     
+    // --- 5. DELETE ---
     @PreAuthorize("hasAuthority('ROLE_COMPANY')")
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> delete(@PathVariable Long id) { // ĐÃ SỬA: BỎ **
+    public ResponseEntity<?> delete(@PathVariable Long id) {
         Optional<Job> jobOpt = jobRepository.findById(id);
         if (jobOpt.isEmpty()) {
             return ResponseEntity.status(404).body("Job not found");
@@ -209,6 +222,7 @@ public class JobController {
         return ResponseEntity.ok("Deleted Job successfully with id: " + id);
     }
 
+    
     @GetMapping("/featured")
     public ResponseEntity<?> getFeaturedJobs() {
         List<FormJobResponseDTO> jobs = jobRepository.findAll().stream()

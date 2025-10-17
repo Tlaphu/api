@@ -9,10 +9,11 @@ import java.util.Date;
 @AllArgsConstructor
 @Builder
 public class FromEducationCandidate {
-    private String candidateId;
+    private long candidateId;
     private String name_education;
     private String major;
     private Date startedAt;
     private Date endAt;
     private String info;
 }
+

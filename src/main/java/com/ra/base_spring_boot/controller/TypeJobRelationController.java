@@ -23,7 +23,7 @@ public class TypeJobRelationController {
     }
 
     @GetMapping("/{id}")
-    public Object getById(@PathVariable String id) {
+    public Object getById(@PathVariable Long id) { 
         TypeJobRelation relation = service.getById(id);
         if (relation == null) {
             return ResponseEntity.status(404)
@@ -34,23 +34,19 @@ public class TypeJobRelationController {
 
     @PostMapping
     public Object create(@RequestBody TypeJobRelation relation) {
-        TypeJobRelation existed = service.getById(relation.getId());
-        if (existed != null) {
-            return ResponseEntity.status(409)
-                    .body("TypeJobRelation already exists with id: " + relation.getId());
-        }
+        
         return service.save(relation);
     }
 
 
     @PutMapping("/{id}")
-    public Object update(@PathVariable String id, @RequestBody TypeJobRelation relation) {
+    public Object update(@PathVariable Long id, @RequestBody TypeJobRelation relation) { 
         relation.setId(id);
         return service.save(relation);
     }
 
     @DeleteMapping("/{id}")
-    public Object delete(@PathVariable String id) {
+    public Object delete(@PathVariable Long id) { 
         TypeJobRelation existed = service.getById(id);
         if (existed == null) {
             return ResponseEntity.status(404)

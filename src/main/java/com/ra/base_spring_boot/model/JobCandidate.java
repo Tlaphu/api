@@ -2,6 +2,8 @@ package com.ra.base_spring_boot.model;
 
 
 
+
+
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -13,7 +15,8 @@ import lombok.*;
 @Builder
 public class JobCandidate {
     @Id
-    private String id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY) 
+    private Long id;
 
     @ManyToOne
     @JoinColumn(name = "job_id")
@@ -26,4 +29,5 @@ public class JobCandidate {
     private String cv_url;
     private String cover_letter;
     private String status;
+
 }

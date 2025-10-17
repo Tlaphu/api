@@ -12,10 +12,10 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class FormTypeCompanyResponse {
-private String id;
+private Long  id;
     private String name;
     
-    // Thêm thông tin thời gian để client biết khi nào loại hình này được tạo/cập nhật
+    
     private Date createdAt; 
     private Date updatedAt; 
 }

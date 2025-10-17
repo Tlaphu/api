@@ -19,7 +19,8 @@ public class LevelJobRelationService {
         return repository.findAll();
     }
 
-    public LevelJobRelation getById(String id) {
+ 
+    public LevelJobRelation getById(Long id) {
         return repository.findById(id).orElse(null);
     }
 
@@ -27,7 +28,7 @@ public class LevelJobRelationService {
         return repository.save(relation);
     }
 
-    public void delete(String id) {
+    public void delete(Long id) {
         repository.deleteById(id);
     }
 }
