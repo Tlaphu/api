@@ -49,11 +49,11 @@ public class CertificateCandidateServiceImpl implements ICertificateCandidateSer
     }
 
     @Override
-    public CertificateCandidateResponse updateCertificate(String id, FormCertificateCandidate req) {
+    public CertificateCandidateResponse updateCertificate(Long id, FormCertificateCandidate req) {
         Candidate current = jwtProvider.getCurrentCandidate();
-        // FIX: Convert String ID from controller to Long ID for repository
-        CertificateCandidate exp = iCertificateCandidateRepository.findById(Long.parseLong(id))
-                .orElseThrow(() -> new RuntimeException("Certificate not found"));
+       
+        CertificateCandidate exp = iCertificateCandidateRepository.findById(id) 
+            .orElseThrow(() -> new RuntimeException("Certificate not found"));
                 
         if (!exp.getCandidate().getId().equals(current.getId())) {
             throw new HttpAccessDenied("Access denied: You can only update your own certificate");
@@ -70,11 +70,11 @@ public class CertificateCandidateServiceImpl implements ICertificateCandidateSer
     }
 
     @Override
-    public void deleteCertificate(String id) {
+    public void deleteCertificate(Long id) {
         Candidate current = jwtProvider.getCurrentCandidate();
-        // FIX: Convert String ID from controller to Long ID for repository
-        CertificateCandidate exp = iCertificateCandidateRepository.findById(Long.parseLong(id))
-                .orElseThrow(() -> new RuntimeException("Certificate not found"));
+        
+        CertificateCandidate exp = iCertificateCandidateRepository.findById(id) 
+            .orElseThrow(() -> new RuntimeException("Certificate not found"));
 
         if (!exp.getCandidate().getId().equals(current.getId())) {
             throw new HttpAccessDenied("Access denied: You can only delete your own certificate");
@@ -90,7 +90,7 @@ public class CertificateCandidateServiceImpl implements ICertificateCandidateSer
                 .organization(cer.getOrganization())
                 .started_at(cer.getStarted_at())
                 .end_at(cer.getEnd_at())
-                // NOTE: Removed duplicate '.organization(cer.getOrganization())' line here.
+                
                 .info(cer.getInfo())
                 .created_at(cer.getCreated_at())
                 .updated_at(cer.getUpdated_at())

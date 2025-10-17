@@ -55,7 +55,7 @@ public class CertificateCandidateController {
      */
     @PutMapping("/{id}")
     public ResponseEntity<?> updateExperience(
-            @PathVariable String id,
+            @PathVariable Long id,
             @RequestBody FormCertificateCandidate request) {
 
         CertificateCandidateResponse updated = certificateCandidateService.updateCertificate(id, request);
@@ -71,16 +71,16 @@ public class CertificateCandidateController {
     /**
      * @apiNote
      */
-    @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteExperience(@PathVariable String id) {
-        certificateCandidateService.deleteCertificate(id);
-        return ResponseEntity.ok(
-                ResponseWrapper.<String>builder()
-                        .status(HttpStatus.OK)
-                        .code(200)
-                        .data("Certificate deleted successfully")
-                        .build()
-        );
-    }
+@DeleteMapping("/{id}")
+public ResponseEntity<?> deleteCertificate(@PathVariable Long id) {
+    certificateCandidateService.deleteCertificate(id);
+    return ResponseEntity.ok(
+        ResponseWrapper.<String>builder() 
+                .status(HttpStatus.OK)
+                .code(200)
+                .data("Certificate deleted successfully") // OK
+                .build()
+    );
+}
 }
 

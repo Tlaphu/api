@@ -9,6 +9,6 @@ public interface ICertificateCandidateService {
     List<CertificateCandidateResponse> getCertificate();
     CertificateCandidateResponse createCertificate(FormCertificateCandidate req);
 
-    CertificateCandidateResponse updateCertificate(String id, FormCertificateCandidate req);
-    void deleteCertificate(String id);
+    CertificateCandidateResponse updateCertificate(Long id, FormCertificateCandidate req);
+    void deleteCertificate(Long id);
 }
