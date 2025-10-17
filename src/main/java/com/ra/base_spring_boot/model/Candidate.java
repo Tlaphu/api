@@ -54,9 +54,11 @@ public class Candidate extends BaseObject {
     private Date updated_at;
 
     @OneToMany(mappedBy = "candidate", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
     private List<ProjectCandidate> projectCandidates;
 
     @OneToMany(mappedBy = "candidate", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
     private List<SkillsCandidate> skillCandidates;
 
     @OneToMany(mappedBy = "candidate", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -72,5 +74,6 @@ public class Candidate extends BaseObject {
     private List<CertificateCandidate> certificateCandidates;
 
     @OneToMany(mappedBy = "candidate", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
     private List<JobCandidate> jobCandidates;
 }

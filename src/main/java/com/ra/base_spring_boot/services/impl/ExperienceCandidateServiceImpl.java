@@ -50,7 +50,7 @@ public class ExperienceCandidateServiceImpl implements IExperienceCandidateServi
     }
 
     @Override
-    public ExperienceCandidateResponse updateExperience(String id, FromExperienceCandidate req) {
+    public ExperienceCandidateResponse updateExperience(Long id, FromExperienceCandidate req) {
         Candidate current = jwtProvider.getCurrentCandidate();
         ExperienceCandidate exp = experienceRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Experience not found"));
@@ -70,7 +70,7 @@ public class ExperienceCandidateServiceImpl implements IExperienceCandidateServi
     }
 
     @Override
-    public void deleteExperience(String id) {
+    public void deleteExperience(Long id) {
         Candidate current = jwtProvider.getCurrentCandidate();
         ExperienceCandidate exp = experienceRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Experience not found"));

@@ -48,7 +48,7 @@ public class CertificateCandidateServiceImpl implements ICertificateCandidateSer
     }
 
     @Override
-    public CertificateCandidateResponse updateCertificate(String id, FormCertificateCandidate req) {
+    public CertificateCandidateResponse updateCertificate(Long id, FormCertificateCandidate req) {
         Candidate current = jwtProvider.getCurrentCandidate();
         CertificateCandidate exp = iCertificateCandidateRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("certificate not found"));
@@ -68,7 +68,7 @@ public class CertificateCandidateServiceImpl implements ICertificateCandidateSer
     }
 
     @Override
-    public void deleteCertificate(String id) {
+    public void deleteCertificate(Long id) {
         Candidate current = jwtProvider.getCurrentCandidate();
         CertificateCandidate exp = iCertificateCandidateRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("certificate not found"));
