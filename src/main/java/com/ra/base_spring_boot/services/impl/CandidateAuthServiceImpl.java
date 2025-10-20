@@ -94,7 +94,6 @@ public class CandidateAuthServiceImpl implements ICandidateAuthService {
     }
 
 
-
     @Override
     public void logout(String token) {
         System.out.println("Logout token: " + token);

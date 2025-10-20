@@ -57,8 +57,7 @@ public class ExperienceCandidateServiceImpl implements IExperienceCandidateServi
     public ExperienceCandidateResponse updateExperience(Long id, FromExperienceCandidate req) {
         Candidate current = jwtProvider.getCurrentCandidate();
         
-        // FIX: Convert String ID from HTTP path to Long ID for the repository.
-        ExperienceCandidate exp = experienceRepo.findById(Long.parseLong(id))
+        ExperienceCandidate exp = experienceRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Experience not found"));
 
         if (!exp.getCandidate().getId().equals(current.getId())) {
@@ -78,9 +77,8 @@ public class ExperienceCandidateServiceImpl implements IExperienceCandidateServi
     @Override
     public void deleteExperience(Long id) {
         Candidate current = jwtProvider.getCurrentCandidate();
-        
-        // FIX: Convert String ID from HTTP path to Long ID for the repository.
-        ExperienceCandidate exp = experienceRepo.findById(Long.parseLong(id))
+
+        ExperienceCandidate exp = experienceRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Experience not found"));
 
         if (!exp.getCandidate().getId().equals(current.getId())) {

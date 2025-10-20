@@ -51,8 +51,7 @@ public class CertificateCandidateServiceImpl implements ICertificateCandidateSer
     @Override
     public CertificateCandidateResponse updateCertificate(Long id, FormCertificateCandidate req) {
         Candidate current = jwtProvider.getCurrentCandidate();
-        // FIX: Convert String ID from controller to Long ID for repository
-        CertificateCandidate exp = iCertificateCandidateRepository.findById(Long.parseLong(id))
+        CertificateCandidate exp = iCertificateCandidateRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Certificate not found"));
                 
         if (!exp.getCandidate().getId().equals(current.getId())) {
@@ -72,8 +71,7 @@ public class CertificateCandidateServiceImpl implements ICertificateCandidateSer
     @Override
     public void deleteCertificate(Long id) {
         Candidate current = jwtProvider.getCurrentCandidate();
-        // FIX: Convert String ID from controller to Long ID for repository
-        CertificateCandidate exp = iCertificateCandidateRepository.findById(Long.parseLong(id))
+        CertificateCandidate exp = iCertificateCandidateRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Certificate not found"));
 
         if (!exp.getCandidate().getId().equals(current.getId())) {
