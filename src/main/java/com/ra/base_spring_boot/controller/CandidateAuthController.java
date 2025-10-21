@@ -3,6 +3,8 @@ package com.ra.base_spring_boot.controller;
 import com.ra.base_spring_boot.dto.ResponseWrapper;
 import com.ra.base_spring_boot.dto.req.*;
 import com.ra.base_spring_boot.dto.resp.JwtResponse;
+import com.ra.base_spring_boot.model.Candidate;
+import com.ra.base_spring_boot.security.jwt.JwtProvider;
 import com.ra.base_spring_boot.services.ICandidateAuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -11,6 +13,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/auth/candidate")
@@ -18,6 +22,7 @@ import java.net.URI;
 public class CandidateAuthController {
 
     private final ICandidateAuthService authService;
+    private final JwtProvider jwtProvider;
 
     /**
      * @param formLogin FormLogin
@@ -126,4 +131,24 @@ public class CandidateAuthController {
                     .build()
     );
 }
+    @GetMapping("/me")
+    public ResponseEntity<?> getCurrentCandidate() {
+        Candidate candidate = jwtProvider.getCurrentCandidate();
+        if (candidate == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Candidate not authenticated");
+        }
+
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("name", candidate.getName());
+        response.put("email", candidate.getEmail());
+        response.put("phone", candidate.getPhone());
+        response.put("address", candidate.getAddress());
+        response.put("dob", candidate.getDob());
+        response.put("gender", candidate.getGender());
+        response.put("link", candidate.getLink());
+
+        return ResponseEntity.ok(response);
+    }
+
+
 }

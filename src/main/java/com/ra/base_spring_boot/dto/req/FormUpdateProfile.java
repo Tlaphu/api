@@ -30,10 +30,8 @@ public class FormUpdateProfile {
 
     private Integer gender; // 0 = female, 1 = male, 2 = other
 
-    private String linkFb;
-    private String linkLinkedin;
-    private String linkGit;
+    private String link;
 
-    // Nếu muốn cho phép update trạng thái tìm việc
+
     private Integer isOpen; // 0 = đóng, 1 = mở
 }

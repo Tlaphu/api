@@ -24,7 +24,7 @@ public class AccountCompany {
     private String fullName;
     private String email;
     private String password;
-
+    @Builder.Default
     private boolean status = false;
     private String verificationToken;
     @ManyToOne(fetch = FetchType.LAZY)
