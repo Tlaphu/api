@@ -7,6 +7,6 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface IProjectRepository extends JpaRepository<ProjectCandidate , String>{
+public interface IProjectRepository extends JpaRepository<ProjectCandidate , Long>{
     List<ProjectCandidate> findAllByCandidate_Id(Long candidateId);
 }

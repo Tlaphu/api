@@ -13,7 +13,11 @@ import java.util.List;
 @Builder
 public class TypeCompany {
     @Id
+<<<<<<< HEAD
     @GeneratedValue(strategy = GenerationType.IDENTITY) 
+=======
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+>>>>>>> 05fa726ec0f77df812a93ae1d3fdd29aebdb058d
     private Long id;
     private String name;
     @Temporal(TemporalType.DATE)

@@ -9,7 +9,7 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class ProjectCandidateResponse {
-    private String id;
+    private Long id;
     private String name;
     private String link;
     private Date started_at;

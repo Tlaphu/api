@@ -8,5 +8,6 @@ import java.util.List;
 public interface IProjectCandidateService {
     List<ProjectCandidateResponse> getProject();
     ProjectCandidateResponse createProject(FormProjectCandidate req);
-    ProjectCandidateResponse updateProject(FormProjectCandidate req);
+    ProjectCandidateResponse updateProject(Long id, FormProjectCandidate req);
+    void deleteProject(Long id) ;
 }
