@@ -1,8 +1,7 @@
-package com.ra.base_spring_boot.dto.req;
+package com.ra.base_spring_boot.dto.resp;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 import java.util.Date;
@@ -12,7 +11,7 @@ import java.util.Date;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class FormRegisterCandidate {
+public class CandidateProfileResponse {
 
     @NotBlank(message = "Full name is required")
     private String name;
@@ -21,19 +20,13 @@ public class FormRegisterCandidate {
     @NotBlank(message = "Email is required")
     private String email;
 
-    @NotBlank(message = "Password is required")
-    private String password;
-
-    @NotBlank(message = "Confirm Password is required")
-    private String confirmPassword;
-
     private String phone;
 
     private String address;
 
     private Date dob;
 
-    private Integer gender; 
+    private Integer gender;
 
     private String link;
 }

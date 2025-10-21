@@ -33,7 +33,7 @@ public class Candidate {
     private String email;
     private String phone;
     private String password;
-
+    @Builder.Default
     private boolean status = false;
     private String verificationToken;
     @ManyToMany(fetch = FetchType.EAGER)
@@ -48,9 +48,8 @@ public class Candidate {
 
     private Integer gender;
 
-    private String link_fb;
-    private String link_linkedin;
-    private String link_git;
+    private String link;
+
 
     @Temporal(TemporalType.TIMESTAMP)
     private Date created_at;

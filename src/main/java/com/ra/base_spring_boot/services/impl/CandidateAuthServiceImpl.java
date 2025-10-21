@@ -62,14 +62,11 @@ public class CandidateAuthServiceImpl implements ICandidateAuthService {
                 .address(formRegisterCandidate.getAddress())
                 .dob(formRegisterCandidate.getDob())
                 .gender(formRegisterCandidate.getGender())
-                .link_fb(formRegisterCandidate.getLink_fb())
-                .link_linkedin(formRegisterCandidate.getLink_linkedin())
-                .link_git(formRegisterCandidate.getLink_git())
-                .isOpen(1)
+                .link(formRegisterCandidate.getLink())
                 .roles(roles)
                 .created_at(new Date())
                 .updated_at(new Date())
-                
+                .isOpen(1)
                 .verificationToken(verificationToken)
                 .status(false)
                 .build();
@@ -166,10 +163,7 @@ public class CandidateAuthServiceImpl implements ICandidateAuthService {
         candidate.setAddress(form.getAddress());
         candidate.setDob(form.getDob());
         candidate.setGender(form.getGender());
-        candidate.setLink_fb(form.getLinkFb());
-        candidate.setLink_linkedin(form.getLinkLinkedin());
-        candidate.setLink_git(form.getLinkGit());
-        candidate.setIsOpen(form.getIsOpen());
+        candidate.setLink(form.getLink());
         candidate.setUpdated_at(new Date());
 
         candidateRepository.save(candidate);
