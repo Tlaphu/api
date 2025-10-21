@@ -12,26 +12,25 @@ import java.util.Properties;
 @Configuration
 public class MailConfig {
 
-    // --- CẤU HÌNH GỬI MAIL ---
+ 
     @Bean
     public JavaMailSender getJavaMailSender() {
         JavaMailSenderImpl mailSender = new JavaMailSenderImpl();
         
-        // 1. Thông tin Máy chủ SMTP
+     
         mailSender.setHost("smtp.gmail.com");
         mailSender.setPort(587); 
 
-        mailSender.setUsername("phuthgce182003@fpt.edu.vn");
-        mailSender.setPassword("phu123456789"); 
+        mailSender.setUsername("thaihoangiaphu004@gmail.com");
+        mailSender.setPassword("ksrk sqwi zdjn wxrg"); 
 
-        // 3. Thiết lập Thuộc tính JavaMail
+        
         Properties props = mailSender.getJavaMailProperties();
-        props.put("mail.transport.protocol", "smtp"); // Giao thức truyền tải
-        props.put("mail.smtp.auth", "true"); // Bật xác thực
-        props.put("mail.smtp.starttls.enable", "true"); // Bật bảo mật STARTTLS
-        props.put("mail.smtp.starttls.required", "true"); // Yêu cầu bảo mật
-        props.put("mail.debug", "false"); // Tắt debug (hoặc bật "true" để kiểm tra lỗi)
-
+        props.put("mail.transport.protocol", "smtp"); 
+        props.put("mail.smtp.auth", "true"); 
+        props.put("mail.smtp.starttls.enable", "true"); 
+        props.put("mail.smtp.starttls.required", "true"); 
+        props.put("mail.debug", "false"); 
         return mailSender;
     }
 }

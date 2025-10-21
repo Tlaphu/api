@@ -47,5 +47,6 @@ public interface ICompanyAuthService {
      * Get company by id
      */
     CompanyResponse findById(Long id);
+    void activateAccount(String token);
 }
 

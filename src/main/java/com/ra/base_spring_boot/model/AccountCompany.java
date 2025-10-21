@@ -1,6 +1,8 @@
 package com.ra.base_spring_boot.model;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.ra.base_spring_boot.model.base.BaseObject;
+
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -15,6 +17,7 @@ import java.util.Set;
 @Setter
 @Builder
 public class AccountCompany {
+    
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -22,6 +25,8 @@ public class AccountCompany {
     private String email;
     private String password;
 
+    private boolean status = false;
+    private String verificationToken;
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "company_id")
     @JsonBackReference

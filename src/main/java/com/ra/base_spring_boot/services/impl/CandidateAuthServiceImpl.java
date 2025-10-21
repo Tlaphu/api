@@ -11,6 +11,7 @@ import com.ra.base_spring_boot.security.jwt.JwtProvider;
 import com.ra.base_spring_boot.security.principle.MyUserDetails;
 import com.ra.base_spring_boot.services.ICandidateAuthService;
 import com.ra.base_spring_boot.services.IRoleService;
+import com.ra.base_spring_boot.services.EmailService; 
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -32,7 +33,11 @@ public class CandidateAuthServiceImpl implements ICandidateAuthService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager candidateAuthManager;
     private final JwtProvider jwtProvider;
-
+    private final EmailService emailService; 
+    
+    // URL CỨNG CHO SERVER (Cần thay thế bằng giá trị từ file properties trong thực tế)
+    private static final String BASE_URL = "http://localhost:8080/api/v1/auth/candidate";
+    
     @Override
     public void register(FormRegisterCandidate formRegisterCandidate) {
         if (candidateRepository.existsByEmail(formRegisterCandidate.getEmail())) {
@@ -45,7 +50,10 @@ public class CandidateAuthServiceImpl implements ICandidateAuthService {
 
         Set<Role> roles = new HashSet<>();
         roles.add(roleService.findByRoleName(RoleName.ROLE_CANDIDATE));
-
+        
+        // 1. TẠO MÃ KÍCH HOẠT
+        String verificationToken = UUID.randomUUID().toString();
+        
         Candidate candidate = Candidate.builder()
                 .name(formRegisterCandidate.getName())
                 .email(formRegisterCandidate.getEmail())
@@ -61,9 +69,22 @@ public class CandidateAuthServiceImpl implements ICandidateAuthService {
                 .roles(roles)
                 .created_at(new Date())
                 .updated_at(new Date())
+                
+                .verificationToken(verificationToken)
+                .status(false)
                 .build();
 
         candidateRepository.save(candidate);
+        
+       
+        String confirmationLink = BASE_URL + "/verify?token=" + verificationToken;
+        
+        
+        emailService.sendVerificationEmail(
+            formRegisterCandidate.getEmail(), 
+            formRegisterCandidate.getName(), 
+            confirmationLink 
+        );
     }
 
     @Override
@@ -75,6 +96,11 @@ public class CandidateAuthServiceImpl implements ICandidateAuthService {
 
             MyUserDetails userDetails = (MyUserDetails) authentication.getPrincipal();
             Candidate candidate = userDetails.getCandidate();
+            
+            
+            if (!candidate.isStatus()) {
+                 throw new HttpBadRequest("Account is not activated. Please check your email for the activation link.");
+            }
 
             Set<String> roles = userDetails.getAuthorities().stream()
                     .map(GrantedAuthority::getAuthority)
@@ -92,7 +118,6 @@ public class CandidateAuthServiceImpl implements ICandidateAuthService {
             throw new HttpBadRequest("Email or password wrong");
         }
     }
-
 
 
     @Override
@@ -147,6 +172,16 @@ public class CandidateAuthServiceImpl implements ICandidateAuthService {
         candidate.setIsOpen(form.getIsOpen());
         candidate.setUpdated_at(new Date());
 
+        candidateRepository.save(candidate);
+    }
+    
+    @Override
+    public void activateAccount(String token) {
+        Candidate candidate = candidateRepository.findByVerificationToken(token)
+                .orElseThrow(() -> new HttpBadRequest("Invalid or expired verification token"));
+        
+        candidate.setStatus(true); 
+        candidate.setVerificationToken(null); 
         candidateRepository.save(candidate);
     }
 }

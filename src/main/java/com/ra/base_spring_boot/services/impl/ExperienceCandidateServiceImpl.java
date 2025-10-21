@@ -25,7 +25,7 @@ public class ExperienceCandidateServiceImpl implements IExperienceCandidateServi
     @Override
     public List<ExperienceCandidateResponse> getMyExperiences() {
         Candidate current = jwtProvider.getCurrentCandidate();
-        // Assuming Candidate ID is String, and Candidate Experience ID is Long based on required parsing.
+        
         return experienceRepo.findAllByCandidate_Id(current.getId())
                 .stream()
                 .map(this::toResponse)
@@ -36,8 +36,7 @@ public class ExperienceCandidateServiceImpl implements IExperienceCandidateServi
     public ExperienceCandidateResponse createExperience(FromExperienceCandidate req) {
         Candidate current = jwtProvider.getCurrentCandidate();
 
-        // Note: If ExperienceCandidate ID is Long (auto-generated), you should remove the commented block 
-        // regarding setting String ID manually. Assuming it is Long here.
+       
         
         ExperienceCandidate exp = ExperienceCandidate.builder()
                 .candidate(current)
@@ -57,8 +56,8 @@ public class ExperienceCandidateServiceImpl implements IExperienceCandidateServi
     public ExperienceCandidateResponse updateExperience(Long id, FromExperienceCandidate req) {
         Candidate current = jwtProvider.getCurrentCandidate();
         
-        // FIX: Convert String ID from HTTP path to Long ID for the repository.
-        ExperienceCandidate exp = experienceRepo.findById(Long.parseLong(id))
+       
+        ExperienceCandidate exp = experienceRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Experience not found"));
 
         if (!exp.getCandidate().getId().equals(current.getId())) {
@@ -79,8 +78,8 @@ public class ExperienceCandidateServiceImpl implements IExperienceCandidateServi
     public void deleteExperience(Long id) {
         Candidate current = jwtProvider.getCurrentCandidate();
         
-        // FIX: Convert String ID from HTTP path to Long ID for the repository.
-        ExperienceCandidate exp = experienceRepo.findById(Long.parseLong(id))
+        
+        ExperienceCandidate exp = experienceRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Experience not found"));
 
         if (!exp.getCandidate().getId().equals(current.getId())) {
@@ -90,7 +89,7 @@ public class ExperienceCandidateServiceImpl implements IExperienceCandidateServi
         experienceRepo.delete(exp);
     }
 
-    // Mapper: Entity → Response
+    
     private ExperienceCandidateResponse toResponse(ExperienceCandidate exp) {
         return ExperienceCandidateResponse.builder()
                 .id(exp.getId()) 

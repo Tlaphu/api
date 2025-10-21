@@ -32,8 +32,7 @@ public class JobCandidateServiceImpl implements JobCandidateService {
         this.candidateRepository = candidateRepository;
     }
 
-    // --- Phương thức chuyển đổi DTO sang Entity ---
-    // Phương thức này hiện đã thực hiện việc tìm Job và Candidate theo ID
+    
     private JobCandidate toEntity(FormJobCandidate form) {
         Job job = jobRepository.findById(form.getJobId())
                 .orElseThrow(() -> new RuntimeException(String.format("Job not found with id: %d", form.getJobId())));
@@ -50,20 +49,20 @@ public class JobCandidateServiceImpl implements JobCandidateService {
                 .build();
     }
 
-    // --- Phương thức chuyển đổi Entity sang Response DTO (ĐÃ CẬP NHẬT) ---
+    
 
     private JobCandidateResponse toResponse(JobCandidate entity) {
         JobCandidateResponse response = new JobCandidateResponse();
         response.setId(entity.getId());
         
-        // Đặt thông tin Job
+        
         if (entity.getJob() != null) {
             Job job = entity.getJob();
             response.setJobId(job.getId());
             response.setJobTitle(job.getTitle());
         }
         
-        // Đặt thông tin Candidate
+        
         if (entity.getCandidate() != null) {
             Candidate candidate = entity.getCandidate();
             response.setCandidateId(candidate.getId());
@@ -78,13 +77,13 @@ public class JobCandidateServiceImpl implements JobCandidateService {
         return response;
     }
 
-    // --- Triển khai Service Methods (CRUD) ---
+    
     
     @Override
     public JobCandidateResponse create(FormJobCandidate form) {
         JobCandidate jobCandidateToCreate = toEntity(form);
         JobCandidate savedJobCandidate = jobCandidateRepository.save(jobCandidateToCreate);
-        // Trả về response đã có đủ thông tin tên/tiêu đề
+        
         return toResponse(savedJobCandidate); 
     }
     
@@ -93,13 +92,13 @@ public class JobCandidateServiceImpl implements JobCandidateService {
         JobCandidate existingCandidate = jobCandidateRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("JobCandidate not found with id: " + id));
 
-        // Cập nhật các trường trực tiếp (không thay đổi Job/Candidate ID)
+        
         existingCandidate.setCv_url(form.getCvUrl()); 
         existingCandidate.setCover_letter(form.getCoverLetter());
         existingCandidate.setStatus(form.getStatus());
 
         JobCandidate updatedJobCandidate = jobCandidateRepository.save(existingCandidate);
-        // Trả về response đã có đủ thông tin tên/tiêu đề
+        
         return toResponse(updatedJobCandidate); 
     }
     
@@ -120,7 +119,7 @@ public class JobCandidateServiceImpl implements JobCandidateService {
         if (!jobCandidateRepository.existsById(id)) {
              throw new RuntimeException("JobCandidate not found with id: " + id);
         }
-        // Thay vì dùng .get(), kiểm tra Optional để an toàn hơn (dù đã existsById)
+        
         jobCandidateRepository.findById(id).ifPresent(jobCandidateRepository::delete);
     }
     

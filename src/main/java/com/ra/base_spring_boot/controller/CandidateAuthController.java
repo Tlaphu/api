@@ -114,5 +114,16 @@ public class CandidateAuthController {
                         .build()
         );
     }
-
+   
+    @GetMapping("/verify")
+    public ResponseEntity<?> handleCandidateVerification(@RequestParam("token") String token) {
+        authService.activateAccount(token);
+        return ResponseEntity.ok(
+            ResponseWrapper.builder()
+                    .status(HttpStatus.OK)
+                    .code(200)
+                    .data("Candidate account activated successfully! You can now log in.")
+                    .build()
+    );
+}
 }

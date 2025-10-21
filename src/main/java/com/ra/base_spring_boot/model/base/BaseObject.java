@@ -16,4 +16,5 @@ public class   BaseObject
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    private boolean status = false;
 }

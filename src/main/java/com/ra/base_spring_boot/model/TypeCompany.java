@@ -13,7 +13,7 @@ import java.util.List;
 @Builder
 public class TypeCompany {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY) // <--- Thêm annotation này
+    @GeneratedValue(strategy = GenerationType.IDENTITY) 
     private Long id;
     private String name;
     @Temporal(TemporalType.DATE)
