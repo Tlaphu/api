@@ -47,6 +47,7 @@ public class Candidate extends BaseObject {
     private String link_linkedin;
     private String link_git;
 
+    private boolean status;
     @Temporal(TemporalType.TIMESTAMP)
     private Date created_at;
 

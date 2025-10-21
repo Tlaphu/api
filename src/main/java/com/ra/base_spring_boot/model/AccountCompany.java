@@ -21,7 +21,7 @@ public class AccountCompany {
     private String fullName;
     private String email;
     private String password;
-
+    private boolean status;
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "company_id")
     @JsonBackReference
