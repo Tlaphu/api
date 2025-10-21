@@ -51,15 +51,10 @@ public class CertificateCandidateServiceImpl implements ICertificateCandidateSer
     @Override
     public CertificateCandidateResponse updateCertificate(Long id, FormCertificateCandidate req) {
         Candidate current = jwtProvider.getCurrentCandidate();
-<<<<<<< HEAD
-       
-        CertificateCandidate exp = iCertificateCandidateRepository.findById(id) 
-            .orElseThrow(() -> new RuntimeException("Certificate not found"));
-=======
+
         CertificateCandidate exp = iCertificateCandidateRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Certificate not found"));
->>>>>>> 05fa726ec0f77df812a93ae1d3fdd29aebdb058d
-                
+
         if (!exp.getCandidate().getId().equals(current.getId())) {
             throw new HttpAccessDenied("Access denied: You can only update your own certificate");
         }
@@ -77,14 +72,10 @@ public class CertificateCandidateServiceImpl implements ICertificateCandidateSer
     @Override
     public void deleteCertificate(Long id) {
         Candidate current = jwtProvider.getCurrentCandidate();
-<<<<<<< HEAD
-        
-        CertificateCandidate exp = iCertificateCandidateRepository.findById(id) 
-            .orElseThrow(() -> new RuntimeException("Certificate not found"));
-=======
+
         CertificateCandidate exp = iCertificateCandidateRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Certificate not found"));
->>>>>>> 05fa726ec0f77df812a93ae1d3fdd29aebdb058d
+
 
         if (!exp.getCandidate().getId().equals(current.getId())) {
             throw new HttpAccessDenied("Access denied: You can only delete your own certificate");
