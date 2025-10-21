@@ -15,4 +15,6 @@ public interface ICandidateRepository extends JpaRepository<Candidate, Long> {
     Optional<Candidate> findByEmail(String email);
 
     Optional<Candidate> findByEmailAndRoles_RoleName(String email, RoleName roleName);
+   
+    Optional<Candidate> findByVerificationToken(String verificationToken);
 }

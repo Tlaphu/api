@@ -27,9 +27,9 @@ public class EducationCandidateServiceImpl implements IEducationCandidateService
     }
 
     @Override
-    // Đã hoàn nguyên tham số về String để khớp với IEducationCandidateService
+    
     public EducationCandidateResponse createByCandidate(String candidateId, FromEducationCandidate request) {
-        // Chuyển đổi String ID sang Long để tìm kiếm trong Repository
+     
         Long idAsLong = Long.parseLong(candidateId);
         
         Candidate candidate = candidateRepo.findById(idAsLong)
@@ -51,20 +51,20 @@ public class EducationCandidateServiceImpl implements IEducationCandidateService
     }
 
     @Override
-    // Đã hoàn nguyên tham số về String để khớp với IEducationCandidateService
+    
     public EducationCandidateResponse updateByCandidate(Long id, String candidateId, FromEducationCandidate request) {
         EducationCandidate edu = educationRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Education not found"));
         
-        // Chuyển đổi String ID sang Long để so sánh
+        
         Long candidateIdAsLong = Long.parseLong(candidateId);
 
-        // So sánh hai Long ID
+        
         if (!edu.getCandidate().getId().equals(candidateIdAsLong)) {
             throw new RuntimeException("Unauthorized: cannot edit other candidate’s education");
         }
 
-        // ... Logic cập nhật ...
+      
         edu.setName_education(request.getName_education());
         edu.setMajor(request.getMajor());
         edu.setStarted_at(request.getStartedAt());
@@ -77,12 +77,12 @@ public class EducationCandidateServiceImpl implements IEducationCandidateService
     }
 
     @Override
-    // Đã hoàn nguyên tham số về String để khớp với IEducationCandidateService
+    
     public void deleteByCandidate(Long id, String candidateId) {
         EducationCandidate edu = educationRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Education not found"));
         
-        // Chuyển đổi String ID sang Long để so sánh
+        
         Long candidateIdAsLong = Long.parseLong(candidateId);
 
      

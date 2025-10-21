@@ -16,8 +16,11 @@ import java.util.Set;
 @Getter
 @Setter
 @Builder
-public class Candidate extends BaseObject {
-
+public class Candidate {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    
     private String name;
 
     private Integer isOpen;
@@ -31,6 +34,8 @@ public class Candidate extends BaseObject {
     private String phone;
     private String password;
 
+    private boolean status = false;
+    private String verificationToken;
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "candidate_roles",

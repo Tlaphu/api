@@ -13,6 +13,7 @@ public class AccountCompanyResponse {
     private String email;
     private String fullName;
     private String phone;
+    private boolean status;
     @JsonIgnoreProperties({
             "accounts", "jobs", "addresses"
     })

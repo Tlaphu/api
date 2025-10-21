@@ -10,7 +10,7 @@ import com.ra.base_spring_boot.security.jwt.JwtProvider;
 import com.ra.base_spring_boot.security.principle.MyCompanyDetails;
 import com.ra.base_spring_boot.services.ICompanyAuthService;
 import com.ra.base_spring_boot.services.IRoleService;
-import jakarta.validation.constraints.NotBlank;
+import com.ra.base_spring_boot.services.EmailService; 
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.PageRequest;
@@ -38,6 +38,10 @@ public class CompanyAuthServiceImpl implements ICompanyAuthService {
     @Qualifier("companyAuthManager")
     private final AuthenticationManager companyAuthManager;
     private final JwtProvider jwtProvider;
+    private final EmailService emailService; 
+    
+    // URL CỨNG CHO SERVER (Bạn nên chuyển giá trị này ra application.properties/yml)
+    private static final String BASE_URL = "http://localhost:8080/api/v1/auth/company";
 
     public CompanyAuthServiceImpl(
             IRoleService roleService,
@@ -47,7 +51,8 @@ public class CompanyAuthServiceImpl implements ICompanyAuthService {
             PasswordEncoder passwordEncoder,
             ITypeCompanyRepository typeCompanyRepository,
             @Qualifier("companyAuthManager") AuthenticationManager companyAuthManager,
-            JwtProvider jwtProvider
+            JwtProvider jwtProvider,
+            EmailService emailService 
     ) {
         this.roleService = roleService;
         this.accountCompanyRepository = accountCompanyRepository;
@@ -57,6 +62,7 @@ public class CompanyAuthServiceImpl implements ICompanyAuthService {
         this.typeCompanyRepository = typeCompanyRepository;
         this.companyAuthManager = companyAuthManager;
         this.jwtProvider = jwtProvider;
+        this.emailService = emailService; 
     }
 
     @Override
@@ -69,7 +75,6 @@ public class CompanyAuthServiceImpl implements ICompanyAuthService {
             throw new HttpBadRequest("Passwords do not match");
         }
 
-
         Set<Role> roles = new HashSet<>();
         roles.add(roleService.findByRoleName(RoleName.ROLE_COMPANY));
 
@@ -79,7 +84,6 @@ public class CompanyAuthServiceImpl implements ICompanyAuthService {
         if (existingCompanyOpt.isPresent()) {
             company = existingCompanyOpt.get();
         } else {
-
             company = Company.builder()
                     .name(form.getFullName())
                     .email(form.getCompanyEmail())
@@ -89,21 +93,47 @@ public class CompanyAuthServiceImpl implements ICompanyAuthService {
                     .build();
             companyRepository.save(company);
         }
-
+        
+        // 1. TẠO MÃ KÍCH HOẠT
+        String verificationToken = UUID.randomUUID().toString();
+        
         AccountCompany accountCompany = AccountCompany.builder()
                 .email(form.getEmail())
                 .password(passwordEncoder.encode(form.getPassword()))
                 .roles(roles)
                 .company(company)
+                // 2. LƯU TOKEN VÀ ĐẶT TRẠNG THÁI status=false (INACTIVE)
+                .verificationToken(verificationToken) 
+                .status(false)
                 .build();
 
-        accountCompanyRepository.save(accountCompany);
+        accountCompanyRepository.save(accountCompany); 
 
         AddressCompany address = AddressCompany.builder()
                 .company(company)
                 .address(form.getAddress())
                 .build();
         addressCompanyRepository.save(address);
+
+        // 3. GỬI EMAIL KÍCH HOẠT
+        String confirmationLink = BASE_URL + "/verify?token=" + verificationToken;
+        
+        emailService.sendVerificationEmail(
+            form.getEmail(), 
+            form.getFullName(), 
+            confirmationLink 
+        );
+    }
+    
+    // THÊM PHƯƠNG THỨC ACTIVATE ACCOUNT (Bổ sung từ interface)
+    @Override
+    public void activateAccount(String token) {
+        AccountCompany accountCompany = accountCompanyRepository.findByVerificationToken(token)
+                .orElseThrow(() -> new HttpBadRequest("Invalid or expired verification token"));
+        
+        accountCompany.setStatus(true); // Kích hoạt tài khoản
+        accountCompany.setVerificationToken(null); // Xóa token sau khi kích hoạt
+        accountCompanyRepository.save(accountCompany);
     }
 
 
@@ -120,6 +150,12 @@ public class CompanyAuthServiceImpl implements ICompanyAuthService {
 
         MyCompanyDetails companyDetails = (MyCompanyDetails) authentication.getPrincipal();
         AccountCompany accountCompany = companyDetails.getAccountCompany();
+        
+        // KIỂM TRA TRẠNG THÁI KÍCH HOẠT TRƯỚC KHI CHO ĐĂNG NHẬP
+        if (!accountCompany.isStatus()) {
+             throw new HttpBadRequest("Account is not activated. Please check your email for the activation link.");
+        }
+        
         Company company = accountCompany.getCompany();
 
         Set<String> roles = companyDetails.getAuthorities().stream()
@@ -240,7 +276,7 @@ public class CompanyAuthServiceImpl implements ICompanyAuthService {
                 .size(company.getSize())
                 .description(company.getDescription())
                 .created_at(company.getCreated_at())
-                .updated_at(company.getUpdated_at())
+                .updated_at(new Date()) // Updated to use the field from Company
                 .typeCompanyName(company.getTypeCompany() != null ? company.getTypeCompany().getName() : null)
                 .addresses(addresses)
                 .build();
@@ -254,6 +290,7 @@ public class CompanyAuthServiceImpl implements ICompanyAuthService {
                 .email(accountCompany.getEmail())
                 .fullName(accountCompany.getFullName())
                 .phone(company.getPhone())
+                .status(accountCompany.isStatus()) // Thêm trạng thái kích hoạt vào Response
                 .company(CompanyResponse.builder()
                         .id(company.getId())
                         .name(company.getName())
@@ -292,5 +329,4 @@ public class CompanyAuthServiceImpl implements ICompanyAuthService {
                 )
                 .build();
     }
-
 }

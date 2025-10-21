@@ -17,34 +17,31 @@ public class JobCandidateController {
 
     private final JobCandidateService jobCandidateService;
 
-    // Constructor Injection
     @Autowired
     public JobCandidateController(JobCandidateService jobCandidateService) {
         this.jobCandidateService = jobCandidateService;
     }
 
-    // 1. POST: Tạo mới một lần ứng tuyển
-    // URI: /api/v1/job-candidates
+ 
+
     @PostMapping
     public ResponseEntity<JobCandidateResponse> createJobCandidate(@Valid @RequestBody FormJobCandidate form) {
         JobCandidateResponse response = jobCandidateService.create(form);
-        return new ResponseEntity<>(response, HttpStatus.CREATED); // HTTP 201
+        return new ResponseEntity<>(response, HttpStatus.CREATED); 
     }
 
-    // 2. GET: Lấy tất cả các lần ứng tuyển
-    // URI: /api/v1/job-candidates
     @GetMapping
     public List<JobCandidateResponse> getAllJobCandidates() {
         return jobCandidateService.findAll();
     }
 
-    // 3. GET: Lấy chi tiết lần ứng tuyển theo ID
-    // URI: /api/v1/job-candidates/{id}
+    
+    
     @GetMapping("/{id}")
     public ResponseEntity<JobCandidateResponse> getJobCandidateById(@PathVariable Long id) {
         return jobCandidateService.findById(id)
-                .map(ResponseEntity::ok) // HTTP 200
-                .orElse(ResponseEntity.notFound().build()); // HTTP 404
+                .map(ResponseEntity::ok) 
+                .orElse(ResponseEntity.notFound().build()); 
     }
     
 

@@ -71,6 +71,7 @@ public class CertificateCandidateController {
     /**
      * @apiNote
      */
+
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteExperience(@PathVariable Long id) {
         certificateCandidateService.deleteCertificate(id);
@@ -82,5 +83,6 @@ public class CertificateCandidateController {
                         .build()
         );
     }
+
 }
 

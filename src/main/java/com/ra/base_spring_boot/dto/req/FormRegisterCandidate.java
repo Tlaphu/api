@@ -33,7 +33,7 @@ public class FormRegisterCandidate {
 
     private Date dob;
 
-    private Integer gender; // 0 = female, 1 = male, 2 = other
+    private Integer gender; 
 
     private String link_fb;
     private String link_linkedin;

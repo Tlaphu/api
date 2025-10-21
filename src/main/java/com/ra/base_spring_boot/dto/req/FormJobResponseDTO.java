@@ -1,8 +1,8 @@
 package com.ra.base_spring_boot.dto.req;
 
+import java.util.Date;
+
 import lombok.*;
-import lombok.Builder;
-import lombok.Getter;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -19,4 +19,7 @@ public class FormJobResponseDTO {
     private String companyName;
     private String companyLogo;
     private String locationName;
+    private String levelJobName;
+    private Date created_at;
+    private Date expire_at;
 }

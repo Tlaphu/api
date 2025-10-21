@@ -15,5 +15,6 @@ public class FormJob {
     private Date expire_at;
     private Long companyId;
     private Long locationId;
+    private long levelJobRelationsId;
     private String workTime;     
 }

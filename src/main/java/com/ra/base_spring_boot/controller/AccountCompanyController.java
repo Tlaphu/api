@@ -87,4 +87,15 @@ public class AccountCompanyController {
                         .build()
         );
     }
+    @GetMapping("/verify")
+    public ResponseEntity<?> handleCompanyVerification(@RequestParam("token") String token) {
+        companyAuthService.activateAccount(token);
+        return ResponseEntity.ok(
+            ResponseWrapper.builder()
+                    .status(HttpStatus.OK)
+                    .code(200)
+                    .data("Company account activated successfully! You can now log in.")
+                    .build()
+    );
+}
 }
