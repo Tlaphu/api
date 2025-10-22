@@ -27,6 +27,8 @@ public class AccountCompany {
     @Builder.Default
     private boolean status = false;
     private String verificationToken;
+    @Column(unique = true) 
+    private String resetToken;
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "company_id")
     @JsonBackReference

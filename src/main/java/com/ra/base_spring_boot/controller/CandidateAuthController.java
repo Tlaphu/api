@@ -78,16 +78,36 @@ public class CandidateAuthController {
      */
     @PostMapping("/forgot-password")
     public ResponseEntity<?> handleForgotPassword(@Valid @RequestBody FormForgotPassword formForgotPassword) {
-        String resetToken = authService.forgotPassword(formForgotPassword);
-        return ResponseEntity.ok(
-                ResponseWrapper.builder()
-                        .status(HttpStatus.OK)
-                        .code(200)
-                        .data("Reset password link has been sent to email. Token: " + resetToken)
-                        .build()
-        );
-    }
+   
+    authService.forgotPassword(formForgotPassword); 
+    
+    
+    return ResponseEntity.ok(
+            ResponseWrapper.builder()
+                    .status(HttpStatus.OK)
+                    .code(200)
+                   
+                    .data("Password reset link has been sent to your email.") 
+                    .build()
+    );
+}
+    /**
+     * @param formResetPassword FormResetPassword
+     * @apiNote handle reset password with resetToken & newPassword
+     */
 
+@PutMapping("/reset-password")
+public ResponseEntity<?> handleResetPassword(@Valid @RequestBody FormResetPassword form) {
+    authService.resetPassword(form);
+    
+    return ResponseEntity.ok(
+            ResponseWrapper.builder()
+                    .status(HttpStatus.OK)
+                    .code(HttpStatus.OK.value())
+                    .data("Password has been reset successfully! You can now log in.")
+                    .build()
+    );
+}
     /**
      * @param formChangePassword FormChangePassword
      * @apiNote handle change password with oldPassword & newPassword

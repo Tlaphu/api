@@ -35,5 +35,6 @@ public interface ICandidateAuthService {
      */
     void updateProfile(FormUpdateProfile form);
     void activateAccount(String token);
+    void resetPassword(FormResetPassword form);
 
 }

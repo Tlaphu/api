@@ -178,16 +178,45 @@ public class CompanyAuthServiceImpl implements ICompanyAuthService {
 
     @Override
     public String forgotPassword(FormForgotPassword form) {
-        AccountCompany accountCompany = accountCompanyRepository
-                .findByEmailAndRoles_RoleName(form.getEmail(), form.getRole())
-                .orElseThrow(() -> new HttpBadRequest("Company account not found with email and role"));
-
+       AccountCompany accountCompany = accountCompanyRepository
+            .findByEmail(form.getEmail()) 
+            .orElseThrow(() -> new HttpBadRequest("Account not found with this email."));
+        
         String resetToken = UUID.randomUUID().toString();
-        System.out.println("Send reset password token to email: " + accountCompany.getEmail());
-        return resetToken;
+        accountCompany.setResetToken(resetToken); 
+        accountCompanyRepository.save(accountCompany); 
+
+     
+        String baseUrlNoAuth = BASE_URL.substring(0, BASE_URL.lastIndexOf("/company"));
+        String resetLink = baseUrlNoAuth + "/reset-password?token=" + resetToken; 
+
+        
+        emailService.sendResetPasswordEmail(
+            accountCompany.getEmail(), 
+            accountCompany.getFullName(), 
+            resetLink
+        );
+
+       
+        return "Password reset link sent to email.";
     }
 
+    @Override
+public void resetPassword(FormResetPassword form) {
+    
+    if (!form.getNewPassword().equals(form.getConfirmNewPassword())) {
+        throw new HttpBadRequest("New passwords do not match.");
+    }
+    
+    
+    AccountCompany accountCompany = accountCompanyRepository.findByResetToken(form.getToken())
+            .orElseThrow(() -> new HttpBadRequest("Invalid or expired reset token."));
 
+   
+    accountCompany.setPassword(passwordEncoder.encode(form.getNewPassword()));
+    accountCompany.setResetToken(null); 
+    accountCompanyRepository.save(accountCompany);
+}
     @Override
     public void changePassword(FormChangePassword form) {
         AccountCompany accountCompany = jwtProvider.getCurrentAccountCompany();

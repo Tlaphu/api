@@ -36,6 +36,8 @@ public class Candidate {
     @Builder.Default
     private boolean status = false;
     private String verificationToken;
+    @Column(unique = true) 
+    private String resetToken;
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "candidate_roles",

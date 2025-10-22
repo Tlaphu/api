@@ -36,7 +36,7 @@ public class JobController {
     private ICompanyAuthService companyAuthService;
 
    
-    @PreAuthorize("hasAuthority('ROLE_COMPANY')")
+    @PreAuthorize("hasAuthority('ROLE_COMPANY') or hasAuthority('ROLE_ADMIN')")
     @PostMapping
     public ResponseEntity<?> create(@RequestBody FormJob form) {
         
@@ -148,7 +148,7 @@ public class JobController {
     }
     
     
-    @PreAuthorize("hasAuthority('ROLE_COMPANY')")
+    @PreAuthorize("hasAuthority('ROLE_COMPANY') or hasAuthority('ROLE_ADMIN')")
     @PutMapping("/{id}")
     public ResponseEntity<?> update(@PathVariable Long id, @RequestBody FormJob form) {
         
@@ -219,7 +219,7 @@ public class JobController {
     }
     
     // --- 5. DELETE ---
-    @PreAuthorize("hasAuthority('ROLE_COMPANY')")
+    @PreAuthorize("hasAuthority('ROLE_COMPANY') or hasAuthority('ROLE_ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<?> delete(@PathVariable Long id) {
         Optional<Job> jobOpt = jobRepository.findById(id);

@@ -71,4 +71,28 @@ public class EmailService {
             System.err.println("Error while sending registration success email: " + e.getMessage());
         }
     }
+   
+ public void sendResetPasswordEmail(String toEmail, String recipientName, String resetLink) {
+    String userName = recipientName != null && !recipientName.isEmpty() ? recipientName : "User";
+    try {
+        SimpleMailMessage message = new SimpleMailMessage();
+
+        message.setFrom(fromEmail);
+        message.setTo(toEmail);
+        message.setSubject("Password Reset Request");
+
+        String content = "Dear " + userName + ",\n\n"
+                       + "You requested a password reset. Please click the link below to set a new password:\n\n"
+                       + resetLink + "\n\n"
+                       + "This link will expire soon. If you didn't request this, please ignore this email.\n\n"
+                       + "Best regards,\n"
+                       + "The Recruitment Team.";
+
+        message.setText(content);
+        mailSender.send(message);
+        System.out.println("Password reset email sent to: " + toEmail);
+    } catch (Exception e) {
+        System.err.println("ERROR SENDING RESET PASSWORD EMAIL to " + toEmail + ": " + e.getMessage());
+    }
+}
 }
