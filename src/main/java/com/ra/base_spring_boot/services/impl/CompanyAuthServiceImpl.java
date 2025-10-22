@@ -40,7 +40,6 @@ public class CompanyAuthServiceImpl implements ICompanyAuthService {
     private final JwtProvider jwtProvider;
     private final EmailService emailService; 
     
-    // URL CỨNG CHO SERVER (Bạn nên chuyển giá trị này ra application.properties/yml)
     private static final String BASE_URL = "http://localhost:8080/api/v1/auth/company";
 
     public CompanyAuthServiceImpl(
@@ -85,7 +84,7 @@ public class CompanyAuthServiceImpl implements ICompanyAuthService {
             company = existingCompanyOpt.get();
         } else {
             company = Company.builder()
-                    .name(form.getFullName())
+                    .name(form.getCompanyName())
                     .email(form.getCompanyEmail())
                     .phone(form.getPhone())
                     .created_at(new Date())
@@ -94,16 +93,15 @@ public class CompanyAuthServiceImpl implements ICompanyAuthService {
             companyRepository.save(company);
         }
         
-        // 1. TẠO MÃ KÍCH HOẠT
         String verificationToken = UUID.randomUUID().toString();
         
         AccountCompany accountCompany = AccountCompany.builder()
+                .fullName(form.getFullName())
                 .email(form.getEmail())
                 .password(passwordEncoder.encode(form.getPassword()))
                 .roles(roles)
                 .company(company)
-                // 2. LƯU TOKEN VÀ ĐẶT TRẠNG THÁI status=false (INACTIVE)
-                .verificationToken(verificationToken) 
+                .verificationToken(verificationToken)
                 .status(false)
                 .build();
 
@@ -115,7 +113,6 @@ public class CompanyAuthServiceImpl implements ICompanyAuthService {
                 .build();
         addressCompanyRepository.save(address);
 
-        // 3. GỬI EMAIL KÍCH HOẠT
         String confirmationLink = BASE_URL + "/verify?token=" + verificationToken;
         
         emailService.sendVerificationEmail(
@@ -125,14 +122,13 @@ public class CompanyAuthServiceImpl implements ICompanyAuthService {
         );
     }
     
-    // THÊM PHƯƠNG THỨC ACTIVATE ACCOUNT (Bổ sung từ interface)
     @Override
     public void activateAccount(String token) {
         AccountCompany accountCompany = accountCompanyRepository.findByVerificationToken(token)
                 .orElseThrow(() -> new HttpBadRequest("Invalid or expired verification token"));
         
-        accountCompany.setStatus(true); // Kích hoạt tài khoản
-        accountCompany.setVerificationToken(null); // Xóa token sau khi kích hoạt
+        accountCompany.setStatus(true);
+        accountCompany.setVerificationToken(null);
         accountCompanyRepository.save(accountCompany);
     }
 
@@ -151,7 +147,7 @@ public class CompanyAuthServiceImpl implements ICompanyAuthService {
         MyCompanyDetails companyDetails = (MyCompanyDetails) authentication.getPrincipal();
         AccountCompany accountCompany = companyDetails.getAccountCompany();
         
-        // KIỂM TRA TRẠNG THÁI KÍCH HOẠT TRƯỚC KHI CHO ĐĂNG NHẬP
+
         if (!accountCompany.isStatus()) {
              throw new HttpBadRequest("Account is not activated. Please check your email for the activation link.");
         }

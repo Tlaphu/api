@@ -28,5 +28,9 @@ public class Role {
     @ManyToMany(mappedBy = "roles")
     @JsonIgnore
     private List<AccountCompany> companies;
+    @ManyToMany(mappedBy = "roles")
+    @JsonIgnore
+    private List<Admin> admins;
+
 }
 
