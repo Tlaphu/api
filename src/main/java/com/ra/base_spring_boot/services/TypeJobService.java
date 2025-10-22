@@ -19,7 +19,6 @@ public class TypeJobService {
         return repo.findAll();
     }
 
-
     public TypeJob getById(Long id) {
         return repo.findById(id).orElse(null);
     }
@@ -28,7 +27,6 @@ public class TypeJobService {
         return repo.save(tj);
     }
 
-   
     public void delete(Long id) {
         repo.deleteById(id);
     }

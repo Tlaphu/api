@@ -18,7 +18,6 @@ public class AddressCompanyController {
 
     private final IAddressCompanyService service;
 
-
     @PreAuthorize("hasAuthority('ROLE_COMPANY')")
     @GetMapping
     public ResponseEntity<List<AddressCompanyResponse>> getAllForCompany(Principal principal) {
@@ -26,25 +25,22 @@ public class AddressCompanyController {
         return ResponseEntity.ok(service.getByCompanyEmail(email));
     }
 
-
     @PreAuthorize("hasAuthority('ROLE_COMPANY')")
     @PostMapping
     public ResponseEntity<AddressCompanyResponse> create(@RequestBody FormAddressCompany form,
-                                                         Principal principal) {
+            Principal principal) {
         String email = principal.getName();
         return ResponseEntity.ok(service.createForCompany(email, form));
     }
 
-
     @PreAuthorize("hasAuthority('ROLE_COMPANY')")
     @PutMapping("/{id}")
     public ResponseEntity<AddressCompanyResponse> update(@PathVariable Long id,
-                                                         @RequestBody FormAddressCompany form,
-                                                         Principal principal) {
+            @RequestBody FormAddressCompany form,
+            Principal principal) {
         String email = principal.getName();
         return ResponseEntity.ok(service.updateForCompany(email, id, form));
     }
-
 
     @PreAuthorize("hasAuthority('ROLE_COMPANY')")
     @DeleteMapping("/{id}")

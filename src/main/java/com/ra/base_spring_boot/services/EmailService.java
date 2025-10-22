@@ -12,7 +12,7 @@ public class EmailService {
 
     private final JavaMailSender mailSender;
 
-    // Sử dụng email đã được cấu hình trong MailConfig
+    
     
     @Value("${spring.mail.username:thaihoangiaphu004@gmail.com}")
     private String fromEmail;

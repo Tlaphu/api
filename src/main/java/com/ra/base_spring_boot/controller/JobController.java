@@ -15,7 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.*; 
+import java.util.*;
 import java.util.stream.Collectors;
 
 @RestController
@@ -35,21 +35,18 @@ public class JobController {
     @Autowired
     private ICompanyAuthService companyAuthService;
 
-   
     @PreAuthorize("hasAuthority('ROLE_COMPANY') or hasAuthority('ROLE_ADMIN')")
     @PostMapping
     public ResponseEntity<?> create(@RequestBody FormJob form) {
-        
-    
+
         Long locationId = form.getLocationId();
         Optional<Location> locationOpt = locationRepository.findById(locationId);
         if (locationOpt.isEmpty()) {
             return ResponseEntity.status(404).body("Location not found");
         }
 
-    
         Long companyId = form.getCompanyId();
-        Optional<Company> companyOpt = companyRepository.findById(companyId); 
+        Optional<Company> companyOpt = companyRepository.findById(companyId);
         if (companyOpt.isEmpty()) {
             return ResponseEntity.status(404).body("Company not found");
         }
@@ -68,7 +65,7 @@ public class JobController {
                 .location(location)
                 .company(company)
                 .created_at(new Date())
-                .expire_at(form.getExpire_at()) 
+                .expire_at(form.getExpire_at())
                 .build();
 
         jobRepository.save(job);
@@ -92,31 +89,28 @@ public class JobController {
         return ResponseEntity.status(201).body(response);
     }
 
-    
-
     @GetMapping
     public ResponseEntity<?> getAll() {
         List<FormJobResponseDTO> jobs = jobRepository.findAll().stream()
                 .map(job -> FormJobResponseDTO.builder()
-                        .id(job.getId())
-                        .title(job.getTitle())
-                        .description(job.getDescription())
-                        .salary(job.getSalary())
-                        .requirements(job.getRequirements())
-                        .desirable(job.getDesirable())
-                        .benefits(job.getBenefits())
-                        .workTime(job.getWorkTime())
-                        .companyName(job.getCompany() != null ? job.getCompany().getName() : "N/A")
-                        .companyLogo(job.getCompany()!= null ? job.getCompany().getLogo() : "N/A")
-                        .locationName(job.getLocation() != null ? job.getLocation().getName() : "N/A")
-                        .created_at(job.getCreated_at())
-                        .expire_at(job.getExpire_at())
-                        .build())
+                .id(job.getId())
+                .title(job.getTitle())
+                .description(job.getDescription())
+                .salary(job.getSalary())
+                .requirements(job.getRequirements())
+                .desirable(job.getDesirable())
+                .benefits(job.getBenefits())
+                .workTime(job.getWorkTime())
+                .companyName(job.getCompany() != null ? job.getCompany().getName() : "N/A")
+                .companyLogo(job.getCompany() != null ? job.getCompany().getLogo() : "N/A")
+                .locationName(job.getLocation() != null ? job.getLocation().getName() : "N/A")
+                .created_at(job.getCreated_at())
+                .expire_at(job.getExpire_at())
+                .build())
                 .collect(Collectors.toList());
 
         return ResponseEntity.ok(jobs);
     }
-
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getById(@PathVariable Long id) {
@@ -141,17 +135,16 @@ public class JobController {
                 .locationName(job.getLocation() != null ? job.getLocation().getName() : null)
                 .created_at(job.getCreated_at())
                 .expire_at(job.getExpire_at())
-                .levelJobName(job.getLevelJobRelations() != null && !job.getLevelJobRelations().isEmpty() ? job.getLevelJobRelations().get(0).getLevelJob().getName(): null)
+                .levelJobName(job.getLevelJobRelations() != null && !job.getLevelJobRelations().isEmpty() ? job.getLevelJobRelations().get(0).getLevelJob().getName() : null)
                 .build();
 
         return ResponseEntity.ok(dto);
     }
-    
-    
+
     @PreAuthorize("hasAuthority('ROLE_COMPANY') or hasAuthority('ROLE_ADMIN')")
     @PutMapping("/{id}")
     public ResponseEntity<?> update(@PathVariable Long id, @RequestBody FormJob form) {
-        
+
         Optional<Job> jobOpt = jobRepository.findById(id);
         if (jobOpt.isEmpty()) {
             return ResponseEntity.status(404).body("Job not found");
@@ -159,7 +152,6 @@ public class JobController {
 
         Job job = jobOpt.get();
 
- 
         Long locationId = form.getLocationId();
         if (locationId == null) {
             return ResponseEntity.status(400).body("Location ID must be provided in the request body.");
@@ -169,20 +161,17 @@ public class JobController {
             return ResponseEntity.status(404).body("Location not found");
         }
 
-       
         Long companyId = form.getCompanyId();
         if (companyId == null) {
             return ResponseEntity.status(400).body("Company ID must be provided in the request body.");
         }
-        Optional<Company> companyOpt = companyRepository.findById(companyId); 
+        Optional<Company> companyOpt = companyRepository.findById(companyId);
         if (companyOpt.isEmpty()) {
             return ResponseEntity.status(404).body("Company not found");
         }
 
-        
         Location location = locationOpt.get();
         Company company = companyOpt.get();
-
 
         job.setTitle(form.getTitle());
         job.setDescription(form.getDescription());
@@ -198,7 +187,6 @@ public class JobController {
 
         jobRepository.save(job);
 
-        
         FormJobResponseDTO response = FormJobResponseDTO.builder()
                 .id(job.getId())
                 .title(job.getTitle())
@@ -217,7 +205,7 @@ public class JobController {
 
         return ResponseEntity.ok(response);
     }
-    
+
     // --- 5. DELETE ---
     @PreAuthorize("hasAuthority('ROLE_COMPANY') or hasAuthority('ROLE_ADMIN')")
     @DeleteMapping("/{id}")
@@ -231,30 +219,29 @@ public class JobController {
         return ResponseEntity.ok("Deleted Job successfully with id: " + id);
     }
 
-    
     @GetMapping("/featured")
     public ResponseEntity<?> getFeaturedJobs() {
         List<FormJobResponseDTO> jobs = jobRepository.findAll().stream()
                 .sorted((a, b) -> Double.compare(
-                        b.getSalary() != null ? b.getSalary() : 0,
-                        a.getSalary() != null ? a.getSalary() : 0
-                ))
+                b.getSalary() != null ? b.getSalary() : 0,
+                a.getSalary() != null ? a.getSalary() : 0
+        ))
                 .limit(10)
                 .map(job -> FormJobResponseDTO.builder()
-                        .id(job.getId())
-                        .title(job.getTitle())
-                        .description(job.getDescription())
-                        .salary(job.getSalary())
-                        .requirements(job.getRequirements())
-                        .desirable(job.getDesirable())
-                        .benefits(job.getBenefits())
-                        .workTime(job.getWorkTime())
-                        .companyName(job.getCompany() != null ? job.getCompany().getName() : "N/A")
-                        .companyLogo(job.getCompany()!= null ? job.getCompany().getLogo() : "N/A")
-                        .locationName(job.getLocation() != null ? job.getLocation().getName() : "N/A")
-                        .created_at(job.getCreated_at())
-                        .expire_at(job.getExpire_at())
-                        .build())
+                .id(job.getId())
+                .title(job.getTitle())
+                .description(job.getDescription())
+                .salary(job.getSalary())
+                .requirements(job.getRequirements())
+                .desirable(job.getDesirable())
+                .benefits(job.getBenefits())
+                .workTime(job.getWorkTime())
+                .companyName(job.getCompany() != null ? job.getCompany().getName() : "N/A")
+                .companyLogo(job.getCompany() != null ? job.getCompany().getLogo() : "N/A")
+                .locationName(job.getLocation() != null ? job.getLocation().getName() : "N/A")
+                .created_at(job.getCreated_at())
+                .expire_at(job.getExpire_at())
+                .build())
                 .collect(Collectors.toList());
 
         return ResponseEntity.ok(jobs);

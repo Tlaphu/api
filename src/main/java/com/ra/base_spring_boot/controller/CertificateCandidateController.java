@@ -1,6 +1,5 @@
 package com.ra.base_spring_boot.controller;
 
-
 import com.ra.base_spring_boot.dto.ResponseWrapper;
 import com.ra.base_spring_boot.dto.req.FormCertificateCandidate;
 import com.ra.base_spring_boot.dto.resp.CertificateCandidateResponse;
@@ -71,7 +70,6 @@ public class CertificateCandidateController {
     /**
      * @apiNote
      */
-
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteExperience(@PathVariable Long id) {
         certificateCandidateService.deleteCertificate(id);
@@ -85,4 +83,3 @@ public class CertificateCandidateController {
     }
 
 }
-

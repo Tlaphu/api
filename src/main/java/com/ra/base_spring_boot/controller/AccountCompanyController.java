@@ -42,35 +42,33 @@ public class AccountCompanyController {
         );
     }
 
-@PostMapping("/forgot-password")
-public ResponseEntity<ResponseWrapper<String>> forgotPassword(@RequestBody FormForgotPassword form) {
-    
-    companyAuthService.forgotPassword(form); 
-    
-    
-    return ResponseEntity.ok(
-            ResponseWrapper.<String>builder()
-                    .status(HttpStatus.OK)
-                    .code(HttpStatus.OK.value())
-                    
-                    .data("Password reset link has been sent to your email.") 
-                    .build()
-    );
-}
-    
+    @PostMapping("/forgot-password")
+    public ResponseEntity<ResponseWrapper<String>> forgotPassword(@RequestBody FormForgotPassword form) {
 
-@PutMapping("/reset-password") 
-public ResponseEntity<ResponseWrapper<String>> handleResetPassword(@Valid @RequestBody FormResetPassword form) {
-    companyAuthService.resetPassword(form);
-    
-    return ResponseEntity.ok(
-            ResponseWrapper.<String>builder()
-                    .status(HttpStatus.OK)
-                    .code(HttpStatus.OK.value())
-                    .data("Password has been reset successfully! You can now log in.")
-                    .build()
-    );
-}
+        companyAuthService.forgotPassword(form);
+
+        return ResponseEntity.ok(
+                ResponseWrapper.<String>builder()
+                        .status(HttpStatus.OK)
+                        .code(HttpStatus.OK.value())
+                        .data("Password reset link has been sent to your email.")
+                        .build()
+        );
+    }
+
+    @PutMapping("/reset-password")
+    public ResponseEntity<ResponseWrapper<String>> handleResetPassword(@Valid @RequestBody FormResetPassword form) {
+        companyAuthService.resetPassword(form);
+
+        return ResponseEntity.ok(
+                ResponseWrapper.<String>builder()
+                        .status(HttpStatus.OK)
+                        .code(HttpStatus.OK.value())
+                        .data("Password has been reset successfully! You can now log in.")
+                        .build()
+        );
+    }
+
     @PutMapping("/change-password")
     public ResponseEntity<ResponseWrapper<String>> changePassword(@RequestBody FormChangePassword form) {
         companyAuthService.changePassword(form);
@@ -106,15 +104,16 @@ public ResponseEntity<ResponseWrapper<String>> handleResetPassword(@Valid @Reque
                         .build()
         );
     }
+
     @GetMapping("/verify")
     public ResponseEntity<?> handleCompanyVerification(@RequestParam("token") String token) {
         companyAuthService.activateAccount(token);
         return ResponseEntity.ok(
-            ResponseWrapper.builder()
-                    .status(HttpStatus.OK)
-                    .code(200)
-                    .data("Company account activated successfully! You can now log in.")
-                    .build()
-    );
-}
+                ResponseWrapper.builder()
+                        .status(HttpStatus.OK)
+                        .code(200)
+                        .data("Company account activated successfully! You can now log in.")
+                        .build()
+        );
+    }
 }

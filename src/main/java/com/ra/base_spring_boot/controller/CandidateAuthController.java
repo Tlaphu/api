@@ -78,36 +78,35 @@ public class CandidateAuthController {
      */
     @PostMapping("/forgot-password")
     public ResponseEntity<?> handleForgotPassword(@Valid @RequestBody FormForgotPassword formForgotPassword) {
-   
-    authService.forgotPassword(formForgotPassword); 
-    
-    
-    return ResponseEntity.ok(
-            ResponseWrapper.builder()
-                    .status(HttpStatus.OK)
-                    .code(200)
-                   
-                    .data("Password reset link has been sent to your email.") 
-                    .build()
-    );
-}
+
+        authService.forgotPassword(formForgotPassword);
+
+        return ResponseEntity.ok(
+                ResponseWrapper.builder()
+                        .status(HttpStatus.OK)
+                        .code(200)
+                        .data("Password reset link has been sent to your email.")
+                        .build()
+        );
+    }
+
     /**
      * @param formResetPassword FormResetPassword
      * @apiNote handle reset password with resetToken & newPassword
      */
+    @PutMapping("/reset-password")
+    public ResponseEntity<?> handleResetPassword(@Valid @RequestBody FormResetPassword form) {
+        authService.resetPassword(form);
 
-@PutMapping("/reset-password")
-public ResponseEntity<?> handleResetPassword(@Valid @RequestBody FormResetPassword form) {
-    authService.resetPassword(form);
-    
-    return ResponseEntity.ok(
-            ResponseWrapper.builder()
-                    .status(HttpStatus.OK)
-                    .code(HttpStatus.OK.value())
-                    .data("Password has been reset successfully! You can now log in.")
-                    .build()
-    );
-}
+        return ResponseEntity.ok(
+                ResponseWrapper.builder()
+                        .status(HttpStatus.OK)
+                        .code(HttpStatus.OK.value())
+                        .data("Password has been reset successfully! You can now log in.")
+                        .build()
+        );
+    }
+
     /**
      * @param formChangePassword FormChangePassword
      * @apiNote handle change password with oldPassword & newPassword
@@ -139,18 +138,19 @@ public ResponseEntity<?> handleResetPassword(@Valid @RequestBody FormResetPasswo
                         .build()
         );
     }
-   
+
     @GetMapping("/verify")
     public ResponseEntity<?> handleCandidateVerification(@RequestParam("token") String token) {
         authService.activateAccount(token);
         return ResponseEntity.ok(
-            ResponseWrapper.builder()
-                    .status(HttpStatus.OK)
-                    .code(200)
-                    .data("Candidate account activated successfully! You can now log in.")
-                    .build()
-    );
-}
+                ResponseWrapper.builder()
+                        .status(HttpStatus.OK)
+                        .code(200)
+                        .data("Candidate account activated successfully! You can now log in.")
+                        .build()
+        );
+    }
+
     @GetMapping("/me")
     public ResponseEntity<?> getCurrentCandidate() {
         Candidate candidate = jwtProvider.getCurrentCandidate();
@@ -169,6 +169,5 @@ public ResponseEntity<?> handleResetPassword(@Valid @RequestBody FormResetPasswo
 
         return ResponseEntity.ok(response);
     }
-
 
 }
