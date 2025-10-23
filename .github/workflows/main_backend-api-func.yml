@@ -4,10 +4,10 @@
 name: Build and deploy Java project to Azure Function App - backend-api-func
 
 on:
-  push:
-    branches:
-      - main
-  workflow_dispatch:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
 
 env:
   AZURE_FUNCTIONAPP_NAME: backend-api-func # set this to your function app name on Azure
@@ -55,6 +55,4 @@ jobs:
           app-name: 'backend-api-func'
           slot-name: 'Production'
           package: '${{ env.PACKAGE_DIRECTORY }}'
-          
-
-
+          # Xóa 'respect-pom-xml: true' vì đang dùng Gradle
