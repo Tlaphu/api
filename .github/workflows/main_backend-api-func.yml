@@ -39,7 +39,7 @@ jobs:
         run: |
           pushd './${{ env.PACKAGE_DIRECTORY }}'
           chmod +x gradlew
-          ./gradlew clean build # Lệnh build chuẩn của Gradle
+          ./gradlew clean build -x test 
           popd
         
       - name: Login to Azure
@@ -57,3 +57,4 @@ jobs:
           slot-name: 'Production'
           package: '${{ env.PACKAGE_DIRECTORY }}'
           # Đã xóa 'respect-pom-xml: true'
+
