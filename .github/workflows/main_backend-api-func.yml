@@ -28,8 +28,7 @@ jobs:
       - name: Setup Java Sdk ${{ env.JAVA_VERSION }}
         uses: actions/setup-java@v1
         with: |+
-          java-version: ${{ env.JAVA_VERSION }}
-
+          java-version: 17
       - name: 'Restore Project Dependencies Using Mvn'
         shell: pwsh
         run: |+
@@ -52,4 +51,5 @@ jobs:
           slot-name: 'Production'
           package: '${{ env.PACKAGE_DIRECTORY }}'
           respect-pom-xml: true
+
           
