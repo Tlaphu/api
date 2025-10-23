@@ -10,48 +10,51 @@ on:
   workflow_dispatch:
 
 env:
-  AZURE_FUNCTIONAPP_NAME: backend-api-func # set this to your function app name on Azure
-  PACKAGE_DIRECTORY: '.' # set this to the directory which contains pom.xml file
-  JAVA_VERSION: '17' # set this to the java version to use
+  AZURE_FUNCTIONAPP_NAME: backend-api-func # set this to your function app name on Azure
+  PACKAGE_DIRECTORY: '.' # set this to the directory which contains pom.xml file
+  JAVA_VERSION: '17' # set this to the java version to use
 
 jobs:
-  build-and-deploy:
-    runs-on: ubuntu-latest
-    permissions:
-      id-token: write #This is required for requesting the JWT
-      contents: read #This is required for actions/checkout
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write #This is required for requesting the JWT
+      contents: read #This is required for actions/checkout
 
-    steps:
-      - name: 'Checkout GitHub Action'
-        uses: actions/checkout@v4
+    steps:
+      - name: 'Checkout GitHub Action'
+        uses: actions/checkout@v4
 
-      - name: Setup Java Sdk
-        uses: actions/setup-java@v3
-        with:
-          java-version: '17' 
-          distribution: 'temurin' 
-      - name: 'Restore Project Dependencies Using Mvn'
-        shell: pwsh
-        run: |+
-          pushd './${{ env.PACKAGE_DIRECTORY }}'
-          mvn clean package
-          popd
-      
-      - name: Login to Azure
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_2B9679192BA94E54832A3BFA57B36758 }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_5260E056CA1246D3A555AC147E603136 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_4C633A6F73854A3D84F43FFA69D49824 }}
 
-      - name: 'Run Azure Functions Action'
-        uses: Azure/functions-action@v1
-        id: fa
-        with:
-          app-name: 'backend-api-func'
-          slot-name: 'Production'
-          package: '${{ env.PACKAGE_DIRECTORY }}'
-          respect-pom-xml: true
+      - name: Setup Java Sdk 17
+        uses: actions/setup-java@v3 
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+        
 
+      - name: 'Restore Project Dependencies Using Gradle'
+        shell: bash
+        run: |
+          pushd './${{ env.PACKAGE_DIRECTORY }}'
+          chmod +x gradlew
+          ./gradlew clean build # Lệnh build chuẩn của Gradle
+          popd
+        
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_2B9679192BA94E54832A3BFA57B36758 }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_5260E056CA1246D3A555AC147E603136 }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_4C633A6F73854A3D84F43FFA69D49824 }}
+
+      - name: 'Run Azure Functions Action'
+        uses: Azure/functions-action@v1
+        id: fa
+        with:
+          app-name: 'backend-api-func'
+          slot-name: 'Production'
+          package: '${{ env.PACKAGE_DIRECTORY }}'
           
+
 
