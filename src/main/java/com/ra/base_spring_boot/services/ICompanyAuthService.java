@@ -48,5 +48,6 @@ public interface ICompanyAuthService {
      */
     CompanyResponse findById(Long id);
     void activateAccount(String token);
+    void resetPassword(FormResetPassword form);
 }
 

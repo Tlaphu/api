@@ -12,5 +12,6 @@ public interface IAccountCompanyRepository extends JpaRepository<AccountCompany,
     List<AccountCompany> findAllByCompany_Id(Long companyId);
     Optional<AccountCompany> findByEmailAndRoles_RoleName(String email, String roleName);
     Optional<AccountCompany> findByVerificationToken(String verificationToken);
+   Optional<AccountCompany> findByResetToken(String resetToken);
 }
 

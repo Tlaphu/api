@@ -120,17 +120,50 @@ public class CandidateAuthServiceImpl implements ICandidateAuthService {
         System.out.println("Logout token: " + token);
     }
 
+
+@Override
+public String forgotPassword(FormForgotPassword form) {
+    Candidate candidate = candidateRepository
+            
+            .findByEmail(form.getEmail()) 
+            .orElseThrow(() -> new HttpBadRequest("Candidate account not found with this email."));
+   
+    String resetToken = UUID.randomUUID().toString();
+   
+    candidate.setResetToken(resetToken); 
+    candidateRepository.save(candidate); 
+   
+    
+
+    String resetLink = BASE_URL.replace("/api/v1/auth/candidate", "") // Lấy domain + port
+                        + "/reset-password?token=" + resetToken; 
+    
+    
+    emailService.sendResetPasswordEmail(
+        candidate.getEmail(), 
+        candidate.getName(), 
+        resetLink
+    );
+
+   
+    return "Password reset link sent to email.";
+}
     @Override
-    public String forgotPassword(FormForgotPassword form) {
-        Candidate candidate = candidateRepository.findByEmailAndRoles_RoleName(form.getEmail(), RoleName.ROLE_CANDIDATE)
-                .orElseThrow(() -> new HttpBadRequest("Candidate not found with email and role"));
-
-        String resetToken = UUID.randomUUID().toString();
-        System.out.println("Send reset password token to email: " + candidate.getEmail());
-
-        return resetToken;
+public void resetPassword(FormResetPassword form) {
+    
+    if (!form.getNewPassword().equals(form.getConfirmNewPassword())) {
+        throw new HttpBadRequest("New passwords do not match.");
     }
+    
+    Candidate candidate = candidateRepository.findByResetToken(form.getToken())
+            .orElseThrow(() -> new HttpBadRequest("Invalid or expired reset token."));
 
+   
+    candidate.setPassword(passwordEncoder.encode(form.getNewPassword()));
+    candidate.setResetToken(null); 
+ 
+    candidateRepository.save(candidate);
+}
     @Override
     public void changePassword(FormChangePassword form) {
         Candidate candidate = jwtProvider.getCurrentCandidate();

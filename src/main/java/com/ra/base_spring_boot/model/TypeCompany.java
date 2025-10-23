@@ -13,6 +13,7 @@ import java.util.List;
 @Builder
 public class TypeCompany {
     @Id
+
     @GeneratedValue(strategy = GenerationType.IDENTITY)
 
     private Long id;

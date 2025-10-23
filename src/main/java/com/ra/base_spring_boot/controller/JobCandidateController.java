@@ -22,12 +22,10 @@ public class JobCandidateController {
         this.jobCandidateService = jobCandidateService;
     }
 
- 
-
     @PostMapping
     public ResponseEntity<JobCandidateResponse> createJobCandidate(@Valid @RequestBody FormJobCandidate form) {
         JobCandidateResponse response = jobCandidateService.create(form);
-        return new ResponseEntity<>(response, HttpStatus.CREATED); 
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
     @GetMapping
@@ -35,48 +33,42 @@ public class JobCandidateController {
         return jobCandidateService.findAll();
     }
 
-    
-    
     @GetMapping("/{id}")
     public ResponseEntity<JobCandidateResponse> getJobCandidateById(@PathVariable Long id) {
         return jobCandidateService.findById(id)
-                .map(ResponseEntity::ok) 
-                .orElse(ResponseEntity.notFound().build()); 
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
-    
 
     @GetMapping("/job/{jobId}")
     public List<JobCandidateResponse> getCandidatesByJobId(@PathVariable Long jobId) {
-         return jobCandidateService.findByJobId(jobId);
+        return jobCandidateService.findByJobId(jobId);
     }
-    
 
     @GetMapping("/candidate/{candidateId}")
     public List<JobCandidateResponse> getApplicationsByCandidateId(@PathVariable Long candidateId) {
-         return jobCandidateService.findByCandidateId(candidateId);
+        return jobCandidateService.findByCandidateId(candidateId);
     }
 
-
     @PutMapping("/{id}")
-    public ResponseEntity<JobCandidateResponse> updateJobCandidate(@PathVariable Long id, 
-                                                                   @Valid @RequestBody FormJobCandidate form) {
+    public ResponseEntity<JobCandidateResponse> updateJobCandidate(@PathVariable Long id,
+            @Valid @RequestBody FormJobCandidate form) {
         try {
             JobCandidateResponse updatedJobCandidate = jobCandidateService.update(id, form);
             return ResponseEntity.ok(updatedJobCandidate);
         } catch (RuntimeException e) {
-         
-            return ResponseEntity.notFound().build(); 
+
+            return ResponseEntity.notFound().build();
         }
     }
 
-    
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteJobCandidate(@PathVariable Long id) {
         try {
             jobCandidateService.delete(id);
-            return ResponseEntity.noContent().build(); 
+            return ResponseEntity.noContent().build();
         } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build(); 
+            return ResponseEntity.notFound().build();
         }
     }
 }

@@ -74,8 +74,10 @@ public class CertificateCandidateServiceImpl implements ICertificateCandidateSer
         Candidate current = jwtProvider.getCurrentCandidate();
 
 
+
         CertificateCandidate exp = iCertificateCandidateRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Certificate not found"));
+
 
         if (!exp.getCandidate().getId().equals(current.getId())) {
             throw new HttpAccessDenied("Access denied: You can only delete your own certificate");

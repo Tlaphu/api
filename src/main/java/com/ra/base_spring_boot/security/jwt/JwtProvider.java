@@ -81,7 +81,7 @@
         private String createToken(Map<String, Object> claims, String subject) {
             return Jwts.builder()
                     .setClaims(claims)
-                    .setSubject(subject) // subject = email
+                    .setSubject(subject) 
                     .setIssuedAt(new Date(System.currentTimeMillis()))
                     .setExpiration(new Date(System.currentTimeMillis() + EXPIRED_ACCESS))
                     .signWith(getSignKey(), SignatureAlgorithm.HS256)

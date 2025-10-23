@@ -11,4 +11,5 @@ import java.util.List;
 public interface ILocationRepository extends JpaRepository<Location, Long> {
     Optional<Location> findByName(String name);
     List<Location> findAllByOrderByNameAsc();
+   
 }

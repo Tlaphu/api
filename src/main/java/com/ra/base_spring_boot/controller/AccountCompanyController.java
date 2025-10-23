@@ -4,6 +4,8 @@ import com.ra.base_spring_boot.dto.ResponseWrapper;
 import com.ra.base_spring_boot.dto.req.*;
 import com.ra.base_spring_boot.dto.resp.JwtResponse;
 import com.ra.base_spring_boot.services.ICompanyAuthService;
+
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -42,12 +44,27 @@ public class AccountCompanyController {
 
     @PostMapping("/forgot-password")
     public ResponseEntity<ResponseWrapper<String>> forgotPassword(@RequestBody FormForgotPassword form) {
-        String token = companyAuthService.forgotPassword(form);
+
+        companyAuthService.forgotPassword(form);
+
         return ResponseEntity.ok(
                 ResponseWrapper.<String>builder()
                         .status(HttpStatus.OK)
                         .code(HttpStatus.OK.value())
-                        .data("Reset token: " + token)
+                        .data("Password reset link has been sent to your email.")
+                        .build()
+        );
+    }
+
+    @PutMapping("/reset-password")
+    public ResponseEntity<ResponseWrapper<String>> handleResetPassword(@Valid @RequestBody FormResetPassword form) {
+        companyAuthService.resetPassword(form);
+
+        return ResponseEntity.ok(
+                ResponseWrapper.<String>builder()
+                        .status(HttpStatus.OK)
+                        .code(HttpStatus.OK.value())
+                        .data("Password has been reset successfully! You can now log in.")
                         .build()
         );
     }
@@ -87,15 +104,16 @@ public class AccountCompanyController {
                         .build()
         );
     }
+
     @GetMapping("/verify")
     public ResponseEntity<?> handleCompanyVerification(@RequestParam("token") String token) {
         companyAuthService.activateAccount(token);
         return ResponseEntity.ok(
-            ResponseWrapper.builder()
-                    .status(HttpStatus.OK)
-                    .code(200)
-                    .data("Company account activated successfully! You can now log in.")
-                    .build()
-    );
-}
+                ResponseWrapper.builder()
+                        .status(HttpStatus.OK)
+                        .code(200)
+                        .data("Company account activated successfully! You can now log in.")
+                        .build()
+        );
+    }
 }
