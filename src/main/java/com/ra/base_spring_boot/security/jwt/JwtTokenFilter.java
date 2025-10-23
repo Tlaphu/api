@@ -1,9 +1,6 @@
 package com.ra.base_spring_boot.security.jwt;
 
-import com.ra.base_spring_boot.security.principle.MyUserDetailsService;
-import com.ra.base_spring_boot.security.principle.MyCompanyDetailsService;
-import com.ra.base_spring_boot.security.principle.MyUserDetails;
-import com.ra.base_spring_boot.security.principle.MyCompanyDetails;
+import com.ra.base_spring_boot.security.principle.*;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -27,6 +24,8 @@ public class JwtTokenFilter extends OncePerRequestFilter {
     private final MyUserDetailsService userDetailsService; 
     private final MyCompanyDetailsService companyDetailsService; 
     private final JwtProvider jwtProvider;
+    private final MyAdminDetailsService adminDetailsService;
+
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -68,7 +67,9 @@ public class JwtTokenFilter extends OncePerRequestFilter {
                                     new UsernamePasswordAuthenticationToken(companyDetails, null, companyDetails.getAuthorities());
                             SecurityContextHolder.getContext().setAuthentication(authentication);
                         }
-                    } else {
+                    } else if ("admin".equals(type)){
+
+                    }{
                         log.debug("JwtTokenFilter: unknown token type '{}'", type);
                     }
                 }

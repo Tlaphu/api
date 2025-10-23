@@ -1,5 +1,6 @@
     package com.ra.base_spring_boot.security.jwt;
 
+    import com.ra.base_spring_boot.model.Admin;
     import com.ra.base_spring_boot.model.Candidate;
     import com.ra.base_spring_boot.model.AccountCompany;
     import com.ra.base_spring_boot.security.principle.MyCompanyDetails;
@@ -122,4 +123,29 @@
             return company != null ? company.getEmail() : null;
         }
 
+        public Boolean validateAdminToken(String token, Admin admin) {
+            final String email = extractEmail(token);
+            return (email.equals(admin.getEmail()) && !isTokenExpired(token));
+        }
+
+        public String generateAdminToken(Admin admin, Set<String> roles) {
+            Map<String, Object> claims = new HashMap<>();
+            claims.put("roles", roles);
+            claims.put("type", "admin");
+            return createToken(claims, admin.getEmail());
+        }
+
+        public Admin getCurrentAdmin() {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication != null && authentication.isAuthenticated()
+                    && authentication.getPrincipal() instanceof com.ra.base_spring_boot.security.principle.MyAdminDetails adminDetails) {
+                return adminDetails.getAdmin();
+            }
+            return null;
+        }
+
+        public String getAdminUsername() {
+            Admin admin = getCurrentAdmin();
+            return admin != null ? admin.getEmail() : null;
+        }
     }
