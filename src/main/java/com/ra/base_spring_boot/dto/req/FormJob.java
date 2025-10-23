@@ -13,8 +13,8 @@ public class FormJob {
     private String desirable;
     private String benefits;
     private Date expire_at;
-    private Long companyId;
-    private Long locationId;
+    private String locationName; 
+    private String companyName; 
     private long levelJobRelationsId;
     private String workTime;     
 }

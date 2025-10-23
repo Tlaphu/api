@@ -9,5 +9,6 @@ import java.util.Optional;
 public interface ICompanyRepository extends JpaRepository<Company, Long> {
      List<Company> findAllByOrderByFollowerDesc(Pageable pageable);
     Optional<Company> findByEmail(String email);
+    Optional<Company> findByName(String name);
 
 }

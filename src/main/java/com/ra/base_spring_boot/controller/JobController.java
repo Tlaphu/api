@@ -39,19 +39,25 @@ public class JobController {
     @PostMapping
     public ResponseEntity<?> create(@RequestBody FormJob form) {
 
-        Long locationId = form.getLocationId();
-        Optional<Location> locationOpt = locationRepository.findById(locationId);
-        if (locationOpt.isEmpty()) {
-            return ResponseEntity.status(404).body("Location not found");
+        Location location = null;
+        String locationName = form.getLocationName();
+        if (locationName != null && !locationName.trim().isEmpty()) {
+            Optional<Location> locationOpt = locationRepository.findByName(locationName);
+            if (locationOpt.isPresent()) {
+                location = locationOpt.get();
+            }
         }
 
-        Long companyId = form.getCompanyId();
-        Optional<Company> companyOpt = companyRepository.findById(companyId);
+        String companyName = form.getCompanyName();
+        if (companyName == null || companyName.trim().isEmpty()) {
+             return ResponseEntity.status(400).body("Company name must be provided in the request body.");
+        }
+        
+        Optional<Company> companyOpt = companyRepository.findByName(companyName);
         if (companyOpt.isEmpty()) {
-            return ResponseEntity.status(404).body("Company not found");
+            return ResponseEntity.status(404).body("Company not found with name: " + companyName);
         }
 
-        Location location = locationOpt.get();
         Company company = companyOpt.get();
 
         Job job = Job.builder()
@@ -81,7 +87,7 @@ public class JobController {
                 .workTime(job.getWorkTime())
                 .companyName(company.getName())
                 .companyLogo(company.getLogo())
-                .locationName(location.getName())
+                .locationName(location != null ? location.getName() : null)
                 .created_at(job.getCreated_at())
                 .expire_at(job.getExpire_at())
                 .build();
@@ -152,25 +158,27 @@ public class JobController {
 
         Job job = jobOpt.get();
 
-        Long locationId = form.getLocationId();
-        if (locationId == null) {
-            return ResponseEntity.status(400).body("Location ID must be provided in the request body.");
-        }
-        Optional<Location> locationOpt = locationRepository.findById(locationId);
-        if (locationOpt.isEmpty()) {
-            return ResponseEntity.status(404).body("Location not found");
+        Location location = null;
+        String locationName = form.getLocationName();
+        if (locationName != null && !locationName.trim().isEmpty()) {
+            Optional<Location> locationOpt = locationRepository.findByName(locationName);
+            if (locationOpt.isPresent()) {
+                location = locationOpt.get();
+            }
+        } else {
+             location = job.getLocation(); 
         }
 
-        Long companyId = form.getCompanyId();
-        if (companyId == null) {
-            return ResponseEntity.status(400).body("Company ID must be provided in the request body.");
+        String companyName = form.getCompanyName();
+        if (companyName == null || companyName.trim().isEmpty()) {
+             return ResponseEntity.status(400).body("Company name must be provided in the request body.");
         }
-        Optional<Company> companyOpt = companyRepository.findById(companyId);
+        
+        Optional<Company> companyOpt = companyRepository.findByName(companyName);
         if (companyOpt.isEmpty()) {
-            return ResponseEntity.status(404).body("Company not found");
+            return ResponseEntity.status(404).body("Company not found with name: " + companyName);
         }
 
-        Location location = locationOpt.get();
         Company company = companyOpt.get();
 
         job.setTitle(form.getTitle());
@@ -198,7 +206,7 @@ public class JobController {
                 .workTime(job.getWorkTime())
                 .companyName(company.getName())
                 .companyLogo(company.getLogo())
-                .locationName(location.getName())
+                .locationName(location != null ? location.getName() : null)
                 .created_at(job.getCreated_at())
                 .expire_at(job.getExpire_at())
                 .build();
@@ -206,7 +214,6 @@ public class JobController {
         return ResponseEntity.ok(response);
     }
 
-    // --- 5. DELETE ---
     @PreAuthorize("hasAuthority('ROLE_COMPANY') or hasAuthority('ROLE_ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<?> delete(@PathVariable Long id) {
