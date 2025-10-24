@@ -5,7 +5,6 @@ import jakarta.persistence.*;
 import lombok.*;
 import java.util.Date;
 import java.util.List;
-import lombok.Builder;
 @Entity
 @Table(name = "job")
 @NoArgsConstructor
@@ -44,7 +43,7 @@ public class Job {
 
     @Temporal(TemporalType.DATE)
     private Date updated_at;
-
+    private String status;
     @OneToMany(mappedBy = "job", cascade = CascadeType.ALL)
     @JsonIgnore
     private List<TypeJobRelation> typeJobRelations;

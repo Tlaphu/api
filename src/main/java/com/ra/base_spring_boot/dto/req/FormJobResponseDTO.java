@@ -22,4 +22,5 @@ public class FormJobResponseDTO {
     private String levelJobName;
     private Date created_at;
     private Date expire_at;
+    private String status;
 }
