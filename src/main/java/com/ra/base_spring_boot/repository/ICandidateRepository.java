@@ -5,7 +5,8 @@ import com.ra.base_spring_boot.model.constants.RoleName;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
-
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 public interface ICandidateRepository extends JpaRepository<Candidate, Long> {
 
     boolean existsByEmail(String email);
@@ -20,4 +21,9 @@ public interface ICandidateRepository extends JpaRepository<Candidate, Long> {
     
 
     Optional<Candidate> findByResetToken(String resetToken);
+    @Query("SELECT CASE WHEN COUNT(c) > 0 THEN TRUE ELSE FALSE END FROM Candidate c JOIN c.favoriteJobs j WHERE c.id = :candidateId AND j.id = :jobId")
+    boolean isJobFavorite(@Param("candidateId") Long candidateId, @Param("jobId") Long jobId);
+    @Query("SELECT c FROM Candidate c LEFT JOIN FETCH c.favoriteJobs WHERE c.email = ?1")
+    Optional<Candidate> findByEmailWithFavoriteJobs(String email);
+
 }

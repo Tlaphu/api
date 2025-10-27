@@ -243,6 +243,7 @@ public void resetPassword(FormResetPassword form) {
         company.setLink_fb(form.getLinkFb());
         company.setLink_linkedin(form.getLinkLinkedin());
         company.setDescription(form.getDescription());
+        company.setCompanyPolicy(form.getCompanyPolicy());
         company.setUpdated_at(new Date());
 
         companyRepository.save(company);
@@ -300,6 +301,7 @@ public void resetPassword(FormResetPassword form) {
                 .follower(company.getFollower())
                 .size(company.getSize())
                 .description(company.getDescription())
+                .CompanyPolicy(company.getCompanyPolicy())
                 .created_at(company.getCreated_at())
                 .updated_at(new Date()) // Updated to use the field from Company
                 .typeCompanyName(company.getTypeCompany() != null ? company.getTypeCompany().getName() : null)
@@ -328,6 +330,7 @@ public void resetPassword(FormResetPassword form) {
                         .follower(company.getFollower())
                         .size(company.getSize())
                         .description(company.getDescription())
+                        .CompanyPolicy(company.getCompanyPolicy())
                         .created_at(company.getCreated_at())
                         .updated_at(company.getUpdated_at())
                         .typeCompanyName(company.getTypeCompany() != null ? company.getTypeCompany().getName() : null)
@@ -347,6 +350,7 @@ public void resetPassword(FormResetPassword form) {
                 .follower(company.getFollower())
                 .size(company.getSize())
                 .description(company.getDescription())
+                .CompanyPolicy(company.getCompanyPolicy())
                 .created_at(company.getCreated_at())
                 .updated_at(company.getUpdated_at())
                 .typeCompanyName(

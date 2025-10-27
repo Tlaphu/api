@@ -17,6 +17,7 @@ public class FormUpdateCompany {
     private String linkFb;
     private String linkLinkedin;
     private String description;
+    private String CompanyPolicy;
     private Integer size;
     private Integer follower;
 }
