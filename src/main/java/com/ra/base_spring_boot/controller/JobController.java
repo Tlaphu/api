@@ -3,9 +3,11 @@ package com.ra.base_spring_boot.controller;
 import com.ra.base_spring_boot.model.*;
 import com.ra.base_spring_boot.repository.ICompanyRepository;
 import com.ra.base_spring_boot.repository.ILocationRepository;
+import com.ra.base_spring_boot.repository.ICandidateRepository;
 import com.ra.base_spring_boot.repository.JobRepository;
 import com.ra.base_spring_boot.dto.req.FormJob;
 import com.ra.base_spring_boot.dto.req.FormJobResponseDTO;
+import com.ra.base_spring_boot.dto.resp.DashboardStats;
 import com.ra.base_spring_boot.services.ICompanyAuthService;
 
 import lombok.RequiredArgsConstructor;
@@ -18,6 +20,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 
 @RestController
 @RequestMapping("/api/job")
@@ -28,16 +32,16 @@ public class JobController {
     private final ICompanyRepository companyRepository;
     private final ILocationRepository locationRepository;
     private final ICompanyAuthService companyAuthService;
+    private final ICandidateRepository candidateRepository;
 
     
-
     @Scheduled(cron = "0 30 1 * * *")
     @Transactional
     public void autoUpdateExpiredJobs() {
         Date currentDate = new Date();
         String inactiveStatus = "INACTIVE";
 
-       
+        
         List<Job> jobsToDeactivate = jobRepository.findJobsToExpire(currentDate, inactiveStatus);
 
         if (jobsToDeactivate.isEmpty()) {
@@ -132,7 +136,7 @@ public class JobController {
                 .company(company)
                 .created_at(new Date())
                 .expire_at(form.getExpire_at())
-               
+                
                 .status(form.getStatus() != null ? form.getStatus() : "ACTIVE")
                 .build();
 
@@ -143,10 +147,10 @@ public class JobController {
                 .title(job.getTitle())
                 .description(job.getDescription())
                 .salary(job.getSalary())
-                .requirements(job.getRequirements())
-                .desirable(job.getDesirable())
-                .benefits(job.getBenefits())
-                .workTime(job.getWorkTime())
+                .requirements(form.getRequirements())
+                .desirable(form.getDesirable())
+                .benefits(form.getBenefits())
+                .workTime(form.getWorkTime())
                 .companyName(company.getName())
                 .companyLogo(company.getLogo())
                 .locationName(location != null ? location.getName() : null)
@@ -160,7 +164,10 @@ public class JobController {
 
     @GetMapping
     public ResponseEntity<?> getAll() {
-        List<FormJobResponseDTO> jobs = jobRepository.findAll().stream()
+        
+        List<Job> activeJobs = jobRepository.findByStatus("ACTIVE"); 
+
+        List<FormJobResponseDTO> jobs = activeJobs.stream()
                 .map(job -> FormJobResponseDTO.builder()
                 .id(job.getId())
                 .title(job.getTitle())
@@ -271,10 +278,10 @@ public class JobController {
                 .title(job.getTitle())
                 .description(job.getDescription())
                 .salary(job.getSalary())
-                .requirements(job.getRequirements())
-                .desirable(job.getDesirable())
-                .benefits(job.getBenefits())
-                .workTime(job.getWorkTime())
+                .requirements(form.getRequirements())
+                .desirable(form.getDesirable())
+                .benefits(form.getBenefits())
+                .workTime(form.getWorkTime())
                 .companyName(company.getName())
                 .companyLogo(company.getLogo())
                 .locationName(location != null ? location.getName() : null)
@@ -300,7 +307,9 @@ public class JobController {
 
     @GetMapping("/featured")
     public ResponseEntity<?> getFeaturedJobs() {
-        List<FormJobResponseDTO> jobs = jobRepository.findAll().stream()
+        List<Job> allJobs = jobRepository.findByStatus("ACTIVE"); 
+
+        List<FormJobResponseDTO> jobs = allJobs.stream()
                 .sorted((a, b) -> Double.compare(
                 b.getSalary() != null ? b.getSalary() : 0,
                 a.getSalary() != null ? a.getSalary() : 0
@@ -325,5 +334,31 @@ public class JobController {
                 .collect(Collectors.toList());
 
         return ResponseEntity.ok(jobs);
+    }
+    
+    @GetMapping("/stats")
+    public ResponseEntity<DashboardStats> getDashboardStats() {
+        
+        Long liveJobsCount = jobRepository.countByStatus("ACTIVE"); 
+
+        Long companyCount = companyRepository.count();
+
+        Long candidateCount = candidateRepository.count();
+
+        
+        Instant tenDaysAgo = Instant.now().minus(10, ChronoUnit.DAYS);
+        Date startDate = Date.from(tenDaysAgo);
+        
+       
+        Long newJobsCount = jobRepository.countNewActiveJobs("ACTIVE",startDate); 
+      
+        DashboardStats stats = DashboardStats.builder()
+                .liveJobs(liveJobsCount)
+                .companies(companyCount)
+                .candidates(candidateCount)
+                .newJobs(newJobsCount)
+                .build();
+
+        return ResponseEntity.ok(stats);
     }
 }
