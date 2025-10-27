@@ -32,6 +32,8 @@ public class Company {
     private Integer follower;
     private Integer size;
     private String description;
+    private String CompanyPolicy;
+    
     @Temporal(TemporalType.DATE)
     private Date created_at;
     @Temporal(TemporalType.DATE)

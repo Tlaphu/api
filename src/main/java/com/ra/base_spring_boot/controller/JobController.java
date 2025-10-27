@@ -10,9 +10,10 @@ import com.ra.base_spring_boot.services.ICompanyAuthService;
 
 import lombok.RequiredArgsConstructor;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
@@ -23,17 +24,76 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class JobController {
 
-    @Autowired
-    private JobRepository jobRepository;
+    private final JobRepository jobRepository;
+    private final ICompanyRepository companyRepository;
+    private final ILocationRepository locationRepository;
+    private final ICompanyAuthService companyAuthService;
 
-    @Autowired
-    private ICompanyRepository companyRepository;
+    
 
-    @Autowired
-    private ILocationRepository locationRepository;
+    @Scheduled(cron = "0 30 1 * * *")
+    @Transactional
+    public void autoUpdateExpiredJobs() {
+        Date currentDate = new Date();
+        String inactiveStatus = "INACTIVE";
 
-    @Autowired
-    private ICompanyAuthService companyAuthService;
+       
+        List<Job> jobsToDeactivate = jobRepository.findJobsToExpire(currentDate, inactiveStatus);
+
+        if (jobsToDeactivate.isEmpty()) {
+            return;
+        }
+
+        for (Job job : jobsToDeactivate) {
+            job.setStatus(inactiveStatus);
+            job.setUpdated_at(new Date());
+        }
+
+        jobRepository.saveAll(jobsToDeactivate);
+    }
+
+    
+    @GetMapping("/company/{companyName}")
+    public ResponseEntity<?> getJobsByCompany(@PathVariable String companyName) {
+        if (companyName == null || companyName.trim().isEmpty()) {
+            return ResponseEntity.status(400).body("Company name must be provided in the path.");
+        }
+
+        Optional<Company> companyOpt = companyRepository.findByName(companyName);
+        if (companyOpt.isEmpty()) {
+            return ResponseEntity.status(404).body("Company not found with name: " + companyName);
+        }
+
+        Company company = companyOpt.get();
+
+
+        List<Job> companyJobs = jobRepository.findByCompanyId(company.getId());
+
+        if (companyJobs.isEmpty()) {
+            return ResponseEntity.ok(Collections.emptyList());
+        }
+
+        List<FormJobResponseDTO> jobs = companyJobs.stream()
+                .map(job -> FormJobResponseDTO.builder()
+                .id(job.getId())
+                .title(job.getTitle())
+                .description(job.getDescription())
+                .salary(job.getSalary())
+                .requirements(job.getRequirements())
+                .desirable(job.getDesirable())
+                .benefits(job.getBenefits())
+                .workTime(job.getWorkTime())
+                .companyName(company.getName())
+                .companyLogo(company.getLogo())
+                .locationName(job.getLocation() != null ? job.getLocation().getName() : "N/A")
+                .created_at(job.getCreated_at())
+                .expire_at(job.getExpire_at())
+                .status(job.getStatus())
+                .build())
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(jobs);
+    }
 
     @PreAuthorize("hasAuthority('ROLE_COMPANY') or hasAuthority('ROLE_ADMIN')")
     @PostMapping
@@ -50,9 +110,9 @@ public class JobController {
 
         String companyName = form.getCompanyName();
         if (companyName == null || companyName.trim().isEmpty()) {
-             return ResponseEntity.status(400).body("Company name must be provided in the request body.");
+            return ResponseEntity.status(400).body("Company name must be provided in the request body.");
         }
-        
+
         Optional<Company> companyOpt = companyRepository.findByName(companyName);
         if (companyOpt.isEmpty()) {
             return ResponseEntity.status(404).body("Company not found with name: " + companyName);
@@ -72,6 +132,8 @@ public class JobController {
                 .company(company)
                 .created_at(new Date())
                 .expire_at(form.getExpire_at())
+               
+                .status(form.getStatus() != null ? form.getStatus() : "ACTIVE")
                 .build();
 
         jobRepository.save(job);
@@ -90,6 +152,7 @@ public class JobController {
                 .locationName(location != null ? location.getName() : null)
                 .created_at(job.getCreated_at())
                 .expire_at(job.getExpire_at())
+                .status(job.getStatus())
                 .build();
 
         return ResponseEntity.status(201).body(response);
@@ -112,6 +175,7 @@ public class JobController {
                 .locationName(job.getLocation() != null ? job.getLocation().getName() : "N/A")
                 .created_at(job.getCreated_at())
                 .expire_at(job.getExpire_at())
+                .status(job.getStatus())
                 .build())
                 .collect(Collectors.toList());
 
@@ -141,6 +205,7 @@ public class JobController {
                 .locationName(job.getLocation() != null ? job.getLocation().getName() : null)
                 .created_at(job.getCreated_at())
                 .expire_at(job.getExpire_at())
+                .status(job.getStatus())
                 .levelJobName(job.getLevelJobRelations() != null && !job.getLevelJobRelations().isEmpty() ? job.getLevelJobRelations().get(0).getLevelJob().getName() : null)
                 .build();
 
@@ -166,14 +231,14 @@ public class JobController {
                 location = locationOpt.get();
             }
         } else {
-             location = job.getLocation(); 
+            location = job.getLocation();
         }
 
         String companyName = form.getCompanyName();
         if (companyName == null || companyName.trim().isEmpty()) {
-             return ResponseEntity.status(400).body("Company name must be provided in the request body.");
+            return ResponseEntity.status(400).body("Company name must be provided in the request body.");
         }
-        
+
         Optional<Company> companyOpt = companyRepository.findByName(companyName);
         if (companyOpt.isEmpty()) {
             return ResponseEntity.status(404).body("Company not found with name: " + companyName);
@@ -190,6 +255,12 @@ public class JobController {
         job.setWorkTime(form.getWorkTime());
         job.setLocation(location);
         job.setCompany(company);
+        
+        
+        if (form.getStatus() != null && !form.getStatus().trim().isEmpty()) {
+            job.setStatus(form.getStatus());
+        }
+        
         job.setExpire_at(form.getExpire_at());
         job.setUpdated_at(new Date());
 
@@ -209,6 +280,7 @@ public class JobController {
                 .locationName(location != null ? location.getName() : null)
                 .created_at(job.getCreated_at())
                 .expire_at(job.getExpire_at())
+                .status(job.getStatus())
                 .build();
 
         return ResponseEntity.ok(response);
@@ -248,6 +320,7 @@ public class JobController {
                 .locationName(job.getLocation() != null ? job.getLocation().getName() : "N/A")
                 .created_at(job.getCreated_at())
                 .expire_at(job.getExpire_at())
+                .status(job.getStatus())
                 .build())
                 .collect(Collectors.toList());
 

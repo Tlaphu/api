@@ -46,7 +46,14 @@ public class Candidate {
     )
     @Builder.Default
     private Set<Role> roles = new HashSet<>();
-
+    @ManyToMany
+    @JoinTable(
+        name = "candidate_favorite_jobs", 
+        joinColumns = @JoinColumn(name = "candidate_id"),
+        inverseJoinColumns = @JoinColumn(name = "job_id")
+    )
+    @Builder.Default
+    private Set<Job> favoriteJobs = new HashSet<>();
 
     private Integer gender;
 

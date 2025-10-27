@@ -25,6 +25,7 @@ public class CompanyResponse {
     private String description;
     private Date created_at;
     private Date updated_at;
+    private String CompanyPolicy;
 
     @JsonIgnoreProperties({"company"})
     private List<AddressCompanyResponse> addresses;

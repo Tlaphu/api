@@ -16,5 +16,6 @@ public class FormJob {
     private String locationName; 
     private String companyName; 
     private long levelJobRelationsId;
-    private String workTime;     
+    private String workTime; 
+    private String status;   
 }
