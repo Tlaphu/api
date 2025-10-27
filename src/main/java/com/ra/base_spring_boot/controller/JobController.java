@@ -29,12 +29,15 @@ public class JobController {
     private final ILocationRepository locationRepository;
     private final ICompanyAuthService companyAuthService;
 
+    
+
     @Scheduled(cron = "0 30 1 * * *")
     @Transactional
     public void autoUpdateExpiredJobs() {
         Date currentDate = new Date();
         String inactiveStatus = "INACTIVE";
 
+       
         List<Job> jobsToDeactivate = jobRepository.findJobsToExpire(currentDate, inactiveStatus);
 
         if (jobsToDeactivate.isEmpty()) {
@@ -49,6 +52,7 @@ public class JobController {
         jobRepository.saveAll(jobsToDeactivate);
     }
 
+    
     @GetMapping("/company/{companyName}")
     public ResponseEntity<?> getJobsByCompany(@PathVariable String companyName) {
         if (companyName == null || companyName.trim().isEmpty()) {
@@ -62,13 +66,13 @@ public class JobController {
 
         Company company = companyOpt.get();
 
+
         List<Job> companyJobs = jobRepository.findByCompanyId(company.getId());
 
         if (companyJobs.isEmpty()) {
             return ResponseEntity.ok(Collections.emptyList());
         }
 
-       
         List<FormJobResponseDTO> jobs = companyJobs.stream()
                 .map(job -> FormJobResponseDTO.builder()
                 .id(job.getId())
@@ -128,6 +132,7 @@ public class JobController {
                 .company(company)
                 .created_at(new Date())
                 .expire_at(form.getExpire_at())
+               
                 .status(form.getStatus() != null ? form.getStatus() : "ACTIVE")
                 .build();
 
@@ -250,7 +255,12 @@ public class JobController {
         job.setWorkTime(form.getWorkTime());
         job.setLocation(location);
         job.setCompany(company);
-        job.setStatus(form.getStatus());
+        
+        
+        if (form.getStatus() != null && !form.getStatus().trim().isEmpty()) {
+            job.setStatus(form.getStatus());
+        }
+        
         job.setExpire_at(form.getExpire_at());
         job.setUpdated_at(new Date());
 
