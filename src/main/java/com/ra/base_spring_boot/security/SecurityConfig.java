@@ -109,8 +109,11 @@ public class SecurityConfig {
                                 "/api/v1/auth/company/register",
                                 "/api/v1/auth/company/login",
                                 "/api/v1/auth/admin/login",
-                                "/api/v1/admin/login"
-                                
+                                "/api/v1/admin/login",
+                                "/api/v1/auth/company/register",
+                                "/api/v1/auth/company/login",
+                                "/api/v1/auth/company/top20",
+                                "/api/v1/auth/company/{id}"
                         ).permitAll()
                         
                         .requestMatchers("/api/v1/admin/**").hasAuthority(RoleName.ROLE_ADMIN.toString())
