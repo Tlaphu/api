@@ -58,7 +58,9 @@ public class Candidate {
     private Integer gender;
 
     private String link;
-
+    private String Description;
+    private String Experience;
+    private String Development;
 
     @Temporal(TemporalType.TIMESTAMP)
     private Date created_at;
