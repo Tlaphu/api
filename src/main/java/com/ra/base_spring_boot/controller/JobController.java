@@ -189,6 +189,39 @@ public class JobController {
         return ResponseEntity.ok(jobs);
     }
 
+    
+    @PreAuthorize("hasAuthority('ROLE_COMPANY') or hasAuthority('ROLE_ADMIN')")
+    @GetMapping("/all")
+    public ResponseEntity<?> getAllJobsForManagement() {
+       
+        List<Job> allJobs = jobRepository.findAll(); 
+
+        if (allJobs.isEmpty()) {
+            return ResponseEntity.ok(Collections.emptyList());
+        }
+
+        List<FormJobResponseDTO> jobs = allJobs.stream()
+                .map(job -> FormJobResponseDTO.builder()
+                .id(job.getId())
+                .title(job.getTitle())
+                .description(job.getDescription())
+                .salary(job.getSalary())
+                .requirements(job.getRequirements())
+                .desirable(job.getDesirable())
+                .benefits(job.getBenefits())
+                .workTime(job.getWorkTime())
+                .companyName(job.getCompany() != null ? job.getCompany().getName() : "N/A")
+                .companyLogo(job.getCompany() != null ? job.getCompany().getLogo() : "N/A")
+                .locationName(job.getLocation() != null ? job.getLocation().getName() : "N/A")
+                .created_at(job.getCreated_at())
+                .expire_at(job.getExpire_at())
+                .status(job.getStatus())
+                .build())
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(jobs);
+    }
+    
     @GetMapping("/{id}")
     public ResponseEntity<?> getById(@PathVariable Long id) {
         Optional<Job> jobOpt = jobRepository.findById(id);
@@ -349,7 +382,7 @@ public class JobController {
         Instant tenDaysAgo = Instant.now().minus(10, ChronoUnit.DAYS);
         Date startDate = Date.from(tenDaysAgo);
         
-       
+        
         Long newJobsCount = jobRepository.countNewActiveJobs("ACTIVE",startDate); 
       
         DashboardStats stats = DashboardStats.builder()
