@@ -1,7 +1,7 @@
 package com.ra.base_spring_boot.controller;
 
 import com.ra.base_spring_boot.dto.ResponseWrapper;
-import com.ra.base_spring_boot.dto.req.FromExperienceCandidate;
+import com.ra.base_spring_boot.dto.req.FormExperienceCandidate;
 import com.ra.base_spring_boot.dto.resp.ExperienceCandidateResponse;
 import com.ra.base_spring_boot.services.IExperienceCandidateService;
 import lombok.RequiredArgsConstructor;
@@ -38,7 +38,7 @@ public class ExperienceCandidateController {
      * @apiNote
      */
     @PostMapping
-    public ResponseEntity<?> createExperience(@RequestBody FromExperienceCandidate request) {
+    public ResponseEntity<?> createExperience(@RequestBody FormExperienceCandidate request) {
         ExperienceCandidateResponse newExp = experienceService.createExperience(request);
         return ResponseEntity.created(URI.create("/api/v1/candidate/experiences"))
                 .body(ResponseWrapper.<ExperienceCandidateResponse>builder()
@@ -55,7 +55,7 @@ public class ExperienceCandidateController {
     @PutMapping("/{id}")
     public ResponseEntity<?> updateExperience(
             @PathVariable Long id,
-            @RequestBody FromExperienceCandidate request) {
+            @RequestBody FormExperienceCandidate request) {
 
         ExperienceCandidateResponse updated = experienceService.updateExperience(id, request);
         return ResponseEntity.ok(

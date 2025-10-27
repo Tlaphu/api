@@ -8,7 +8,7 @@ import java.util.Date;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class FromExperienceCandidate {
+public class FormExperienceCandidate {
     private String position;
     private String company;
     private Date started_at;
