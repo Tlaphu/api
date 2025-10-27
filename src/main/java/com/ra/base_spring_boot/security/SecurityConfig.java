@@ -4,6 +4,7 @@ import com.ra.base_spring_boot.model.constants.RoleName;
 import com.ra.base_spring_boot.security.exception.AccessDenied;
 import com.ra.base_spring_boot.security.exception.JwtEntryPoint;
 import com.ra.base_spring_boot.security.jwt.JwtTokenFilter;
+import com.ra.base_spring_boot.security.principle.MyAdminDetailsService;
 import com.ra.base_spring_boot.security.principle.MyCompanyDetailsService;
 import com.ra.base_spring_boot.security.principle.MyUserDetailsService;
 import lombok.RequiredArgsConstructor;
@@ -35,6 +36,7 @@ public class SecurityConfig {
 
     private final MyUserDetailsService candidateDetailsService;
     private final MyCompanyDetailsService companyDetailsService;
+    private final MyAdminDetailsService adminDetailsService;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -56,6 +58,15 @@ public class SecurityConfig {
         provider.setPasswordEncoder(passwordEncoder());
         return provider;
     }
+
+    @Bean
+    public DaoAuthenticationProvider adminAuthProvider() {
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
+        provider.setUserDetailsService(adminDetailsService);
+        provider.setPasswordEncoder(passwordEncoder());
+        return provider;
+    }
+
     @Primary
     @Bean(name = "candidateAuthManager")
     public AuthenticationManager candidateAuthManager() {
@@ -67,6 +78,10 @@ public class SecurityConfig {
         return new ProviderManager(List.of(companyAuthProvider()));
     }
 
+    @Bean(name = "adminAuthManager")
+    public AuthenticationManager adminAuthManager() {
+        return new ProviderManager(List.of(adminAuthProvider()));
+    }
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
@@ -89,17 +104,19 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.GET, "/api/job/**").permitAll()
                         .requestMatchers(
-                                "/api/v1/company/register",
-                                "/api/v1/company/login",
-                                "/api/v1/candidate/register",
-                                "/api/v1/candidate/login"
+                                "/api/v1/auth/candidate/register",
+                                "/api/v1/auth/candidate/login",
+                                "/api/v1/auth/company/register",
+                                "/api/v1/auth/company/login",
+                                "/api/v1/auth/admin/login",
+                                "/api/v1/admin/login"
                                 
                         ).permitAll()
                         
                         .requestMatchers("/api/v1/admin/**").hasAuthority(RoleName.ROLE_ADMIN.toString())
                         .requestMatchers("/api/v1/candidate/**").hasAuthority(RoleName.ROLE_CANDIDATE.toString())
                         .requestMatchers("/api/v1/company/**").hasAuthority(RoleName.ROLE_COMPANY.toString())
-                        .anyRequest().permitAll()
+                        .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .exceptionHandling(ex -> ex

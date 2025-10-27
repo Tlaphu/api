@@ -10,6 +10,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -91,7 +93,7 @@ public class CandidateAuthController {
     }
 
     /**
-     * @param formResetPassword FormResetPassword
+     * @param
      * @apiNote handle reset password with resetToken & newPassword
      */
     @PutMapping("/reset-password")
@@ -153,6 +155,9 @@ public class CandidateAuthController {
 
     @GetMapping("/me")
     public ResponseEntity<?> getCurrentCandidate() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        System.out.println(">>> Auth: " + auth);
+        System.out.println(">>> Principal: " + (auth != null ? auth.getPrincipal() : null));
         Candidate candidate = jwtProvider.getCurrentCandidate();
         if (candidate == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Candidate not authenticated");
@@ -166,6 +171,9 @@ public class CandidateAuthController {
         response.put("dob", candidate.getDob());
         response.put("gender", candidate.getGender());
         response.put("link", candidate.getLink());
+        response.put("decription", candidate.getDescription());
+        response.put("experiance", candidate.getExperience());
+        response.put("Development", candidate.getDevelopment());
 
         return ResponseEntity.ok(response);
     }

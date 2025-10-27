@@ -35,14 +35,19 @@ public class JwtTokenFilter extends OncePerRequestFilter {
         String method = request.getMethod();
 
         boolean isPublicJobGet = method.equalsIgnoreCase("GET") && path.startsWith("/api/job");
-        
+
+        boolean isPublicAuth = path.equals("/api/v1/auth/candidate/login")
+                || path.equals("/api/v1/auth/candidate/register")
+                || path.equals("/api/v1/auth/company/login")
+                || path.equals("/api/v1/auth/company/register")
+                || path.equals("/api/v1/auth/admin/login");
 
         if (isPublicJobGet ||
-            path.startsWith("/api/v1/auth/") ||
-            path.startsWith("/swagger") ||
-            path.startsWith("/v3/api-docs") ||
-            path.startsWith("/actuator")) {
-            
+                isPublicAuth ||
+                path.startsWith("/swagger") ||
+                path.startsWith("/v3/api-docs") ||
+                path.startsWith("/actuator")) {
+
             filterChain.doFilter(request, response);
             return;
         }
@@ -52,30 +57,38 @@ public class JwtTokenFilter extends OncePerRequestFilter {
             if (token != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 String email = jwtProvider.extractEmail(token);
                 String type = jwtProvider.extractClaim(token, claims -> claims.get("type", String.class));
-                if (email != null && type != null) {
-                    if ("candidate".equals(type)) {
-                        UserDetails userDetails = userDetailsService.loadUserByUsername(email);
-                        if (jwtProvider.validateCandidateToken(token, ((MyUserDetails) userDetails).getCandidate())) {
-                            UsernamePasswordAuthenticationToken authentication =
-                                    new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-                            SecurityContextHolder.getContext().setAuthentication(authentication);
-                        }
-                    } else if ("company".equals(type)) {
-                        UserDetails companyDetails = companyDetailsService.loadUserByUsername(email);
-                        if (jwtProvider.validateCompanyToken(token, ((MyCompanyDetails) companyDetails).getAccountCompany())) {
-                            UsernamePasswordAuthenticationToken authentication =
-                                    new UsernamePasswordAuthenticationToken(companyDetails, null, companyDetails.getAuthorities());
-                            SecurityContextHolder.getContext().setAuthentication(authentication);
-                        }
-                    } else if ("admin".equals(type)){
 
-                    }{
-                        log.debug("JwtTokenFilter: unknown token type '{}'", type);
+                if (email != null && type != null) {
+                    switch (type) {
+                        case "candidate" -> {
+                            UserDetails userDetails = userDetailsService.loadUserByUsername(email);
+                            if (jwtProvider.validateCandidateToken(token, ((MyUserDetails) userDetails).getCandidate())) {
+                                UsernamePasswordAuthenticationToken authentication =
+                                        new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                                SecurityContextHolder.getContext().setAuthentication(authentication);
+                            }
+                        }
+                        case "company" -> {
+                            UserDetails companyDetails = companyDetailsService.loadUserByUsername(email);
+                            if (jwtProvider.validateCompanyToken(token, ((MyCompanyDetails) companyDetails).getAccountCompany())) {
+                                UsernamePasswordAuthenticationToken authentication =
+                                        new UsernamePasswordAuthenticationToken(companyDetails, null, companyDetails.getAuthorities());
+                                SecurityContextHolder.getContext().setAuthentication(authentication);
+                            }
+                        }
+                        case "admin" -> {
+                            UserDetails adminDetails = adminDetailsService.loadUserByUsername(email);
+                            if (jwtProvider.validateAdminToken(token, ((MyAdminDetails) adminDetails).getAdmin())) {
+                                UsernamePasswordAuthenticationToken authentication =
+                                        new UsernamePasswordAuthenticationToken(adminDetails, null, adminDetails.getAuthorities());
+                                SecurityContextHolder.getContext().setAuthentication(authentication);
+                            }
+                        }
+                        default -> log.debug("JwtTokenFilter: unknown token type '{}'", type);
                     }
                 }
             }
         } catch (Exception e) {
-            
             log.error("JWT Authentication error: {}", e.getMessage());
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             return;
@@ -83,6 +96,7 @@ public class JwtTokenFilter extends OncePerRequestFilter {
 
         filterChain.doFilter(request, response);
     }
+
 
     private String getTokenFromRequest(HttpServletRequest request) {
         String header = request.getHeader("Authorization");
