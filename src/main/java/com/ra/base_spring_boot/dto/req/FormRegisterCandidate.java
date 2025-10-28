@@ -33,7 +33,7 @@ public class FormRegisterCandidate {
 
     private Date dob;
 
-    private Integer gender; 
+    private Integer gender;
 
     private String link;
 }

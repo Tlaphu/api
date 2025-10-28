@@ -12,6 +12,11 @@ import com.ra.base_spring_boot.services.ICompanyAuthService;
 
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -34,14 +39,12 @@ public class JobController {
     private final ICompanyAuthService companyAuthService;
     private final ICandidateRepository candidateRepository;
 
-    
     @Scheduled(cron = "0 30 1 * * *")
     @Transactional
     public void autoUpdateExpiredJobs() {
         Date currentDate = new Date();
         String inactiveStatus = "INACTIVE";
 
-        
         List<Job> jobsToDeactivate = jobRepository.findJobsToExpire(currentDate, inactiveStatus);
 
         if (jobsToDeactivate.isEmpty()) {
@@ -56,9 +59,11 @@ public class JobController {
         jobRepository.saveAll(jobsToDeactivate);
     }
 
-    
     @GetMapping("/company/{companyName}")
-    public ResponseEntity<?> getJobsByCompany(@PathVariable String companyName) {
+    public ResponseEntity<?> getJobsByCompany(
+            @PathVariable String companyName,
+            @PageableDefault(size = 10, sort = "created_at", direction = Sort.Direction.DESC) Pageable pageable) {
+
         if (companyName == null || companyName.trim().isEmpty()) {
             return ResponseEntity.status(400).body("Company name must be provided in the path.");
         }
@@ -70,15 +75,13 @@ public class JobController {
 
         Company company = companyOpt.get();
 
+        Page<Job> companyJobsPage = jobRepository.findByCompanyId(company.getId(), pageable);
 
-        List<Job> companyJobs = jobRepository.findByCompanyId(company.getId());
-
-        if (companyJobs.isEmpty()) {
-            return ResponseEntity.ok(Collections.emptyList());
+        if (companyJobsPage.isEmpty()) {
+            return ResponseEntity.ok(Page.empty(pageable));
         }
 
-        List<FormJobResponseDTO> jobs = companyJobs.stream()
-                .map(job -> FormJobResponseDTO.builder()
+        Page<FormJobResponseDTO> jobsDTOPage = companyJobsPage.map(job -> FormJobResponseDTO.builder()
                 .id(job.getId())
                 .title(job.getTitle())
                 .description(job.getDescription())
@@ -93,10 +96,9 @@ public class JobController {
                 .created_at(job.getCreated_at())
                 .expire_at(job.getExpire_at())
                 .status(job.getStatus())
-                .build())
-                .collect(Collectors.toList());
+                .build());
 
-        return ResponseEntity.ok(jobs);
+        return ResponseEntity.ok(jobsDTOPage);
     }
 
     @PreAuthorize("hasAuthority('ROLE_COMPANY') or hasAuthority('ROLE_ADMIN')")
@@ -136,7 +138,6 @@ public class JobController {
                 .company(company)
                 .created_at(new Date())
                 .expire_at(form.getExpire_at())
-                
                 .status(form.getStatus() != null ? form.getStatus() : "ACTIVE")
                 .build();
 
@@ -163,12 +164,12 @@ public class JobController {
     }
 
     @GetMapping
-    public ResponseEntity<?> getAll() {
-        
-        List<Job> activeJobs = jobRepository.findByStatus("ACTIVE"); 
+    public ResponseEntity<?> getAll(
+            @PageableDefault(size = 10, sort = "created_at", direction = Sort.Direction.DESC) Pageable pageable) {
 
-        List<FormJobResponseDTO> jobs = activeJobs.stream()
-                .map(job -> FormJobResponseDTO.builder()
+        Page<Job> jobPage = jobRepository.findByStatus("ACTIVE", pageable);
+
+        Page<FormJobResponseDTO> jobsDTOPage = jobPage.map(job -> FormJobResponseDTO.builder()
                 .id(job.getId())
                 .title(job.getTitle())
                 .description(job.getDescription())
@@ -183,25 +184,23 @@ public class JobController {
                 .created_at(job.getCreated_at())
                 .expire_at(job.getExpire_at())
                 .status(job.getStatus())
-                .build())
-                .collect(Collectors.toList());
+                .build());
 
-        return ResponseEntity.ok(jobs);
+        return ResponseEntity.ok(jobsDTOPage);
     }
 
-    
     @PreAuthorize("hasAuthority('ROLE_COMPANY') or hasAuthority('ROLE_ADMIN')")
     @GetMapping("/all")
-    public ResponseEntity<?> getAllJobsForManagement() {
-       
-        List<Job> allJobs = jobRepository.findAll(); 
+    public ResponseEntity<?> getAllJobsForManagement(
+            @PageableDefault(size = 10, sort = "created_at", direction = Sort.Direction.DESC) Pageable pageable) {
 
-        if (allJobs.isEmpty()) {
-            return ResponseEntity.ok(Collections.emptyList());
+        Page<Job> allJobsPage = jobRepository.findAll(pageable);
+
+        if (allJobsPage.isEmpty()) {
+            return ResponseEntity.ok(Page.empty(pageable));
         }
 
-        List<FormJobResponseDTO> jobs = allJobs.stream()
-                .map(job -> FormJobResponseDTO.builder()
+        Page<FormJobResponseDTO> jobsDTOPage = allJobsPage.map(job -> FormJobResponseDTO.builder()
                 .id(job.getId())
                 .title(job.getTitle())
                 .description(job.getDescription())
@@ -216,12 +215,11 @@ public class JobController {
                 .created_at(job.getCreated_at())
                 .expire_at(job.getExpire_at())
                 .status(job.getStatus())
-                .build())
-                .collect(Collectors.toList());
+                .build());
 
-        return ResponseEntity.ok(jobs);
+        return ResponseEntity.ok(jobsDTOPage);
     }
-    
+
     @GetMapping("/{id}")
     public ResponseEntity<?> getById(@PathVariable Long id) {
         Optional<Job> jobOpt = jobRepository.findById(id);
@@ -295,12 +293,11 @@ public class JobController {
         job.setWorkTime(form.getWorkTime());
         job.setLocation(location);
         job.setCompany(company);
-        
-        
+
         if (form.getStatus() != null && !form.getStatus().trim().isEmpty()) {
             job.setStatus(form.getStatus());
         }
-        
+
         job.setExpire_at(form.getExpire_at());
         job.setUpdated_at(new Date());
 
@@ -340,51 +337,49 @@ public class JobController {
 
     @GetMapping("/featured")
     public ResponseEntity<?> getFeaturedJobs() {
-        List<Job> allJobs = jobRepository.findByStatus("ACTIVE"); 
+        
+      
+        Pageable topTenBySalary = PageRequest.of(0, 10, Sort.by("salary").descending());
 
-        List<FormJobResponseDTO> jobs = allJobs.stream()
-                .sorted((a, b) -> Double.compare(
-                b.getSalary() != null ? b.getSalary() : 0,
-                a.getSalary() != null ? a.getSalary() : 0
-        ))
-                .limit(10)
+        Page<Job> jobPage = jobRepository.findByStatus("ACTIVE", topTenBySalary);
+
+     
+        List<FormJobResponseDTO> jobs = jobPage.stream()
                 .map(job -> FormJobResponseDTO.builder()
-                .id(job.getId())
-                .title(job.getTitle())
-                .description(job.getDescription())
-                .salary(job.getSalary())
-                .requirements(job.getRequirements())
-                .desirable(job.getDesirable())
-                .benefits(job.getBenefits())
-                .workTime(job.getWorkTime())
-                .companyName(job.getCompany() != null ? job.getCompany().getName() : "N/A")
-                .companyLogo(job.getCompany() != null ? job.getCompany().getLogo() : "N/A")
-                .locationName(job.getLocation() != null ? job.getLocation().getName() : "N/A")
-                .created_at(job.getCreated_at())
-                .expire_at(job.getExpire_at())
-                .status(job.getStatus())
-                .build())
+                        .id(job.getId())
+                        .title(job.getTitle())
+                        .description(job.getDescription())
+                        .salary(job.getSalary())
+                        .requirements(job.getRequirements())
+                        .desirable(job.getDesirable())
+                        .benefits(job.getBenefits())
+                        .workTime(job.getWorkTime())
+                        .companyName(job.getCompany() != null ? job.getCompany().getName() : "N/A")
+                        .companyLogo(job.getCompany() != null ? job.getCompany().getLogo() : "N/A")
+                        .locationName(job.getLocation() != null ? job.getLocation().getName() : "N/A")
+                        .created_at(job.getCreated_at())
+                        .expire_at(job.getExpire_at())
+                        .status(job.getStatus())
+                        .build())
                 .collect(Collectors.toList());
 
         return ResponseEntity.ok(jobs);
     }
-    
+
     @GetMapping("/stats")
     public ResponseEntity<DashboardStats> getDashboardStats() {
-        
-        Long liveJobsCount = jobRepository.countByStatus("ACTIVE"); 
+
+        Long liveJobsCount = jobRepository.countByStatus("ACTIVE");
 
         Long companyCount = companyRepository.count();
 
         Long candidateCount = candidateRepository.count();
 
-        
         Instant tenDaysAgo = Instant.now().minus(10, ChronoUnit.DAYS);
         Date startDate = Date.from(tenDaysAgo);
-        
-        
-        Long newJobsCount = jobRepository.countNewActiveJobs("ACTIVE",startDate); 
-      
+
+        Long newJobsCount = jobRepository.countNewActiveJobs("ACTIVE", startDate);
+
         DashboardStats stats = DashboardStats.builder()
                 .liveJobs(liveJobsCount)
                 .companies(companyCount)

@@ -23,13 +23,13 @@ public class LevelJobRelationController {
     }
 
     @GetMapping("/{id}")
-    public LevelJobRelation getById(@PathVariable Long id) { 
+    public LevelJobRelation getById(@PathVariable Long id) {
         return service.getById(id);
     }
 
     @PostMapping
     public ResponseEntity<?> create(@RequestBody LevelJobRelation relation) {
-        
+
         return ResponseEntity.ok(service.save(relation));
     }
 
@@ -40,7 +40,7 @@ public class LevelJobRelationController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> delete(@PathVariable Long id) { 
+    public ResponseEntity<?> delete(@PathVariable Long id) {
         LevelJobRelation existed = service.getById(id);
         if (existed == null) {
             return ResponseEntity.status(404)

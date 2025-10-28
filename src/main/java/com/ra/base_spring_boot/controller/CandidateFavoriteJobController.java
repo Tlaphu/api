@@ -34,6 +34,7 @@ public class CandidateFavoriteJobController {
 
     /**
      * Thêm Job vào danh sách yêu thích
+     *
      * @param jobId ID của Job
      */
     @PostMapping("/{jobId}")
@@ -50,6 +51,7 @@ public class CandidateFavoriteJobController {
 
     /**
      * Xóa Job khỏi danh sách yêu thích
+     *
      * @param jobId ID của Job
      */
     @DeleteMapping("/{jobId}")
@@ -63,9 +65,10 @@ public class CandidateFavoriteJobController {
                         .build()
         );
     }
-    
+
     /**
      * Kiểm tra xem Job có trong danh sách yêu thích không
+     *
      * @param jobId ID của Job
      */
     @GetMapping("/check/{jobId}")
