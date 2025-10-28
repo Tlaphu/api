@@ -1,5 +1,6 @@
 package com.ra.base_spring_boot.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.*;
 import java.util.Date;
@@ -16,6 +17,7 @@ public class SkillsCandidate {
     private Long id; 
     @ManyToOne
     @JoinColumn(name = "candidate_id")
+    @JsonBackReference
     private Candidate candidate;
     private String name;
     private String level_job_id;

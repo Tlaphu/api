@@ -189,12 +189,10 @@ public class AdminServiceImpl implements IAdminService {
                 .email(candidate.getEmail())
                 .phone(candidate.getPhone())
                 .address(candidate.getAddress())
-                .gender(String.valueOf(candidate.getGender()))
+                .gender((candidate.getGender()))
                 .dob(candidate.getDob())
                 .link(candidate.getLink())
                 .status(candidate.isStatus())
-                .created_at(candidate.getCreated_at())
-                .updated_at(candidate.getUpdated_at())
                 .build();
     }
     @Override

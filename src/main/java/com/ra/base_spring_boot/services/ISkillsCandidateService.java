@@ -1,23 +1,12 @@
 package com.ra.base_spring_boot.services;
 
-import com.ra.base_spring_boot.model.SkillsCandidate;
+import com.ra.base_spring_boot.dto.req.FormSkillCandidate;
+import com.ra.base_spring_boot.dto.resp.SkillsCandidateResponse;
 import java.util.List;
-import java.util.Optional;
 
 public interface ISkillsCandidateService {
-
-  
-    List<SkillsCandidate> findAll();
-
-    
-    Optional<SkillsCandidate> findById(Long id);
-
- 
-    SkillsCandidate save(SkillsCandidate skillsCandidate);
-
-    
-    void deleteById(Long id);
-
-
-    List<SkillsCandidate> findAllByCandidateId(Long candidateId);
+    List<SkillsCandidateResponse> getMySkills();
+    SkillsCandidateResponse createSkill(FormSkillCandidate req);
+    SkillsCandidateResponse updateSkill(Long id, FormSkillCandidate req);
+    void deleteSkill(Long id);
 }
