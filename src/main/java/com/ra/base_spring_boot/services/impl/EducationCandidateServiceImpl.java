@@ -1,6 +1,6 @@
 package com.ra.base_spring_boot.services.impl;
 
-import com.ra.base_spring_boot.dto.req.FromEducationCandidate;
+import com.ra.base_spring_boot.dto.req.FormEducationCandidate;
 import com.ra.base_spring_boot.dto.resp.EducationCandidateResponse;
 import com.ra.base_spring_boot.model.Candidate;
 import com.ra.base_spring_boot.model.EducationCandidate;
@@ -28,7 +28,7 @@ public class EducationCandidateServiceImpl implements IEducationCandidateService
 
     @Override
     
-    public EducationCandidateResponse createByCandidate(String candidateId, FromEducationCandidate request) {
+    public EducationCandidateResponse createByCandidate(String candidateId, FormEducationCandidate request) {
      
         Long idAsLong = Long.parseLong(candidateId);
         
@@ -52,7 +52,7 @@ public class EducationCandidateServiceImpl implements IEducationCandidateService
 
     @Override
     
-    public EducationCandidateResponse updateByCandidate(Long id, String candidateId, FromEducationCandidate request) {
+    public EducationCandidateResponse updateByCandidate(Long id, String candidateId, FormEducationCandidate request) {
         EducationCandidate edu = educationRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Education not found"));
         

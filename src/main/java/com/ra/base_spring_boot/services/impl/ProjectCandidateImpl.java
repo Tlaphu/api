@@ -1,8 +1,5 @@
 package com.ra.base_spring_boot.services.impl;
 
-import com.ra.base_spring_boot.dto.req.FromExperienceCandidate;
-import com.ra.base_spring_boot.dto.resp.ExperienceCandidateResponse;
-import com.ra.base_spring_boot.model.ExperienceCandidate;
 import com.ra.base_spring_boot.model.ProjectCandidate;
 import com.ra.base_spring_boot.services.IProjectCandidateService;
 import com.ra.base_spring_boot.repository.IProjectRepository;

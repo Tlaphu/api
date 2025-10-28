@@ -1,6 +1,6 @@
 package com.ra.base_spring_boot.services.impl;
 
-import com.ra.base_spring_boot.dto.req.FromExperienceCandidate;
+import com.ra.base_spring_boot.dto.req.FormExperienceCandidate;
 import com.ra.base_spring_boot.dto.resp.ExperienceCandidateResponse;
 import com.ra.base_spring_boot.exception.HttpAccessDenied;
 import com.ra.base_spring_boot.model.Candidate;
@@ -33,7 +33,7 @@ public class ExperienceCandidateServiceImpl implements IExperienceCandidateServi
     }
 
     @Override
-    public ExperienceCandidateResponse createExperience(FromExperienceCandidate req) {
+    public ExperienceCandidateResponse createExperience(FormExperienceCandidate req) {
         Candidate current = jwtProvider.getCurrentCandidate();
 
        
@@ -53,7 +53,7 @@ public class ExperienceCandidateServiceImpl implements IExperienceCandidateServi
     }
 
     @Override
-    public ExperienceCandidateResponse updateExperience(Long id, FromExperienceCandidate req) {
+    public ExperienceCandidateResponse updateExperience(Long id, FormExperienceCandidate req) {
         Candidate current = jwtProvider.getCurrentCandidate();
         
 
