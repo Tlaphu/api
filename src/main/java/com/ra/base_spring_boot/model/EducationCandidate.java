@@ -40,4 +40,5 @@ public class    EducationCandidate {
     private Date created_at;
     @Temporal(TemporalType.DATE)
     private Date updated_at;
+    private String GPA;
 }

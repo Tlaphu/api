@@ -50,28 +50,23 @@ public class CandidateAuthServiceImpl implements ICandidateAuthService {
         Set<Role> roles = new HashSet<>();
         roles.add(roleService.findByRoleName(RoleName.ROLE_CANDIDATE));
 
-        
         String verificationToken = UUID.randomUUID().toString();
 
         Candidate candidate = Candidate.builder()
                 .name(formRegisterCandidate.getName())
                 .email(formRegisterCandidate.getEmail())
-               
                 .password(passwordEncoder.encode(formRegisterCandidate.getPassword()))
                 .phone(formRegisterCandidate.getPhone())
-               
                 .roles(roles)
                 .created_at(new Date())
                 .updated_at(new Date())
                 .isOpen(1)
-                
                 .verificationToken(verificationToken)
-                .status(false) 
+                .status(false)
                 .build();
 
         candidateRepository.save(candidate);
 
-       
         String confirmationLink = BASE_URL + "/verify?token=" + verificationToken;
 
         emailService.sendVerificationEmail(
@@ -106,7 +101,7 @@ public class CandidateAuthServiceImpl implements ICandidateAuthService {
             Candidate candidate = userDetails.getCandidate();
 
             if (!candidate.isStatus()) {
-                
+
                 throw new HttpBadRequest("Account is not activated. Please check your email for the activation link.");
             }
 
@@ -197,7 +192,6 @@ public class CandidateAuthServiceImpl implements ICandidateAuthService {
         candidate.setEmail(form.getEmail());
         candidate.setPhone(form.getPhone());
         candidate.setDescription(form.getDescription());
-        candidate.setTitle(form.getTitle());
         candidate.setAddress(form.getAddress());
         candidate.setDob(form.getDob());
         candidate.setGender(form.getGender());
@@ -246,25 +240,15 @@ public class CandidateAuthServiceImpl implements ICandidateAuthService {
                                 .collect(Collectors.toList()))
                 .educations(candidate.getEducationCandidates() == null ? null
                         : candidate.getEducationCandidates().stream()
-                                .map(e -> EducationCandidateResponse.builder()
-<<<<<<< HEAD
+                                .<EducationCandidateResponse>map(e -> EducationCandidateResponse.builder()
                                 .id(e.getId())
                                 .nameEducation(e.getName_education())
                                 .major(e.getMajor())
+                                .GPA(e.getGPA())
                                 .startedAt((e.getStarted_at()))
                                 .endAt((e.getEnd_at()))
                                 .info(e.getInfo())
                                 .build())
-=======
-                                        .id(e.getId())
-                                        .nameEducation(e.getName_education())
-                                        .major(e.getMajor())
-                                        .GPA(e.getGPA())
-                                        .startedAt((e.getStarted_at()))
-                                        .endAt((e.getEnd_at()))
-                                        .info(e.getInfo())
-                                        .build())
->>>>>>> 0236e1ddca02d496658d67bef9adae27dfbf595b
                                 .collect(Collectors.toList()))
                 .experiences(candidate.getExperienceCandidates() == null ? null
                         : candidate.getExperienceCandidates().stream()

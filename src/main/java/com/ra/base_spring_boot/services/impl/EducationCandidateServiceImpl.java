@@ -42,6 +42,7 @@ public class EducationCandidateServiceImpl implements IEducationCandidateService
                 .candidateCV(null)          
                 .name_education(request.getName_education())
                 .major(request.getMajor())
+                .GPA(request.getGPA())
                 .started_at(request.getStartedAt())
                 .end_at(request.getEndAt())
                 .info(request.getInfo())
@@ -69,6 +70,7 @@ public class EducationCandidateServiceImpl implements IEducationCandidateService
         edu.setMajor(request.getMajor());
         edu.setStarted_at(request.getStartedAt());
         edu.setEnd_at(request.getEndAt());
+        edu.setGPA(request.getGPA());
         edu.setInfo(request.getInfo());
         edu.setUpdated_at(new Date());
 
@@ -98,6 +100,7 @@ public class EducationCandidateServiceImpl implements IEducationCandidateService
                 .major(edu.getMajor())
                 .startedAt(edu.getStarted_at())
                 .endAt(edu.getEnd_at())
+                .GPA(edu.getGPA())
                 .info(edu.getInfo())
                 .createdAt(edu.getCreated_at())
                 .updatedAt(edu.getUpdated_at())
