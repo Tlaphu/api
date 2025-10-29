@@ -78,6 +78,21 @@ public class Candidate {
     @OneToMany(mappedBy = "candidate", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
     private List<JobCandidate> jobCandidates;
+    @OneToMany(mappedBy = "candidate", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private Set<SkillsCandidate> skillCandidates = new HashSet<>();
+
+    @OneToMany(mappedBy = "candidate", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private Set<EducationCandidate> educationCandidates = new HashSet<>();
+    
+    @OneToMany(mappedBy = "candidate", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private Set<ExperienceCandidate> experienceCandidates = new HashSet<>();
+
+    @OneToMany(mappedBy = "candidate", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private Set<CertificateCandidate> certificateCandidates = new HashSet<>();
 
     
 }

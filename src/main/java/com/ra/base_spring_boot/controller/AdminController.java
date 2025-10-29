@@ -71,4 +71,15 @@ public class AdminController {
         adminService.deleteAccountCompany(id);
         return ResponseEntity.ok("Account company deleted successfully");
     }
+    @PutMapping("/candidates/activate/{id}")
+    public ResponseEntity<?> activateCandidate(@PathVariable Long id) {
+        adminService.activateCandidate(id);
+        return ResponseEntity.ok("Candidate account activated and notified successfully.");
+    }
+
+    @PutMapping("/companies/accounts/activate/{id}")
+    public ResponseEntity<?> activateCompanyAccount(@PathVariable Long id) {
+        adminService.activateCompanyAccount(id);
+        return ResponseEntity.ok("Company account activated and notified successfully.");
+    }
 }

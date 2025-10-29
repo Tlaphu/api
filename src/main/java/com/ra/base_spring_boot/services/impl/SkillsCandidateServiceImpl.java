@@ -3,8 +3,11 @@ package com.ra.base_spring_boot.services.impl;
 import com.ra.base_spring_boot.dto.req.FormSkillCandidate;
 import com.ra.base_spring_boot.dto.resp.SkillsCandidateResponse;
 import com.ra.base_spring_boot.exception.HttpAccessDenied;
+import com.ra.base_spring_boot.exception.HttpBadRequest;
 import com.ra.base_spring_boot.model.Candidate;
+import com.ra.base_spring_boot.model.LevelJob;
 import com.ra.base_spring_boot.model.SkillsCandidate;
+import com.ra.base_spring_boot.repository.LevelJobRepository; // Đã sửa từ ILevelJobRepository sang LevelJobRepository
 import com.ra.base_spring_boot.repository.ISkillsCandidateRepository;
 import com.ra.base_spring_boot.security.jwt.JwtProvider;
 import com.ra.base_spring_boot.services.ISkillsCandidateService;
@@ -21,6 +24,7 @@ public class SkillsCandidateServiceImpl implements ISkillsCandidateService {
 
     private final ISkillsCandidateRepository skillsRepo;
     private final JwtProvider jwtProvider;
+    private final LevelJobRepository levelJobRepository;
 
     @Override
     public List<SkillsCandidateResponse> getMySkills() {
@@ -36,10 +40,17 @@ public class SkillsCandidateServiceImpl implements ISkillsCandidateService {
     public SkillsCandidateResponse createSkill(FormSkillCandidate req) {
         Candidate current = jwtProvider.getCurrentCandidate();
 
+        // FIX: Tìm LevelJob object từ ID trong request DTO
+        LevelJob levelJob = null;
+        if (req.getLevelJobId() != null) { // Giả định FormSkillCandidate có getLevelJobId() trả về Long
+            levelJob = levelJobRepository.findById(req.getLevelJobId())
+                    .orElseThrow(() -> new HttpBadRequest("LevelJob not found with ID: " + req.getLevelJobId()));
+        }
+
         SkillsCandidate skill = SkillsCandidate.builder()
                 .candidate(current)
                 .name(req.getName())
-                .level_job_id(req.getLevel_job_id())
+                .levelJob(levelJob)
                 .created_at(new Date())
                 .updated_at(new Date())
                 .build();
@@ -58,8 +69,15 @@ public class SkillsCandidateServiceImpl implements ISkillsCandidateService {
             throw new HttpAccessDenied("Access denied: You can only update your own skill");
         }
 
+        // FIX: Tìm LevelJob object từ ID trong request DTO
+        LevelJob levelJob = null;
+        if (req.getLevelJobId() != null) { // Giả định FormSkillCandidate có getLevelJobId() trả về Long
+            levelJob = levelJobRepository.findById(req.getLevelJobId())
+                    .orElseThrow(() -> new HttpBadRequest("LevelJob not found with ID: " + req.getLevelJobId()));
+        }
+
         skill.setName(req.getName());
-        skill.setLevel_job_id(req.getLevel_job_id());
+        skill.setLevelJob(levelJob);
         skill.setUpdated_at(new Date());
 
         return toResponse(skillsRepo.save(skill));
@@ -83,7 +101,8 @@ public class SkillsCandidateServiceImpl implements ISkillsCandidateService {
         return SkillsCandidateResponse.builder()
                 .id(skill.getId())
                 .name(skill.getName())
-                .level_job_id(skill.getLevel_job_id())
+                // FIX: Lấy ID từ LevelJob object (sử dụng .toString() vì Response DTO likely cần String)
+                .level_job_id(skill.getLevelJob() != null ? skill.getLevelJob().getId().toString() : null)
                 .created_at(skill.getCreated_at())
                 .updated_at(skill.getUpdated_at())
                 .build();

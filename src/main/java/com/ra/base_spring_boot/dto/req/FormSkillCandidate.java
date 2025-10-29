@@ -9,5 +9,5 @@ import lombok.*;
 @Builder
 public class FormSkillCandidate {
     private String name;
-    private String level_job_id;
+    private Long levelJobId;
 }

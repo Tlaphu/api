@@ -95,4 +95,29 @@ public class EmailService {
         System.err.println("ERROR SENDING RESET PASSWORD EMAIL to " + toEmail + ": " + e.getMessage());
     }
 }
+public void sendLoginCredentialsEmail(String toEmail, String recipientName, String defaultPassword) {
+    String userName = recipientName != null && !recipientName.isEmpty() ? recipientName : "User";
+    try {
+        SimpleMailMessage message = new SimpleMailMessage();
+
+        message.setFrom(fromEmail);
+        message.setTo(toEmail);
+        message.setSubject("✅ Your Account Has Been Activated! - Login Credentials");
+
+        String content = "Dear " + userName + ",\n\n"
+                       + "Good news! Your account has been approved and activated by the Administrator.\n"
+                       + "You can now log in using the following credentials:\n\n"
+                       + "  - **Email:** " + toEmail + "\n"
+                       + "  - **Initial Password:** " + defaultPassword + "\n\n"
+                       + "⚠️ **Security Notice:** We highly recommend that you change your password immediately after your first successful login.\n\n"
+                       + "Best regards,\n"
+                       + "The Recruitment Team.";
+
+        message.setText(content);
+        mailSender.send(message);
+        System.out.println("Login credentials email sent to: " + toEmail);
+    } catch (Exception e) {
+        System.err.println("ERROR SENDING LOGIN CREDENTIALS EMAIL to " + toEmail + ": " + e.getMessage());
+    }
+}
 }
