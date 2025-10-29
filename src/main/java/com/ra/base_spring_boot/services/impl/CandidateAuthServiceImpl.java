@@ -257,6 +257,7 @@ public void resetPassword(FormResetPassword form) {
                                         .id(e.getId())
                                         .nameEducation(e.getName_education())
                                         .major(e.getMajor())
+                                        .GPA(e.getGPA())
                                         .startedAt((e.getStarted_at()))
                                         .endAt((e.getEnd_at()))
                                         .info(e.getInfo())

@@ -12,6 +12,7 @@ public class FormEducationCandidate {
     private long candidateId;
     private String name_education;
     private String major;
+    private String GPA;
     private Date startedAt;
     private Date endAt;
     private String info;

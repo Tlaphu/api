@@ -1,6 +1,7 @@
 package com.ra.base_spring_boot.model;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import java.util.Date;
@@ -19,6 +20,12 @@ public class CertificateCandidate {
     @JoinColumn(name = "candidate_id")
     @JsonBackReference
     private Candidate candidate;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "candidate_cv_id")
+    @JsonIgnore
+    private CandidateCV candidateCV;
+
     private String name;
     private String organization;
     @Temporal(TemporalType.DATE)

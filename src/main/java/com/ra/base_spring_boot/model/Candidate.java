@@ -92,4 +92,7 @@ public class Candidate {
     @OneToMany(mappedBy = "candidate", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
     private List<JobCandidate> jobCandidates;
+    @OneToMany(mappedBy = "candidate", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
+    private List<CandidateCV> candidateCVs;
 }
