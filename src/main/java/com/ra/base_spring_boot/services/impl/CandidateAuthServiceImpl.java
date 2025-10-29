@@ -192,6 +192,8 @@ public void resetPassword(FormResetPassword form) {
         candidate.setName(form.getName());
         candidate.setEmail(form.getEmail());
         candidate.setPhone(form.getPhone());
+        candidate.setDescription(form.getDescription());
+        candidate.setTitle(form.getTitle());
         candidate.setAddress(form.getAddress());
         candidate.setDob(form.getDob());
         candidate.setGender(form.getGender());

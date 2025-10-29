@@ -14,16 +14,16 @@ import java.util.Date;
 @Builder
 public class FormUpdateProfile {
 
-    @NotBlank(message = "Full name is required")
     private String name;
 
     @Email(message = "Email is invalid")
-    @NotBlank(message = "Email is required")
     private String email;
 
     private String phone;
 
     private String address;
+    private String Description;
+    private String Title;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private Date dob;

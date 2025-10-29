@@ -61,7 +61,7 @@ public class Candidate {
     private String Description;
     private String Experience;
     private String Development;
-
+    private String Title;
 
     @Temporal(TemporalType.TIMESTAMP)
     private Date created_at;
