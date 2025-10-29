@@ -5,14 +5,13 @@ import com.ra.base_spring_boot.dto.resp.EducationCandidateResponse;
 import com.ra.base_spring_boot.exception.HttpAccessDenied;
 import com.ra.base_spring_boot.model.Candidate;
 import com.ra.base_spring_boot.model.EducationCandidate;
+import com.ra.base_spring_boot.repository.ICandidateRepository;
 import com.ra.base_spring_boot.repository.IEducationCandidateRepository;
-import com.ra.base_spring_boot.security.jwt.JwtProvider;
 import com.ra.base_spring_boot.services.IEducationCandidateService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -20,26 +19,29 @@ import java.util.stream.Collectors;
 public class EducationCandidateServiceImpl implements IEducationCandidateService {
 
     private final IEducationCandidateRepository educationRepo;
-    private final JwtProvider jwtProvider;
+    private final ICandidateRepository candidateRepo; // Giữ lại để tìm Candidate nếu cần (thường không cần trong Service này)
 
     @Override
-    public List<EducationCandidateResponse> getAllByCandidate(Long ignoredCandidateId) {
-        Candidate current = jwtProvider.getCurrentCandidate();
-        return educationRepo.findAllByCandidate_Id(current.getId())
-                .stream()
-                .map(this::toResponse)
-                .collect(Collectors.toList());
+    public List<EducationCandidateResponse> getAllByCandidate(Long candidateId) {
+        // Giả định Repository có phương thức findAllByCandidate_Id
+        List<EducationCandidate> list = educationRepo.findAllByCandidate_Id(candidateId);
+        return list.stream().map(this::toResponse).collect(Collectors.toList());
     }
 
     @Override
-    public EducationCandidateResponse createByCandidate(String ignoredCandidateId, FormEducationCandidate request) {
-        Candidate current = jwtProvider.getCurrentCandidate();
+    public EducationCandidateResponse createByCandidate(String candidateId, FormEducationCandidate request) {
+        
+        Long idAsLong = Long.parseLong(candidateId);
+        
+        
+        Candidate candidate = candidateRepo.findById(idAsLong)
+                .orElseThrow(() -> new RuntimeException("Candidate not found"));
 
         EducationCandidate edu = EducationCandidate.builder()
-                .candidate(current)
+                .candidate(candidate)       
+                .candidateCV(null)          
                 .name_education(request.getName_education())
                 .major(request.getMajor())
-                .GPA(request.getGPA())
                 .started_at(request.getStartedAt())
                 .end_at(request.getEndAt())
                 .info(request.getInfo())
@@ -47,40 +49,43 @@ public class EducationCandidateServiceImpl implements IEducationCandidateService
                 .updated_at(new Date())
                 .build();
 
-        return toResponse(educationRepo.save(edu));
+        educationRepo.save(edu);
+        return toResponse(edu);
     }
 
     @Override
-    public EducationCandidateResponse updateByCandidate(Long id, String ignoredCandidateId, FormEducationCandidate request) {
-        Candidate current = jwtProvider.getCurrentCandidate();
-
+    public EducationCandidateResponse updateByCandidate(Long id, String candidateId, FormEducationCandidate request) {
         EducationCandidate edu = educationRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Education not found"));
+        
+        Long candidateIdAsLong = Long.parseLong(candidateId);
 
-        if (!edu.getCandidate().getId().equals(current.getId())) {
-            throw new HttpAccessDenied("Access denied: You can only update your own education record");
+        // Kiểm tra quyền sở hữu
+        if (edu.getCandidate() == null || !edu.getCandidate().getId().equals(candidateIdAsLong)) {
+            throw new HttpAccessDenied("Unauthorized: cannot edit other candidate’s education");
         }
 
         edu.setName_education(request.getName_education());
         edu.setMajor(request.getMajor());
-        edu.setGPA(request.getGPA());
         edu.setStarted_at(request.getStartedAt());
         edu.setEnd_at(request.getEndAt());
         edu.setInfo(request.getInfo());
         edu.setUpdated_at(new Date());
 
-        return toResponse(educationRepo.save(edu));
+        educationRepo.save(edu);
+        return toResponse(edu);
     }
 
     @Override
-    public void deleteByCandidate(Long id, String ignoredCandidateId) {
-        Candidate current = jwtProvider.getCurrentCandidate();
-
+    public void deleteByCandidate(Long id, String candidateId) {
         EducationCandidate edu = educationRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Education not found"));
+        
+        Long candidateIdAsLong = Long.parseLong(candidateId);
 
-        if (!edu.getCandidate().getId().equals(current.getId())) {
-            throw new HttpAccessDenied("Access denied: You can only delete your own education record");
+        // Kiểm tra quyền sở hữu
+        if (edu.getCandidate() == null || !edu.getCandidate().getId().equals(candidateIdAsLong)) {
+            throw new HttpAccessDenied("Unauthorized: cannot delete other candidate’s education");
         }
 
         educationRepo.delete(edu);

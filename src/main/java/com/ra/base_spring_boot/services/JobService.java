@@ -38,7 +38,5 @@ public class JobService {
 
 
     
-    public List<Job> getFeaturedJobs() {
-        return repo.findTop10ByOrderBySalaryDesc();
-    }
+  
 }

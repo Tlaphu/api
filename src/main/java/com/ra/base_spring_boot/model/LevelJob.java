@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 @Table(name = "leveljob") 
 @Entity
 @NoArgsConstructor
@@ -29,4 +30,7 @@ public class LevelJob {
     @OneToMany(mappedBy = "levelJob", cascade = CascadeType.ALL)
     @JsonIgnore
     private List<LevelJobRelation> levelJobRelations;
+    @OneToMany(mappedBy = "levelJob", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore 
+    private Set<SkillsCandidate> skillCandidates; 
 }

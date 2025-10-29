@@ -3,11 +3,13 @@ package com.ra.base_spring_boot.dto.req;
 import java.util.Date;
 
 import lombok.*;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
 public class FormJobResponseDTO {
+
     private long id;
     private String title;
     private String description;

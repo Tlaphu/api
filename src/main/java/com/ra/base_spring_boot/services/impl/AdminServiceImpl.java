@@ -5,7 +5,9 @@ import com.ra.base_spring_boot.dto.req.FormUpdateCompany;
 import com.ra.base_spring_boot.dto.resp.*;
 import com.ra.base_spring_boot.exception.HttpBadRequest;
 import com.ra.base_spring_boot.model.Admin;
+import com.ra.base_spring_boot.model.Candidate;
 import com.ra.base_spring_boot.model.Company;
+import com.ra.base_spring_boot.model.AccountCompany;
 import com.ra.base_spring_boot.repository.IAccountCompanyRepository;
 import com.ra.base_spring_boot.repository.IAddressCompanyRepository;
 import com.ra.base_spring_boot.repository.ICandidateRepository;
@@ -13,13 +15,14 @@ import com.ra.base_spring_boot.repository.ICompanyRepository;
 import com.ra.base_spring_boot.security.jwt.JwtProvider;
 import com.ra.base_spring_boot.security.principle.MyAdminDetails;
 import com.ra.base_spring_boot.services.IAdminService;
+import com.ra.base_spring_boot.services.EmailService;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.crypto.password.PasswordEncoder; // Đã thêm
 import org.springframework.stereotype.Service;
-import com.ra.base_spring_boot.model.Candidate;
 import com.ra.base_spring_boot.dto.req.FormUpdateProfile;
 
 
@@ -30,12 +33,20 @@ import java.util.stream.Collectors;
 
 @Service
 public class AdminServiceImpl implements IAdminService {
+
+    // Mật khẩu mặc định
+    private static final String DEFAULT_PASSWORD = "Welcome123!"; 
+
     private final AuthenticationManager adminAuthManager;
     private final JwtProvider jwtProvider;
     private final ICompanyRepository companyRepository;
     private final IAccountCompanyRepository accountCompanyRepository;
     private final IAddressCompanyRepository addressCompanyRepository;
     private final ICandidateRepository candidateRepository;
+    
+    // Dependencies mới
+    private final EmailService emailService; 
+    private final PasswordEncoder passwordEncoder; 
 
     public AdminServiceImpl(
             @Qualifier("adminAuthManager") AuthenticationManager adminAuthManager,
@@ -43,7 +54,9 @@ public class AdminServiceImpl implements IAdminService {
             ICompanyRepository companyRepository,
             IAccountCompanyRepository accountCompanyRepository,
             IAddressCompanyRepository addressCompanyRepository,
-            ICandidateRepository candidateRepository
+            ICandidateRepository candidateRepository,
+            EmailService emailService, 
+            PasswordEncoder passwordEncoder 
     ) {
         this.adminAuthManager = adminAuthManager;
         this.jwtProvider = jwtProvider;
@@ -51,6 +64,8 @@ public class AdminServiceImpl implements IAdminService {
         this.accountCompanyRepository = accountCompanyRepository;
         this.addressCompanyRepository = addressCompanyRepository;
         this.candidateRepository = candidateRepository;
+        this.emailService = emailService; 
+        this.passwordEncoder = passwordEncoder; 
     }
 
 
@@ -80,6 +95,60 @@ public class AdminServiceImpl implements IAdminService {
             throw new HttpBadRequest("Wrong email");
         }
     }
+    
+    
+    @Override
+    public void activateCandidate(Long id) {
+        Candidate candidate = candidateRepository.findById(id)
+                .orElseThrow(() -> new HttpBadRequest("Candidate not found"));
+
+        if (candidate.isStatus()) {
+            throw new HttpBadRequest("Candidate account is already active.");
+        }
+        
+       
+        candidate.setStatus(true); 
+        
+        candidate.setPassword(passwordEncoder.encode(DEFAULT_PASSWORD)); 
+        candidate.setVerificationToken(null);
+        candidate.setUpdated_at(new Date());
+
+        candidateRepository.save(candidate);
+
+       
+        emailService.sendLoginCredentialsEmail(
+                candidate.getEmail(),
+                candidate.getName(),
+                DEFAULT_PASSWORD 
+        );
+    }
+    
+    
+    @Override
+    public void activateCompanyAccount(Long id) {
+        AccountCompany account = accountCompanyRepository.findById(id)
+                .orElseThrow(() -> new HttpBadRequest("Company Account not found"));
+        
+        if (account.isStatus()) {
+            throw new HttpBadRequest("Company Account is already active.");
+        }
+        
+        
+        account.setStatus(true);
+   
+        account.setPassword(passwordEncoder.encode(DEFAULT_PASSWORD));
+        account.setVerificationToken(null);
+        
+        accountCompanyRepository.save(account);
+
+        emailService.sendLoginCredentialsEmail(
+                account.getEmail(),
+                account.getFullName(),
+                DEFAULT_PASSWORD
+        );
+    }
+    
+  
 
     @Override
     public List<CompanyResponse> findAll() {
@@ -149,6 +218,9 @@ public class AdminServiceImpl implements IAdminService {
                 .addresses(addresses)
                 .build();
     }
+    
+    
+    
     @Override
     public List<CandidateResponse> findAllCandidates() {
         return candidateRepository.findAll()
@@ -195,6 +267,9 @@ public class AdminServiceImpl implements IAdminService {
                 .status(candidate.isStatus())
                 .build();
     }
+    
+   
+    
     @Override
     public List<AccountCompanyResponse> findAllAccountsCompany() {
         return accountCompanyRepository.findAll()

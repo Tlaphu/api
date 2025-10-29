@@ -9,6 +9,7 @@ import java.util.Date;
 @AllArgsConstructor
 @Builder
 public class FormProjectCandidate {
+
     String name;
     String link;
     private Date started_at;

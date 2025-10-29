@@ -1,7 +1,6 @@
 package com.ra.base_spring_boot.model;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
-import com.ra.base_spring_boot.model.base.BaseObject;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -38,6 +37,7 @@ public class Candidate {
     private String verificationToken;
     @Column(unique = true) 
     private String resetToken;
+    
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "candidate_roles",
@@ -46,6 +46,7 @@ public class Candidate {
     )
     @Builder.Default
     private Set<Role> roles = new HashSet<>();
+    
     @ManyToMany
     @JoinTable(
         name = "candidate_favorite_jobs", 
@@ -61,7 +62,7 @@ public class Candidate {
     private String Description;
     private String Experience;
     private String Development;
-    private String Title;
+
 
     @Temporal(TemporalType.TIMESTAMP)
     private Date created_at;
@@ -70,29 +71,28 @@ public class Candidate {
     private Date updated_at;
 
     @OneToMany(mappedBy = "candidate", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonManagedReference
-    private List<ProjectCandidate> projectCandidates;
-
-    @OneToMany(mappedBy = "candidate", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonManagedReference
-    private List<SkillsCandidate> skillCandidates;
-
-    @OneToMany(mappedBy = "candidate", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonManagedReference
-    private List<EducationCandidate> educationCandidates;
-
-    @OneToMany(mappedBy = "candidate", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonManagedReference
-    private List<ExperienceCandidate> experienceCandidates;
-
-    @OneToMany(mappedBy = "candidate", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonManagedReference
-    private List<CertificateCandidate> certificateCandidates;
-
+    @JsonManagedReference 
+    private List<CandidateCV> candidateCVs;
+    
+   
     @OneToMany(mappedBy = "candidate", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
     private List<JobCandidate> jobCandidates;
     @OneToMany(mappedBy = "candidate", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonManagedReference
-    private List<CandidateCV> candidateCVs;
+    @Builder.Default
+    private Set<SkillsCandidate> skillCandidates = new HashSet<>();
+
+    @OneToMany(mappedBy = "candidate", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private Set<EducationCandidate> educationCandidates = new HashSet<>();
+    
+    @OneToMany(mappedBy = "candidate", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private Set<ExperienceCandidate> experienceCandidates = new HashSet<>();
+
+    @OneToMany(mappedBy = "candidate", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private Set<CertificateCandidate> certificateCandidates = new HashSet<>();
+
+    
 }

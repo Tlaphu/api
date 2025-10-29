@@ -34,29 +34,37 @@ public class CandidateAuthServiceImpl implements ICandidateAuthService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager candidateAuthManager;
     private final JwtProvider jwtProvider;
-    private final EmailService emailService; 
-    
-    private static final String BASE_URL = "http://localhost:8080/api/v1/auth/candidate";
-    
+    private final EmailService emailService;
+
+   
     @Override
+    public void activateAccount(String token) {
+        Candidate candidate = candidateRepository.findByResetToken(token)
+                .orElseThrow(() -> new HttpBadRequest("Invalid or expired activation token."));
+        candidate.setStatus(true);
+        candidate.setResetToken(null);
+        candidate.setUpdated_at(new Date());
+        candidateRepository.save(candidate);
+    }
+    
+    
+@Override
     public void register(FormRegisterCandidate formRegisterCandidate) {
         if (candidateRepository.existsByEmail(formRegisterCandidate.getEmail())) {
             throw new HttpBadRequest("Email is already registered");
         }
 
-        if (!formRegisterCandidate.getPassword().equals(formRegisterCandidate.getConfirmPassword())) {
-            throw new HttpBadRequest("Passwords do not match");
-        }
+        
 
         Set<Role> roles = new HashSet<>();
         roles.add(roleService.findByRoleName(RoleName.ROLE_CANDIDATE));
         
-        String verificationToken = UUID.randomUUID().toString();
         
         Candidate candidate = Candidate.builder()
                 .name(formRegisterCandidate.getName())
                 .email(formRegisterCandidate.getEmail())
-                .password(passwordEncoder.encode(formRegisterCandidate.getPassword()))
+                
+                .password(passwordEncoder.encode("")) 
                 .phone(formRegisterCandidate.getPhone())
                 .address(formRegisterCandidate.getAddress())
                 .dob(formRegisterCandidate.getDob())
@@ -66,23 +74,14 @@ public class CandidateAuthServiceImpl implements ICandidateAuthService {
                 .created_at(new Date())
                 .updated_at(new Date())
                 .isOpen(1)
-                .verificationToken(verificationToken)
-                .status(false)
+                .status(false) 
                 .build();
 
         candidateRepository.save(candidate);
         
-       
-        String confirmationLink = BASE_URL + "/verify?token=" + verificationToken;
-        
-        
-        emailService.sendVerificationEmail(
-            formRegisterCandidate.getEmail(), 
-            formRegisterCandidate.getName(), 
-            confirmationLink 
-        );
+        System.out.println("✅ New Candidate registered successfully, pending Admin approval: " + formRegisterCandidate.getEmail());
     }
-
+   
     @Override
     public JwtResponse login(FormLogin formLogin) {
         try {
@@ -95,9 +94,11 @@ public class CandidateAuthServiceImpl implements ICandidateAuthService {
             
             
             if (!candidate.isStatus()) {
-                 throw new HttpBadRequest("Account is not activated. Please check your email for the activation link.");
+                
+                throw new HttpBadRequest("Account is not activated. Please wait for Admin approval.");
             }
-
+            
+            
             Set<String> roles = userDetails.getAuthorities().stream()
                     .map(GrantedAuthority::getAuthority)
                     .collect(Collectors.toSet());
@@ -114,57 +115,52 @@ public class CandidateAuthServiceImpl implements ICandidateAuthService {
             throw new HttpBadRequest("Email or password wrong");
         }
     }
-
-
+  
     @Override
     public void logout(String token) {
         System.out.println("Logout token: " + token);
     }
 
-
-@Override
-public String forgotPassword(FormForgotPassword form) {
-    Candidate candidate = candidateRepository
-            
+    
+    @Override
+    public String forgotPassword(FormForgotPassword form) {
+        Candidate candidate = candidateRepository
             .findByEmail(form.getEmail()) 
             .orElseThrow(() -> new HttpBadRequest("Candidate account not found with this email."));
-   
-    String resetToken = UUID.randomUUID().toString();
-   
-    candidate.setResetToken(resetToken); 
-    candidateRepository.save(candidate); 
-   
-    
+        
+        String resetToken = UUID.randomUUID().toString();
+        
+        candidate.setResetToken(resetToken); 
+        candidateRepository.save(candidate); 
+        
+        String frontendBaseUrl = "http://localhost:5173"; 
+        String resetLink = frontendBaseUrl + "/reset-password?token=" + resetToken;
+        
+        emailService.sendResetPasswordEmail(
+            candidate.getEmail(), 
+            candidate.getName(), 
+            resetLink
+        );
 
-    String resetLink = BASE_URL.replace("/api/v1/auth/candidate", "") // Lấy domain + port
-                        + "/reset-password?token=" + resetToken; 
-    
-    
-    emailService.sendResetPasswordEmail(
-        candidate.getEmail(), 
-        candidate.getName(), 
-        resetLink
-    );
-
-   
-    return "Password reset link sent to email.";
-}
-    @Override
-public void resetPassword(FormResetPassword form) {
-    
-    if (!form.getNewPassword().equals(form.getConfirmNewPassword())) {
-        throw new HttpBadRequest("New passwords do not match.");
+        return "Password reset link sent to email.";
     }
     
-    Candidate candidate = candidateRepository.findByResetToken(form.getToken())
-            .orElseThrow(() -> new HttpBadRequest("Invalid or expired reset token."));
+    @Override
+    public void resetPassword(FormResetPassword form) {
+        if (!form.getNewPassword().equals(form.getConfirmNewPassword())) {
+            throw new HttpBadRequest("New passwords do not match.");
+        }
+        
+        Candidate candidate = candidateRepository.findByResetToken(form.getToken())
+                .orElseThrow(() -> new HttpBadRequest("Invalid or expired reset token."));
 
+        candidate.setPassword(passwordEncoder.encode(form.getNewPassword()));
+        candidate.setResetToken(null); 
+    
+        candidateRepository.save(candidate);
+    }
+    
    
-    candidate.setPassword(passwordEncoder.encode(form.getNewPassword()));
-    candidate.setResetToken(null); 
- 
-    candidateRepository.save(candidate);
-}
     @Override
     public void changePassword(FormChangePassword form) {
         Candidate candidate = jwtProvider.getCurrentCandidate();
@@ -202,16 +198,8 @@ public void resetPassword(FormResetPassword form) {
 
         candidateRepository.save(candidate);
     }
+
     
-    @Override
-    public void activateAccount(String token) {
-        Candidate candidate = candidateRepository.findByVerificationToken(token)
-                .orElseThrow(() -> new HttpBadRequest("Invalid or expired verification token"));
-        
-        candidate.setStatus(true); 
-        candidate.setVerificationToken(null); 
-        candidateRepository.save(candidate);
-    }
     @Override
     @Transactional(readOnly = true)
     public CandidateResponse getCurrentCandidateProfile() {
@@ -225,7 +213,6 @@ public void resetPassword(FormResetPassword form) {
 
         return mapCandidateToResponse(candidate);
     }
-
 
 
     private CandidateResponse mapCandidateToResponse(Candidate candidate) {
@@ -248,7 +235,8 @@ public void resetPassword(FormResetPassword form) {
                                 .map(s -> SkillCandidateResponse.builder()
                                         .id(s.getId())
                                         .name(s.getName() != null ? s.getName() : null)
-                                        .level_job_id(s.getLevel_job_id())
+                                        
+                                        .level_job_id(s.getLevelJob() != null ? s.getLevelJob().getId().toString() : null) 
                                         .build())
                                 .collect(Collectors.toList()))
                 .educations(candidate.getEducationCandidates() == null ? null :

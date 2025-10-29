@@ -5,6 +5,7 @@ import com.ra.base_spring_boot.dto.resp.ExperienceCandidateResponse;
 import com.ra.base_spring_boot.exception.HttpAccessDenied;
 import com.ra.base_spring_boot.model.Candidate;
 import com.ra.base_spring_boot.model.ExperienceCandidate;
+import com.ra.base_spring_boot.repository.ICandidateRepository;
 import com.ra.base_spring_boot.repository.IExperienceCandidateRepository;
 import com.ra.base_spring_boot.security.jwt.JwtProvider;
 import com.ra.base_spring_boot.services.IExperienceCandidateService;
@@ -20,6 +21,7 @@ import java.util.stream.Collectors;
 public class ExperienceCandidateServiceImpl implements IExperienceCandidateService {
 
     private final IExperienceCandidateRepository experienceRepo;
+    private final ICandidateRepository candidateRepo; 
     private final JwtProvider jwtProvider;
 
     @Override
@@ -36,10 +38,9 @@ public class ExperienceCandidateServiceImpl implements IExperienceCandidateServi
     public ExperienceCandidateResponse createExperience(FormExperienceCandidate req) {
         Candidate current = jwtProvider.getCurrentCandidate();
 
-       
-        
         ExperienceCandidate exp = ExperienceCandidate.builder()
-                .candidate(current)
+                .candidate(current)    
+                .candidateCV(null)     
                 .position(req.getPosition())
                 .company(req.getCompany())
                 .started_at(req.getStarted_at())
@@ -56,11 +57,11 @@ public class ExperienceCandidateServiceImpl implements IExperienceCandidateServi
     public ExperienceCandidateResponse updateExperience(Long id, FormExperienceCandidate req) {
         Candidate current = jwtProvider.getCurrentCandidate();
         
-
         ExperienceCandidate exp = experienceRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Experience not found"));
 
-        if (!exp.getCandidate().getId().equals(current.getId())) {
+      
+        if (exp.getCandidate() == null || !exp.getCandidate().getId().equals(current.getId())) {
             throw new HttpAccessDenied("Access denied: You can only update your own experience");
         }
 
@@ -81,7 +82,8 @@ public class ExperienceCandidateServiceImpl implements IExperienceCandidateServi
         ExperienceCandidate exp = experienceRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Experience not found"));
 
-        if (!exp.getCandidate().getId().equals(current.getId())) {
+        
+        if (exp.getCandidate() == null || !exp.getCandidate().getId().equals(current.getId())) {
             throw new HttpAccessDenied("Access denied: You can only delete your own experience");
         }
 

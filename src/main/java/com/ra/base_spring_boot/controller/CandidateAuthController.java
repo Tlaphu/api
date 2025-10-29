@@ -90,8 +90,7 @@ public class CandidateAuthController {
     }
 
     /**
-     * @param
-     * @apiNote handle reset password with resetToken & newPassword
+     * @param @apiNote handle reset password with resetToken & newPassword
      */
     @PutMapping("/reset-password")
     public ResponseEntity<?> handleResetPassword(@Valid @RequestBody FormResetPassword form) {

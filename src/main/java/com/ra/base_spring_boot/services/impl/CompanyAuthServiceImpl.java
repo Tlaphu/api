@@ -40,7 +40,7 @@ public class CompanyAuthServiceImpl implements ICompanyAuthService {
     private final JwtProvider jwtProvider;
     private final EmailService emailService; 
     
-    private static final String BASE_URL = "http://localhost:8080/api/v1/auth/company";
+   
 
     public CompanyAuthServiceImpl(
             IRoleService roleService,
@@ -70,9 +70,7 @@ public class CompanyAuthServiceImpl implements ICompanyAuthService {
             throw new HttpBadRequest("Email is already registered");
         }
 
-        if (!form.getPassword().equals(form.getConfirmPassword())) {
-            throw new HttpBadRequest("Passwords do not match");
-        }
+        
 
         Set<Role> roles = new HashSet<>();
         roles.add(roleService.findByRoleName(RoleName.ROLE_COMPANY));
@@ -93,16 +91,15 @@ public class CompanyAuthServiceImpl implements ICompanyAuthService {
             companyRepository.save(company);
         }
         
-        String verificationToken = UUID.randomUUID().toString();
         
         AccountCompany accountCompany = AccountCompany.builder()
                 .fullName(form.getFullName())
                 .email(form.getEmail())
-                .password(passwordEncoder.encode(form.getPassword()))
+               
+                .password(passwordEncoder.encode(""))
                 .roles(roles)
                 .company(company)
-                .verificationToken(verificationToken)
-                .status(false)
+                .status(false) 
                 .build();
 
         accountCompanyRepository.save(accountCompany); 
@@ -112,26 +109,11 @@ public class CompanyAuthServiceImpl implements ICompanyAuthService {
                 .address(form.getAddress())
                 .build();
         addressCompanyRepository.save(address);
-
-        String confirmationLink = BASE_URL + "/verify?token=" + verificationToken;
         
-        emailService.sendVerificationEmail(
-            form.getEmail(), 
-            form.getFullName(), 
-            confirmationLink 
-        );
+        System.out.println("✅ New Company Account registered successfully, pending Admin approval: " + form.getEmail());
     }
     
-    @Override
-    public void activateAccount(String token) {
-        AccountCompany accountCompany = accountCompanyRepository.findByVerificationToken(token)
-                .orElseThrow(() -> new HttpBadRequest("Invalid or expired verification token"));
-        
-        accountCompany.setStatus(true);
-        accountCompany.setVerificationToken(null);
-        accountCompanyRepository.save(accountCompany);
-    }
-
+    
 
     @Override
     public JwtResponse login(FormLogin formLogin) {
@@ -149,7 +131,8 @@ public class CompanyAuthServiceImpl implements ICompanyAuthService {
         
 
         if (!accountCompany.isStatus()) {
-             throw new HttpBadRequest("Account is not activated. Please check your email for the activation link.");
+            
+            throw new HttpBadRequest("Account is not activated. Please wait for Admin approval.");
         }
         
         Company company = accountCompany.getCompany();
@@ -165,16 +148,25 @@ public class CompanyAuthServiceImpl implements ICompanyAuthService {
                 .build();
     }
 
-
-    @Override
-    public void logout(String token) {
-        System.out.println("Logout token: " + token);
-    }
+       @Override
+        public void logout(String token) {
+            System.out.println("Logout token: " + token);
+        }
+    
+        @Override
+        public void activateAccount(String token) {
+            AccountCompany accountCompany = accountCompanyRepository.findByResetToken(token)
+                    .orElseThrow(() -> new HttpBadRequest("Invalid activation token."));
+            
+            accountCompany.setStatus(true);
+            accountCompany.setResetToken(null);
+            accountCompanyRepository.save(accountCompany);
+        }
 
 
     @Override
     public String forgotPassword(FormForgotPassword form) {
-       AccountCompany accountCompany = accountCompanyRepository
+        AccountCompany accountCompany = accountCompanyRepository
             .findByEmail(form.getEmail()) 
             .orElseThrow(() -> new HttpBadRequest("Account not found with this email."));
         
@@ -182,9 +174,11 @@ public class CompanyAuthServiceImpl implements ICompanyAuthService {
         accountCompany.setResetToken(resetToken); 
         accountCompanyRepository.save(accountCompany); 
 
-     
-        String baseUrlNoAuth = BASE_URL.substring(0, BASE_URL.lastIndexOf("/company"));
-        String resetLink = baseUrlNoAuth + "/reset-password?token=" + resetToken; 
+       
+        String frontendBaseUrl = "http://localhost:5173"; 
+    
+   
+        String resetLink = frontendBaseUrl + "/reset-password?token=" + resetToken;
 
         
         emailService.sendResetPasswordEmail(
@@ -193,26 +187,27 @@ public class CompanyAuthServiceImpl implements ICompanyAuthService {
             resetLink
         );
 
-       
+        
         return "Password reset link sent to email.";
     }
 
     @Override
-public void resetPassword(FormResetPassword form) {
+    public void resetPassword(FormResetPassword form) {
     
-    if (!form.getNewPassword().equals(form.getConfirmNewPassword())) {
-        throw new HttpBadRequest("New passwords do not match.");
+        if (!form.getNewPassword().equals(form.getConfirmNewPassword())) {
+            throw new HttpBadRequest("New passwords do not match.");
+        }
+        
+        
+        AccountCompany accountCompany = accountCompanyRepository.findByResetToken(form.getToken())
+                .orElseThrow(() -> new HttpBadRequest("Invalid or expired reset token."));
+
+        
+        accountCompany.setPassword(passwordEncoder.encode(form.getNewPassword()));
+        accountCompany.setResetToken(null); 
+        accountCompanyRepository.save(accountCompany);
     }
     
-    
-    AccountCompany accountCompany = accountCompanyRepository.findByResetToken(form.getToken())
-            .orElseThrow(() -> new HttpBadRequest("Invalid or expired reset token."));
-
-   
-    accountCompany.setPassword(passwordEncoder.encode(form.getNewPassword()));
-    accountCompany.setResetToken(null); 
-    accountCompanyRepository.save(accountCompany);
-}
     @Override
     public void changePassword(FormChangePassword form) {
         AccountCompany accountCompany = jwtProvider.getCurrentAccountCompany();
@@ -303,7 +298,7 @@ public void resetPassword(FormResetPassword form) {
                 .description(company.getDescription())
                 .CompanyPolicy(company.getCompanyPolicy())
                 .created_at(company.getCreated_at())
-                .updated_at(new Date()) // Updated to use the field from Company
+                .updated_at(new Date()) 
                 .typeCompanyName(company.getTypeCompany() != null ? company.getTypeCompany().getName() : null)
                 .addresses(addresses)
                 .build();
@@ -317,7 +312,7 @@ public void resetPassword(FormResetPassword form) {
                 .email(accountCompany.getEmail())
                 .fullName(accountCompany.getFullName())
                 .phone(company.getPhone())
-                .status(accountCompany.isStatus()) // Thêm trạng thái kích hoạt vào Response
+                .status(accountCompany.isStatus())
                 .company(CompanyResponse.builder()
                         .id(company.getId())
                         .name(company.getName())
@@ -337,6 +332,7 @@ public void resetPassword(FormResetPassword form) {
                         .build())
                 .build();
     }
+    
     private CompanyResponse toCompanyResponse(Company company) {
         return CompanyResponse.builder()
                 .id(company.getId())

@@ -21,11 +21,6 @@ public class FormRegisterCandidate {
     @NotBlank(message = "Email is required")
     private String email;
 
-    @NotBlank(message = "Password is required")
-    private String password;
-
-    @NotBlank(message = "Confirm Password is required")
-    private String confirmPassword;
 
     private String phone;
 
@@ -33,7 +28,7 @@ public class FormRegisterCandidate {
 
     private Date dob;
 
-    private Integer gender; 
+    private Integer gender;
 
     private String link;
 }
