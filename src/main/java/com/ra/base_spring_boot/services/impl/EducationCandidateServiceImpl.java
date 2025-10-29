@@ -2,6 +2,7 @@ package com.ra.base_spring_boot.services.impl;
 
 import com.ra.base_spring_boot.dto.req.FormEducationCandidate;
 import com.ra.base_spring_boot.dto.resp.EducationCandidateResponse;
+import com.ra.base_spring_boot.exception.HttpAccessDenied;
 import com.ra.base_spring_boot.model.Candidate;
 import com.ra.base_spring_boot.model.EducationCandidate;
 import com.ra.base_spring_boot.repository.ICandidateRepository;
@@ -18,25 +19,27 @@ import java.util.stream.Collectors;
 public class EducationCandidateServiceImpl implements IEducationCandidateService {
 
     private final IEducationCandidateRepository educationRepo;
-    private final ICandidateRepository candidateRepo;
+    private final ICandidateRepository candidateRepo; // Giữ lại để tìm Candidate nếu cần (thường không cần trong Service này)
 
     @Override
     public List<EducationCandidateResponse> getAllByCandidate(Long candidateId) {
+        // Giả định Repository có phương thức findAllByCandidate_Id
         List<EducationCandidate> list = educationRepo.findAllByCandidate_Id(candidateId);
         return list.stream().map(this::toResponse).collect(Collectors.toList());
     }
 
     @Override
-    
     public EducationCandidateResponse createByCandidate(String candidateId, FormEducationCandidate request) {
-     
+        
         Long idAsLong = Long.parseLong(candidateId);
+        
         
         Candidate candidate = candidateRepo.findById(idAsLong)
                 .orElseThrow(() -> new RuntimeException("Candidate not found"));
 
         EducationCandidate edu = EducationCandidate.builder()
-                .candidate(candidate)
+                .candidate(candidate)       
+                .candidateCV(null)          
                 .name_education(request.getName_education())
                 .major(request.getMajor())
                 .started_at(request.getStartedAt())
@@ -51,20 +54,17 @@ public class EducationCandidateServiceImpl implements IEducationCandidateService
     }
 
     @Override
-    
     public EducationCandidateResponse updateByCandidate(Long id, String candidateId, FormEducationCandidate request) {
         EducationCandidate edu = educationRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Education not found"));
         
-        
         Long candidateIdAsLong = Long.parseLong(candidateId);
 
-        
-        if (!edu.getCandidate().getId().equals(candidateIdAsLong)) {
-            throw new RuntimeException("Unauthorized: cannot edit other candidate’s education");
+        // Kiểm tra quyền sở hữu
+        if (edu.getCandidate() == null || !edu.getCandidate().getId().equals(candidateIdAsLong)) {
+            throw new HttpAccessDenied("Unauthorized: cannot edit other candidate’s education");
         }
 
-      
         edu.setName_education(request.getName_education());
         edu.setMajor(request.getMajor());
         edu.setStarted_at(request.getStartedAt());
@@ -77,17 +77,15 @@ public class EducationCandidateServiceImpl implements IEducationCandidateService
     }
 
     @Override
-    
     public void deleteByCandidate(Long id, String candidateId) {
         EducationCandidate edu = educationRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Education not found"));
         
-        
         Long candidateIdAsLong = Long.parseLong(candidateId);
 
-     
-        if (!edu.getCandidate().getId().equals(candidateIdAsLong)) {
-            throw new RuntimeException("Unauthorized: cannot delete other candidate’s education");
+        // Kiểm tra quyền sở hữu
+        if (edu.getCandidate() == null || !edu.getCandidate().getId().equals(candidateIdAsLong)) {
+            throw new HttpAccessDenied("Unauthorized: cannot delete other candidate’s education");
         }
 
         educationRepo.delete(edu);

@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.*;
 import java.util.Date;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 @Entity
 @NoArgsConstructor
 @AllArgsConstructor
@@ -14,11 +16,14 @@ public class ProjectCandidate {
      @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY) 
     private Long id;
-
-    @ManyToOne
-    @JoinColumn(name = "candidate_id")
-    private Candidate candidate;
-
+    @JsonIgnore 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "candidate_id", nullable = false) 
+    private Candidate candidate; 
+   @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cv_id", nullable = true) 
+    @JsonIgnore 
+    private CandidateCV candidateCV;
     private String name;
     private String link;
     @Temporal(TemporalType.DATE)
