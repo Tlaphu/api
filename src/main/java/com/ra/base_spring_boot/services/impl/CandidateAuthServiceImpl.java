@@ -194,6 +194,7 @@ public class CandidateAuthServiceImpl implements ICandidateAuthService {
         candidate.setDescription(form.getDescription());
         candidate.setAddress(form.getAddress());
         candidate.setDob(form.getDob());
+        candidate.setTitle(form.getTitle());
         candidate.setGender(form.getGender());
         candidate.setLink(form.getLink());
         candidate.setUpdated_at(new Date());
@@ -227,6 +228,7 @@ public class CandidateAuthServiceImpl implements ICandidateAuthService {
                 .link(candidate.getLink())
                 .status(candidate.isStatus())
                 .isOpen(candidate.getIsOpen())
+                .Title(candidate.getTitle())
                 .description(candidate.getDescription())
                 .experience(candidate.getExperience())
                 .development(candidate.getDevelopment())
