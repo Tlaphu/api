@@ -2,6 +2,7 @@ package com.ra.base_spring_boot.controller;
 
 import com.ra.base_spring_boot.dto.ResponseWrapper;
 import com.ra.base_spring_boot.dto.req.*;
+import com.ra.base_spring_boot.dto.resp.CandidateResponse;
 import com.ra.base_spring_boot.dto.resp.JwtResponse;
 import com.ra.base_spring_boot.model.Candidate;
 import com.ra.base_spring_boot.security.jwt.JwtProvider;
@@ -10,13 +11,9 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
-import java.util.LinkedHashMap;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/auth/candidate")
@@ -151,30 +148,17 @@ public class CandidateAuthController {
                         .build()
         );
     }
-
     @GetMapping("/me")
-    public ResponseEntity<?> getCurrentCandidate() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        System.out.println(">>> Auth: " + auth);
-        System.out.println(">>> Principal: " + (auth != null ? auth.getPrincipal() : null));
-        Candidate candidate = jwtProvider.getCurrentCandidate();
-        if (candidate == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Candidate not authenticated");
-        }
-
-        Map<String, Object> response = new LinkedHashMap<>();
-        response.put("name", candidate.getName());
-        response.put("email", candidate.getEmail());
-        response.put("phone", candidate.getPhone());
-        response.put("address", candidate.getAddress());
-        response.put("dob", candidate.getDob());
-        response.put("gender", candidate.getGender());
-        response.put("link", candidate.getLink());
-        response.put("decription", candidate.getDescription());
-        response.put("experiance", candidate.getExperience());
-        response.put("Development", candidate.getDevelopment());
-
-        return ResponseEntity.ok(response);
+    public ResponseEntity<?> getCurrentCandidateProfile() {
+        CandidateResponse candidateResponse = authService.getCurrentCandidateProfile();
+        return ResponseEntity.ok(
+                ResponseWrapper.builder()
+                        .status(HttpStatus.OK)
+                        .code(200)
+                        .data(candidateResponse)
+                        .build()
+        );
     }
+
 
 }

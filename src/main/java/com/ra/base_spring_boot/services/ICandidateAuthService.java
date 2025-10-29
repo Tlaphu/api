@@ -1,7 +1,10 @@
 package com.ra.base_spring_boot.services;
 
 import com.ra.base_spring_boot.dto.req.*;
+import com.ra.base_spring_boot.dto.resp.CandidateResponse;
 import com.ra.base_spring_boot.dto.resp.JwtResponse;
+import com.ra.base_spring_boot.model.Candidate;
+import org.springframework.data.jpa.repository.EntityGraph;
 
 public interface ICandidateAuthService {
 
@@ -34,8 +37,9 @@ public interface ICandidateAuthService {
      * Update candidate profile
      */
     void updateProfile(FormUpdateProfile form);
+
     void activateAccount(String token);
+
     void resetPassword(FormResetPassword form);
-
-
+    CandidateResponse getCurrentCandidateProfile();
 }

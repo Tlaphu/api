@@ -1,5 +1,6 @@
 package com.ra.base_spring_boot.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.*;
 import java.util.Date;
@@ -16,6 +17,13 @@ public class SkillsCandidate {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY) 
     private Long id; 
+<<<<<<< HEAD
+=======
+    @ManyToOne
+    @JoinColumn(name = "candidate_id")
+    @JsonBackReference
+    private Candidate candidate;
+>>>>>>> fe67e875853c272e1fca2bdad73da287d5d04a8d
     private String name;
     @JsonIgnore 
     @ManyToOne(fetch = FetchType.LAZY)

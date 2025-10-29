@@ -2,6 +2,7 @@ package com.ra.base_spring_boot.dto.resp;
 
 import lombok.*;
 import java.util.Date;
+import java.util.List;
 
 @Getter
 @Setter
@@ -14,11 +15,19 @@ public class CandidateResponse {
     private String email;
     private String phone;
     private String address;
-    private String gender;
+    private Integer gender;
     private Date dob;
     private String link;
     private boolean status;
     private Integer isOpen;
-    private Date created_at;
-    private Date updated_at;
+
+    private String description;
+    private String experience;
+    private String development;
+
+    private List<SkillCandidateResponse> skills;
+    private List<EducationCandidateResponse> educations;
+    private List<ExperienceCandidateResponse> experiences;
+    private List<CertificateCandidateResponse> certificates;
+    private List<JobCandidateResponse> jobs;
 }

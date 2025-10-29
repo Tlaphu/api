@@ -1,7 +1,7 @@
 package com.ra.base_spring_boot.services.impl;
 
 import com.ra.base_spring_boot.dto.req.*;
-import com.ra.base_spring_boot.dto.resp.JwtResponse;
+import com.ra.base_spring_boot.dto.resp.*;
 import com.ra.base_spring_boot.exception.HttpBadRequest;
 import com.ra.base_spring_boot.model.Candidate;
 import com.ra.base_spring_boot.model.Role;
@@ -11,7 +11,8 @@ import com.ra.base_spring_boot.security.jwt.JwtProvider;
 import com.ra.base_spring_boot.security.principle.MyUserDetails;
 import com.ra.base_spring_boot.services.ICandidateAuthService;
 import com.ra.base_spring_boot.services.IRoleService;
-import com.ra.base_spring_boot.services.EmailService; 
+import com.ra.base_spring_boot.services.EmailService;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -208,5 +209,79 @@ public void resetPassword(FormResetPassword form) {
         candidate.setStatus(true); 
         candidate.setVerificationToken(null); 
         candidateRepository.save(candidate);
+    }
+    @Override
+    @Transactional(readOnly = true)
+    public CandidateResponse getCurrentCandidateProfile() {
+        Candidate current = jwtProvider.getCurrentCandidate();
+        if (current == null) {
+            throw new HttpBadRequest("Unauthorized: Candidate not found or token invalid");
+        }
+
+        Candidate candidate = candidateRepository.findById(current.getId())
+                .orElseThrow(() -> new HttpBadRequest("Candidate not found"));
+
+        return mapCandidateToResponse(candidate);
+    }
+
+
+
+    private CandidateResponse mapCandidateToResponse(Candidate candidate) {
+        return CandidateResponse.builder()
+                .id(candidate.getId())
+                .name(candidate.getName())
+                .email(candidate.getEmail())
+                .phone(candidate.getPhone())
+                .address(candidate.getAddress())
+                .gender(candidate.getGender())
+                .dob(candidate.getDob())
+                .link(candidate.getLink())
+                .status(candidate.isStatus())
+                .isOpen(candidate.getIsOpen())
+                .description(candidate.getDescription())
+                .experience(candidate.getExperience())
+                .development(candidate.getDevelopment())
+                .skills(candidate.getSkillCandidates() == null ? null :
+                        candidate.getSkillCandidates().stream()
+                                .map(s -> SkillCandidateResponse.builder()
+                                        .id(s.getId())
+                                        .name(s.getName() != null ? s.getName() : null)
+                                        .level_job_id(s.getLevel_job_id())
+                                        .build())
+                                .collect(Collectors.toList()))
+                .educations(candidate.getEducationCandidates() == null ? null :
+                        candidate.getEducationCandidates().stream()
+                                .map(e -> EducationCandidateResponse.builder()
+                                        .id(e.getId())
+                                        .nameEducation(e.getName_education())
+                                        .major(e.getMajor())
+                                        .startedAt((e.getStarted_at()))
+                                        .endAt((e.getEnd_at()))
+                                        .info(e.getInfo())
+                                        .build())
+                                .collect(Collectors.toList()))
+                .experiences(candidate.getExperienceCandidates() == null ? null :
+                        candidate.getExperienceCandidates().stream()
+                                .map(ex -> ExperienceCandidateResponse.builder()
+                                        .id(ex.getId())
+                                        .company(ex.getCompany())
+                                        .position(ex.getPosition())
+                                        .started_at((ex.getStarted_at()))
+                                        .end_at((ex.getEnd_at()))
+                                        .info(ex.getInfo())
+                                        .build())
+                                .collect(Collectors.toList()))
+                .certificates(candidate.getCertificateCandidates() == null ? null :
+                        candidate.getCertificateCandidates().stream()
+                                .map(c -> CertificateCandidateResponse.builder()
+                                        .id(c.getId())
+                                        .name(c.getName())
+                                        .organization(c.getOrganization())
+                                        .started_at((c.getStarted_at()))
+                                        .end_at((c.getEnd_at()))
+                                        .info(c.getInfo())
+                                        .build())
+                                .collect(Collectors.toList()))
+                .build();
     }
 }
