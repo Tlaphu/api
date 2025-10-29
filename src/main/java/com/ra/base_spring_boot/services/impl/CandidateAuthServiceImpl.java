@@ -196,6 +196,8 @@ public class CandidateAuthServiceImpl implements ICandidateAuthService {
         candidate.setName(form.getName());
         candidate.setEmail(form.getEmail());
         candidate.setPhone(form.getPhone());
+        candidate.setDescription(form.getDescription());
+        candidate.setTitle(form.getTitle());
         candidate.setAddress(form.getAddress());
         candidate.setDob(form.getDob());
         candidate.setGender(form.getGender());
@@ -245,6 +247,7 @@ public class CandidateAuthServiceImpl implements ICandidateAuthService {
                 .educations(candidate.getEducationCandidates() == null ? null
                         : candidate.getEducationCandidates().stream()
                                 .map(e -> EducationCandidateResponse.builder()
+<<<<<<< HEAD
                                 .id(e.getId())
                                 .nameEducation(e.getName_education())
                                 .major(e.getMajor())
@@ -252,6 +255,16 @@ public class CandidateAuthServiceImpl implements ICandidateAuthService {
                                 .endAt((e.getEnd_at()))
                                 .info(e.getInfo())
                                 .build())
+=======
+                                        .id(e.getId())
+                                        .nameEducation(e.getName_education())
+                                        .major(e.getMajor())
+                                        .GPA(e.getGPA())
+                                        .startedAt((e.getStarted_at()))
+                                        .endAt((e.getEnd_at()))
+                                        .info(e.getInfo())
+                                        .build())
+>>>>>>> 0236e1ddca02d496658d67bef9adae27dfbf595b
                                 .collect(Collectors.toList()))
                 .experiences(candidate.getExperienceCandidates() == null ? null
                         : candidate.getExperienceCandidates().stream()

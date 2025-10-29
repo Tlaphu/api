@@ -12,6 +12,7 @@ public class EducationCandidateResponse {
     private Long id;
     private String nameEducation;
     private String major;
+    private String GPA;
     private Date startedAt;
     private Date endAt;
     private String info;
