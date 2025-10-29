@@ -35,53 +35,66 @@ public class CandidateAuthServiceImpl implements ICandidateAuthService {
     private final AuthenticationManager candidateAuthManager;
     private final JwtProvider jwtProvider;
     private final EmailService emailService;
+    private static final String BASE_URL = "http://localhost:8080/api/v1/auth/candidate";
 
-   
     @Override
-    public void activateAccount(String token) {
-        Candidate candidate = candidateRepository.findByResetToken(token)
-                .orElseThrow(() -> new HttpBadRequest("Invalid or expired activation token."));
-        candidate.setStatus(true);
-        candidate.setResetToken(null);
-        candidate.setUpdated_at(new Date());
-        candidateRepository.save(candidate);
-    }
-    
-    
-@Override
     public void register(FormRegisterCandidate formRegisterCandidate) {
         if (candidateRepository.existsByEmail(formRegisterCandidate.getEmail())) {
             throw new HttpBadRequest("Email is already registered");
         }
 
-        
+        if (!formRegisterCandidate.getPassword().equals(formRegisterCandidate.getConfirmPassword())) {
+            throw new HttpBadRequest("Passwords do not match");
+        }
 
         Set<Role> roles = new HashSet<>();
         roles.add(roleService.findByRoleName(RoleName.ROLE_CANDIDATE));
+
         
-        
+        String verificationToken = UUID.randomUUID().toString();
+
         Candidate candidate = Candidate.builder()
                 .name(formRegisterCandidate.getName())
                 .email(formRegisterCandidate.getEmail())
-                
-                .password(passwordEncoder.encode("")) 
+               
+                .password(passwordEncoder.encode(formRegisterCandidate.getPassword()))
                 .phone(formRegisterCandidate.getPhone())
-                .address(formRegisterCandidate.getAddress())
-                .dob(formRegisterCandidate.getDob())
-                .gender(formRegisterCandidate.getGender())
-                .link(formRegisterCandidate.getLink())
+               
                 .roles(roles)
                 .created_at(new Date())
                 .updated_at(new Date())
                 .isOpen(1)
+                
+                .verificationToken(verificationToken)
                 .status(false) 
                 .build();
 
         candidateRepository.save(candidate);
-        
-        System.out.println("✅ New Candidate registered successfully, pending Admin approval: " + formRegisterCandidate.getEmail());
+
+       
+        String confirmationLink = BASE_URL + "/verify?token=" + verificationToken;
+
+        emailService.sendVerificationEmail(
+                formRegisterCandidate.getEmail(),
+                formRegisterCandidate.getName(),
+                confirmationLink
+        );
+        System.out.println("✅ Activation email sent to: " + formRegisterCandidate.getEmail());
     }
-   
+
+    @Override
+    public void activateAccount(String token) {
+
+        Candidate candidate = candidateRepository.findByVerificationToken(token)
+                .orElseThrow(() -> new HttpBadRequest("Invalid or expired verification token"));
+
+        candidate.setStatus(true);
+        candidate.setVerificationToken(null);
+        candidateRepository.save(candidate);
+
+        emailService.sendRegistrationSuccessEmail(candidate.getEmail(), candidate.getName(), "Candidate");
+    }
+
     @Override
     public JwtResponse login(FormLogin formLogin) {
         try {
@@ -91,14 +104,12 @@ public class CandidateAuthServiceImpl implements ICandidateAuthService {
 
             MyUserDetails userDetails = (MyUserDetails) authentication.getPrincipal();
             Candidate candidate = userDetails.getCandidate();
-            
-            
+
             if (!candidate.isStatus()) {
                 
-                throw new HttpBadRequest("Account is not activated. Please wait for Admin approval.");
+                throw new HttpBadRequest("Account is not activated. Please check your email for the activation link.");
             }
-            
-            
+
             Set<String> roles = userDetails.getAuthorities().stream()
                     .map(GrantedAuthority::getAuthority)
                     .collect(Collectors.toSet());
@@ -115,52 +126,50 @@ public class CandidateAuthServiceImpl implements ICandidateAuthService {
             throw new HttpBadRequest("Email or password wrong");
         }
     }
-  
+
     @Override
     public void logout(String token) {
         System.out.println("Logout token: " + token);
     }
 
-    
     @Override
     public String forgotPassword(FormForgotPassword form) {
         Candidate candidate = candidateRepository
-            .findByEmail(form.getEmail()) 
-            .orElseThrow(() -> new HttpBadRequest("Candidate account not found with this email."));
-        
+                .findByEmail(form.getEmail())
+                .orElseThrow(() -> new HttpBadRequest("Candidate account not found with this email."));
+
         String resetToken = UUID.randomUUID().toString();
-        
-        candidate.setResetToken(resetToken); 
-        candidateRepository.save(candidate); 
-        
-        String frontendBaseUrl = "http://localhost:5173"; 
+
+        candidate.setResetToken(resetToken);
+        candidateRepository.save(candidate);
+
+        String frontendBaseUrl = "http://localhost:5173";
         String resetLink = frontendBaseUrl + "/reset-password?token=" + resetToken;
-        
+
         emailService.sendResetPasswordEmail(
-            candidate.getEmail(), 
-            candidate.getName(), 
-            resetLink
+                candidate.getEmail(),
+                candidate.getName(),
+                resetLink
         );
 
         return "Password reset link sent to email.";
     }
-    
+
     @Override
     public void resetPassword(FormResetPassword form) {
         if (!form.getNewPassword().equals(form.getConfirmNewPassword())) {
             throw new HttpBadRequest("New passwords do not match.");
         }
-        
+
         Candidate candidate = candidateRepository.findByResetToken(form.getToken())
                 .orElseThrow(() -> new HttpBadRequest("Invalid or expired reset token."));
 
         candidate.setPassword(passwordEncoder.encode(form.getNewPassword()));
-        candidate.setResetToken(null); 
-    
+        candidate.setResetToken(null);
+
         candidateRepository.save(candidate);
     }
-    
-   
+
     @Override
     public void changePassword(FormChangePassword form) {
         Candidate candidate = jwtProvider.getCurrentCandidate();
@@ -177,7 +186,6 @@ public class CandidateAuthServiceImpl implements ICandidateAuthService {
 
         candidateRepository.save(candidate);
     }
-
 
     @Override
     public void updateProfile(FormUpdateProfile form) {
@@ -197,7 +205,6 @@ public class CandidateAuthServiceImpl implements ICandidateAuthService {
         candidateRepository.save(candidate);
     }
 
-    
     @Override
     @Transactional(readOnly = true)
     public CandidateResponse getCurrentCandidateProfile() {
@@ -211,7 +218,6 @@ public class CandidateAuthServiceImpl implements ICandidateAuthService {
 
         return mapCandidateToResponse(candidate);
     }
-
 
     private CandidateResponse mapCandidateToResponse(Candidate candidate) {
         return CandidateResponse.builder()
@@ -228,47 +234,46 @@ public class CandidateAuthServiceImpl implements ICandidateAuthService {
                 .description(candidate.getDescription())
                 .experience(candidate.getExperience())
                 .development(candidate.getDevelopment())
-                .skills(candidate.getSkillCandidates() == null ? null :
-                        candidate.getSkillCandidates().stream()
+                .skills(candidate.getSkillCandidates() == null ? null
+                        : candidate.getSkillCandidates().stream()
                                 .map(s -> SkillCandidateResponse.builder()
-                                        .id(s.getId())
-                                        .name(s.getName() != null ? s.getName() : null)
-                                        
-                                        .level_job_id(s.getLevelJob() != null ? s.getLevelJob().getId().toString() : null) 
-                                        .build())
+                                .id(s.getId())
+                                .name(s.getName() != null ? s.getName() : null)
+                                .level_job_id(s.getLevelJob() != null ? s.getLevelJob().getId().toString() : null)
+                                .build())
                                 .collect(Collectors.toList()))
-                .educations(candidate.getEducationCandidates() == null ? null :
-                        candidate.getEducationCandidates().stream()
+                .educations(candidate.getEducationCandidates() == null ? null
+                        : candidate.getEducationCandidates().stream()
                                 .map(e -> EducationCandidateResponse.builder()
-                                        .id(e.getId())
-                                        .nameEducation(e.getName_education())
-                                        .major(e.getMajor())
-                                        .startedAt((e.getStarted_at()))
-                                        .endAt((e.getEnd_at()))
-                                        .info(e.getInfo())
-                                        .build())
+                                .id(e.getId())
+                                .nameEducation(e.getName_education())
+                                .major(e.getMajor())
+                                .startedAt((e.getStarted_at()))
+                                .endAt((e.getEnd_at()))
+                                .info(e.getInfo())
+                                .build())
                                 .collect(Collectors.toList()))
-                .experiences(candidate.getExperienceCandidates() == null ? null :
-                        candidate.getExperienceCandidates().stream()
+                .experiences(candidate.getExperienceCandidates() == null ? null
+                        : candidate.getExperienceCandidates().stream()
                                 .map(ex -> ExperienceCandidateResponse.builder()
-                                        .id(ex.getId())
-                                        .company(ex.getCompany())
-                                        .position(ex.getPosition())
-                                        .started_at((ex.getStarted_at()))
-                                        .end_at((ex.getEnd_at()))
-                                        .info(ex.getInfo())
-                                        .build())
+                                .id(ex.getId())
+                                .company(ex.getCompany())
+                                .position(ex.getPosition())
+                                .started_at((ex.getStarted_at()))
+                                .end_at((ex.getEnd_at()))
+                                .info(ex.getInfo())
+                                .build())
                                 .collect(Collectors.toList()))
-                .certificates(candidate.getCertificateCandidates() == null ? null :
-                        candidate.getCertificateCandidates().stream()
+                .certificates(candidate.getCertificateCandidates() == null ? null
+                        : candidate.getCertificateCandidates().stream()
                                 .map(c -> CertificateCandidateResponse.builder()
-                                        .id(c.getId())
-                                        .name(c.getName())
-                                        .organization(c.getOrganization())
-                                        .started_at((c.getStarted_at()))
-                                        .end_at((c.getEnd_at()))
-                                        .info(c.getInfo())
-                                        .build())
+                                .id(c.getId())
+                                .name(c.getName())
+                                .organization(c.getOrganization())
+                                .started_at((c.getStarted_at()))
+                                .end_at((c.getEnd_at()))
+                                .info(c.getInfo())
+                                .build())
                                 .collect(Collectors.toList()))
                 .build();
     }

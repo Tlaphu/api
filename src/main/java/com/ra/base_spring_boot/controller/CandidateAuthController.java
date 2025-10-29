@@ -144,10 +144,11 @@ public class CandidateAuthController {
                 ResponseWrapper.builder()
                         .status(HttpStatus.OK)
                         .code(200)
-                        .data("Candidate account activated successfully! You can now log in.")
+                        .data("Candidate account activated successfully! You can log in now.") 
                         .build()
         );
     }
+
     @GetMapping("/me")
     public ResponseEntity<?> getCurrentCandidateProfile() {
         CandidateResponse candidateResponse = authService.getCurrentCandidateProfile();
@@ -159,6 +160,5 @@ public class CandidateAuthController {
                         .build()
         );
     }
-
 
 }

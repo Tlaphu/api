@@ -97,31 +97,6 @@ public class AdminServiceImpl implements IAdminService {
     }
     
     
-    @Override
-    public void activateCandidate(Long id) {
-        Candidate candidate = candidateRepository.findById(id)
-                .orElseThrow(() -> new HttpBadRequest("Candidate not found"));
-
-        if (candidate.isStatus()) {
-            throw new HttpBadRequest("Candidate account is already active.");
-        }
-        
-       
-        candidate.setStatus(true); 
-        
-        candidate.setPassword(passwordEncoder.encode(DEFAULT_PASSWORD)); 
-        candidate.setVerificationToken(null);
-        candidate.setUpdated_at(new Date());
-
-        candidateRepository.save(candidate);
-
-       
-        emailService.sendLoginCredentialsEmail(
-                candidate.getEmail(),
-                candidate.getName(),
-                DEFAULT_PASSWORD 
-        );
-    }
     
     
     @Override
