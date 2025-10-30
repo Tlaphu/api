@@ -10,7 +10,7 @@ import com.ra.base_spring_boot.security.jwt.JwtProvider;
 import com.ra.base_spring_boot.security.principle.MyCompanyDetails;
 import com.ra.base_spring_boot.services.ICompanyAuthService;
 import com.ra.base_spring_boot.services.IRoleService;
-import com.ra.base_spring_boot.services.EmailService; 
+import com.ra.base_spring_boot.services.EmailService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.PageRequest;
@@ -38,9 +38,7 @@ public class CompanyAuthServiceImpl implements ICompanyAuthService {
     @Qualifier("companyAuthManager")
     private final AuthenticationManager companyAuthManager;
     private final JwtProvider jwtProvider;
-    private final EmailService emailService; 
-    
-   
+    private final EmailService emailService;
 
     public CompanyAuthServiceImpl(
             IRoleService roleService,
@@ -51,7 +49,7 @@ public class CompanyAuthServiceImpl implements ICompanyAuthService {
             ITypeCompanyRepository typeCompanyRepository,
             @Qualifier("companyAuthManager") AuthenticationManager companyAuthManager,
             JwtProvider jwtProvider,
-            EmailService emailService 
+            EmailService emailService
     ) {
         this.roleService = roleService;
         this.accountCompanyRepository = accountCompanyRepository;
@@ -61,7 +59,7 @@ public class CompanyAuthServiceImpl implements ICompanyAuthService {
         this.typeCompanyRepository = typeCompanyRepository;
         this.companyAuthManager = companyAuthManager;
         this.jwtProvider = jwtProvider;
-        this.emailService = emailService; 
+        this.emailService = emailService;
     }
 
     @Override
@@ -69,8 +67,6 @@ public class CompanyAuthServiceImpl implements ICompanyAuthService {
         if (accountCompanyRepository.existsByEmail(form.getEmail())) {
             throw new HttpBadRequest("Email is already registered");
         }
-
-        
 
         Set<Role> roles = new HashSet<>();
         roles.add(roleService.findByRoleName(RoleName.ROLE_COMPANY));
@@ -90,30 +86,26 @@ public class CompanyAuthServiceImpl implements ICompanyAuthService {
                     .build();
             companyRepository.save(company);
         }
-        
-        
+
         AccountCompany accountCompany = AccountCompany.builder()
                 .fullName(form.getFullName())
                 .email(form.getEmail())
-               
                 .password(passwordEncoder.encode(""))
                 .roles(roles)
                 .company(company)
-                .status(false) 
+                .status(false)
                 .build();
 
-        accountCompanyRepository.save(accountCompany); 
+        accountCompanyRepository.save(accountCompany);
 
         AddressCompany address = AddressCompany.builder()
                 .company(company)
                 .address(form.getAddress())
                 .build();
         addressCompanyRepository.save(address);
-        
+
         System.out.println("✅ New Company Account registered successfully, pending Admin approval: " + form.getEmail());
     }
-    
-    
 
     @Override
     public JwtResponse login(FormLogin formLogin) {
@@ -128,13 +120,12 @@ public class CompanyAuthServiceImpl implements ICompanyAuthService {
 
         MyCompanyDetails companyDetails = (MyCompanyDetails) authentication.getPrincipal();
         AccountCompany accountCompany = companyDetails.getAccountCompany();
-        
 
         if (!accountCompany.isStatus()) {
-            
+
             throw new HttpBadRequest("Account is not activated. Please wait for Admin approval.");
         }
-        
+
         Company company = accountCompany.getCompany();
 
         Set<String> roles = companyDetails.getAuthorities().stream()
@@ -148,68 +139,61 @@ public class CompanyAuthServiceImpl implements ICompanyAuthService {
                 .build();
     }
 
-       @Override
-        public void logout(String token) {
-            System.out.println("Logout token: " + token);
-        }
-    
-        @Override
-        public void activateAccount(String token) {
-            AccountCompany accountCompany = accountCompanyRepository.findByResetToken(token)
-                    .orElseThrow(() -> new HttpBadRequest("Invalid activation token."));
-            
-            accountCompany.setStatus(true);
-            accountCompany.setResetToken(null);
-            accountCompanyRepository.save(accountCompany);
-        }
+    @Override
+    public void logout(String token) {
+        System.out.println("Logout token: " + token);
+    }
 
+    @Override
+    public void activateAccount(String token) {
+        AccountCompany accountCompany = accountCompanyRepository.findByResetToken(token)
+                .orElseThrow(() -> new HttpBadRequest("Invalid activation token."));
+
+        accountCompany.setStatus(true);
+        accountCompany.setResetToken(null);
+        accountCompanyRepository.save(accountCompany);
+    }
 
     @Override
     public String forgotPassword(FormForgotPassword form) {
         AccountCompany accountCompany = accountCompanyRepository
-            .findByEmail(form.getEmail()) 
-            .orElseThrow(() -> new HttpBadRequest("Account not found with this email."));
+                .findByEmail(form.getEmail())
+                .orElseThrow(() -> new HttpBadRequest("Account not found with this email."));
         if (!accountCompany.isStatus()) {
             throw new HttpBadRequest("Account is not activated.");
         }
         String resetToken = UUID.randomUUID().toString();
-        accountCompany.setResetToken(resetToken); 
-        accountCompanyRepository.save(accountCompany); 
+        accountCompany.setResetToken(resetToken);
+        accountCompanyRepository.save(accountCompany);
 
-       
-        String frontendBaseUrl = "http://localhost:5173"; 
-    
-   
+        String frontendBaseUrl = "http://localhost:5173";
+
         String resetLink = frontendBaseUrl + "/reset-password?token=" + resetToken;
 
-        
         emailService.sendResetPasswordEmail(
-            accountCompany.getEmail(), 
-            accountCompany.getFullName(), 
-            resetLink
+                accountCompany.getEmail(),
+                accountCompany.getFullName(),
+                resetLink
         );
 
-        
         return "Password reset link sent to email.";
     }
 
     @Override
     public void resetPassword(FormResetPassword form) {
-        
+
         if (!form.getNewPassword().equals(form.getConfirmNewPassword())) {
             throw new HttpBadRequest("New passwords do not match.");
         }
-        
-        
+
         AccountCompany accountCompany = accountCompanyRepository.findByResetToken(form.getToken())
                 .orElseThrow(() -> new HttpBadRequest("Invalid or expired reset token."));
 
-        
         accountCompany.setPassword(passwordEncoder.encode(form.getNewPassword()));
-        accountCompany.setResetToken(null); 
+        accountCompany.setResetToken(null);
         accountCompanyRepository.save(accountCompany);
     }
-    
+
     @Override
     public void changePassword(FormChangePassword form) {
         AccountCompany accountCompany = jwtProvider.getCurrentAccountCompany();
@@ -224,7 +208,6 @@ public class CompanyAuthServiceImpl implements ICompanyAuthService {
         accountCompany.setPassword(passwordEncoder.encode(form.getNewPassword()));
         accountCompanyRepository.save(accountCompany);
     }
-
 
     @Override
     public void updateProfile(FormUpdateCompany form) {
@@ -246,7 +229,6 @@ public class CompanyAuthServiceImpl implements ICompanyAuthService {
         companyRepository.save(company);
     }
 
-
     @Override
     public List<CompanyResponse> findTop20ByFollower() {
         Pageable topTwenty = PageRequest.of(0, 20);
@@ -257,15 +239,12 @@ public class CompanyAuthServiceImpl implements ICompanyAuthService {
                 .collect(Collectors.toList());
     }
 
-
-
     @Override
     public List<CompanyResponse> findAll() {
         return companyRepository.findAll()
                 .stream().map(this::toResponse)
                 .collect(Collectors.toList());
     }
-
 
     @Override
     public CompanyResponse findById(Long id) {
@@ -274,16 +253,15 @@ public class CompanyAuthServiceImpl implements ICompanyAuthService {
         return toResponse(company);
     }
 
-
     private CompanyResponse toResponse(Company company) {
         List<AddressCompanyResponse> addresses = addressCompanyRepository.findByCompany(company)
                 .stream()
                 .map(addr -> AddressCompanyResponse.builder()
-                        .id(addr.getId())
-                        .address(addr.getAddress())
-                        .mapUrl(addr.getMap_url())
-                        .locationName(addr.getLocation() != null ? addr.getLocation().getName() : null)
-                        .build())
+                .id(addr.getId())
+                .address(addr.getAddress())
+                .mapUrl(addr.getMap_url())
+                .locationName(addr.getLocation() != null ? addr.getLocation().getName() : null)
+                .build())
                 .collect(Collectors.toList());
 
         return CompanyResponse.builder()
@@ -300,7 +278,7 @@ public class CompanyAuthServiceImpl implements ICompanyAuthService {
                 .description(company.getDescription())
                 .CompanyPolicy(company.getCompanyPolicy())
                 .created_at(company.getCreated_at())
-                .updated_at(new Date()) 
+                .updated_at(new Date())
                 .typeCompanyName(company.getTypeCompany() != null ? company.getTypeCompany().getName() : null)
                 .addresses(addresses)
                 .build();
@@ -334,7 +312,7 @@ public class CompanyAuthServiceImpl implements ICompanyAuthService {
                         .build())
                 .build();
     }
-    
+
     private CompanyResponse toCompanyResponse(Company company) {
         return CompanyResponse.builder()
                 .id(company.getId())

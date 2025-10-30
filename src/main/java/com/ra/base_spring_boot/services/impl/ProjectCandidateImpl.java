@@ -22,11 +22,10 @@ public class ProjectCandidateImpl implements IProjectCandidateService {
     private final IProjectRepository projectRepo;
     private final JwtProvider jwtProvider;
 
-
     @Override
     public List<ProjectCandidateResponse> getProject() {
         Candidate current = jwtProvider.getCurrentCandidate();
-        
+
         return projectRepo.findAllByCandidate_Id(current.getId())
                 .stream()
                 .map(this::toResponse)
@@ -37,10 +36,9 @@ public class ProjectCandidateImpl implements IProjectCandidateService {
     public ProjectCandidateResponse createProject(FormProjectCandidate req) {
         Candidate current = jwtProvider.getCurrentCandidate();
 
-        
         ProjectCandidate exp = ProjectCandidate.builder()
-                .candidate(current)     
-                .candidateCV(null)    
+                .candidate(current)
+                .candidateCV(null)
                 .name(req.getName())
                 .link(req.getLink())
                 .started_at(req.getStarted_at())
@@ -56,7 +54,7 @@ public class ProjectCandidateImpl implements IProjectCandidateService {
     @Override
     public ProjectCandidateResponse updateProject(Long id, FormProjectCandidate req) {
         Candidate current = jwtProvider.getCurrentCandidate();
-        
+
         ProjectCandidate exp = projectRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Project not found"));
 

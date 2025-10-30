@@ -9,8 +9,9 @@ import java.util.Date;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Data
 public class FormCertificateCandidate {
-
+    private Long id;
     String name;
     String organization;
     private Date started_at;

@@ -25,7 +25,6 @@ import org.springframework.security.crypto.password.PasswordEncoder; // Đã th�
 import org.springframework.stereotype.Service;
 import com.ra.base_spring_boot.dto.req.FormUpdateProfile;
 
-
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
@@ -35,7 +34,7 @@ import java.util.stream.Collectors;
 public class AdminServiceImpl implements IAdminService {
 
     // Mật khẩu mặc định
-    private static final String DEFAULT_PASSWORD = "Welcome123!"; 
+    private static final String DEFAULT_PASSWORD = "Welcome123!";
 
     private final AuthenticationManager adminAuthManager;
     private final JwtProvider jwtProvider;
@@ -43,10 +42,10 @@ public class AdminServiceImpl implements IAdminService {
     private final IAccountCompanyRepository accountCompanyRepository;
     private final IAddressCompanyRepository addressCompanyRepository;
     private final ICandidateRepository candidateRepository;
-    
+
     // Dependencies mới
-    private final EmailService emailService; 
-    private final PasswordEncoder passwordEncoder; 
+    private final EmailService emailService;
+    private final PasswordEncoder passwordEncoder;
 
     public AdminServiceImpl(
             @Qualifier("adminAuthManager") AuthenticationManager adminAuthManager,
@@ -55,8 +54,8 @@ public class AdminServiceImpl implements IAdminService {
             IAccountCompanyRepository accountCompanyRepository,
             IAddressCompanyRepository addressCompanyRepository,
             ICandidateRepository candidateRepository,
-            EmailService emailService, 
-            PasswordEncoder passwordEncoder 
+            EmailService emailService,
+            PasswordEncoder passwordEncoder
     ) {
         this.adminAuthManager = adminAuthManager;
         this.jwtProvider = jwtProvider;
@@ -64,10 +63,9 @@ public class AdminServiceImpl implements IAdminService {
         this.accountCompanyRepository = accountCompanyRepository;
         this.addressCompanyRepository = addressCompanyRepository;
         this.candidateRepository = candidateRepository;
-        this.emailService = emailService; 
-        this.passwordEncoder = passwordEncoder; 
+        this.emailService = emailService;
+        this.passwordEncoder = passwordEncoder;
     }
-
 
     @Override
     public JwtResponse login(FormLogin formLogin) {
@@ -95,25 +93,21 @@ public class AdminServiceImpl implements IAdminService {
             throw new HttpBadRequest("Wrong email");
         }
     }
-    
-    
-    
-    
+
     @Override
     public void activateCompanyAccount(Long id) {
         AccountCompany account = accountCompanyRepository.findById(id)
                 .orElseThrow(() -> new HttpBadRequest("Company Account not found"));
-        
+
         if (account.isStatus()) {
             throw new HttpBadRequest("Company Account is already active.");
         }
-        
-        
+
         account.setStatus(true);
-   
+
         account.setPassword(passwordEncoder.encode(DEFAULT_PASSWORD));
         account.setVerificationToken(null);
-        
+
         accountCompanyRepository.save(account);
 
         emailService.sendLoginCredentialsEmail(
@@ -122,8 +116,6 @@ public class AdminServiceImpl implements IAdminService {
                 DEFAULT_PASSWORD
         );
     }
-    
-  
 
     @Override
     public List<CompanyResponse> findAll() {
@@ -167,11 +159,11 @@ public class AdminServiceImpl implements IAdminService {
         List<AddressCompanyResponse> addresses = addressCompanyRepository.findByCompany(company)
                 .stream()
                 .map(addr -> AddressCompanyResponse.builder()
-                        .id(addr.getId())
-                        .address(addr.getAddress())
-                        .mapUrl(addr.getMap_url())
-                        .locationName(addr.getLocation() != null ? addr.getLocation().getName() : null)
-                        .build())
+                .id(addr.getId())
+                .address(addr.getAddress())
+                .mapUrl(addr.getMap_url())
+                .locationName(addr.getLocation() != null ? addr.getLocation().getName() : null)
+                .build())
                 .collect(Collectors.toList());
 
         return CompanyResponse.builder()
@@ -193,9 +185,7 @@ public class AdminServiceImpl implements IAdminService {
                 .addresses(addresses)
                 .build();
     }
-    
-    
-    
+
     @Override
     public List<CandidateResponse> findAllCandidates() {
         return candidateRepository.findAll()
@@ -242,27 +232,25 @@ public class AdminServiceImpl implements IAdminService {
                 .status(candidate.isStatus())
                 .build();
     }
-    
-   
-    
+
     @Override
     public List<AccountCompanyResponse> findAllAccountsCompany() {
         return accountCompanyRepository.findAll()
                 .stream()
                 .map(account -> AccountCompanyResponse.builder()
-                        .id(account.getId())
-                        .email(account.getEmail())
-                        .fullName(account.getFullName())
-                        .status(account.isStatus())
-                        .company(
-                                CompanyResponse.builder()
-                                        .id(account.getCompany().getId())
-                                        .name(account.getCompany().getName())
-                                        .email(account.getCompany().getEmail())
-                                        .phone(account.getCompany().getPhone())
-                                        .build()
-                        )
-                        .build()
+                .id(account.getId())
+                .email(account.getEmail())
+                .fullName(account.getFullName())
+                .status(account.isStatus())
+                .company(
+                        CompanyResponse.builder()
+                                .id(account.getCompany().getId())
+                                .name(account.getCompany().getName())
+                                .email(account.getCompany().getEmail())
+                                .phone(account.getCompany().getPhone())
+                                .build()
+                )
+                .build()
                 ).collect(Collectors.toList());
     }
 

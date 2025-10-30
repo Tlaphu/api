@@ -4,9 +4,11 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Builder.Default; 
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList; 
 import java.util.Date;
 import java.util.List;
 
@@ -20,7 +22,7 @@ public class CandidateCV {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-  
+    private String template;
     private String title; 
 
     
@@ -36,18 +38,24 @@ public class CandidateCV {
     private Date updated_at;
 
  
-    @OneToMany(mappedBy = "candidateCV", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<SkillsCandidate> skillCandidates;
-
-    @OneToMany(mappedBy = "candidateCV", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ProjectCandidate> projectCandidates;
-
-    @OneToMany(mappedBy = "candidateCV", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<EducationCandidate> educationCandidates;
     
     @OneToMany(mappedBy = "candidateCV", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ExperienceCandidate> experienceCandidates;
+    @Default
+    private List<SkillsCandidate> skillCandidates = new ArrayList<>(); 
+
+    @OneToMany(mappedBy = "candidateCV", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Default
+    private List<ProjectCandidate> projectCandidates = new ArrayList<>(); 
+
+    @OneToMany(mappedBy = "candidateCV", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Default
+    private List<EducationCandidate> educationCandidates = new ArrayList<>(); 
     
     @OneToMany(mappedBy = "candidateCV", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<CertificateCandidate> certificateCandidates;
+    @Default
+    private List<ExperienceCandidate> experienceCandidates = new ArrayList<>(); 
+    
+    @OneToMany(mappedBy = "candidateCV", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Default
+    private List<CertificateCandidate> certificateCandidates = new ArrayList<>(); 
 }

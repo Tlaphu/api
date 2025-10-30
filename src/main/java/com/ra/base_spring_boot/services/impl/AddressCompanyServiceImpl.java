@@ -69,7 +69,7 @@ public class AddressCompanyServiceImpl implements IAddressCompanyService {
         }
 
         Location location = locationRepository.findById(form.getLocationId())
-                .orElseThrow(() -> new RuntimeException("Cannot found company location "  + form.getLocationId()));
+                .orElseThrow(() -> new RuntimeException("Cannot found company location " + form.getLocationId()));
 
         address.setAddress(form.getAddress());
         address.setMap_url(form.getMapUrl());
@@ -104,4 +104,3 @@ public class AddressCompanyServiceImpl implements IAddressCompanyService {
                 .build();
     }
 }
-

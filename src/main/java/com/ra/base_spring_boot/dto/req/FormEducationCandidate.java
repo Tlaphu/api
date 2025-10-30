@@ -8,7 +8,9 @@ import java.util.Date;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Data
 public class FormEducationCandidate {
+    private Long id;
     private long candidateId;
     private String name_education;
     private String major;

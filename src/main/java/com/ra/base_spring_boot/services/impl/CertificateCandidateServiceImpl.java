@@ -19,15 +19,14 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class CertificateCandidateServiceImpl implements ICertificateCandidateService {
-    
+
     private final ICertificateCandidateRepository iCertificateCandidateRepository;
     private final JwtProvider jwtProvider;
 
     @Override
-    public List<CertificateCandidateResponse> getCertificate(){
+    public List<CertificateCandidateResponse> getCertificate() {
         Candidate current = jwtProvider.getCurrentCandidate();
-        
-        
+
         return iCertificateCandidateRepository.findAllByCandidate_Id(current.getId())
                 .stream()
                 .map(this::toResponse)
@@ -39,8 +38,8 @@ public class CertificateCandidateServiceImpl implements ICertificateCandidateSer
         Candidate current = jwtProvider.getCurrentCandidate();
 
         CertificateCandidate cer = CertificateCandidate.builder()
-                .candidate(current)     
-                .candidateCV(null)      
+                .candidate(current)
+                .candidateCV(null)
                 .name(req.getName())
                 .organization(req.getOrganization())
                 .started_at(req.getStarted_at())
@@ -60,7 +59,6 @@ public class CertificateCandidateServiceImpl implements ICertificateCandidateSer
         CertificateCandidate cer = iCertificateCandidateRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Certificate not found"));
 
-       
         if (!cer.getCandidate().getId().equals(current.getId())) {
             throw new HttpAccessDenied("Access denied: You can only update your own certificate");
         }
@@ -82,7 +80,6 @@ public class CertificateCandidateServiceImpl implements ICertificateCandidateSer
         CertificateCandidate cer = iCertificateCandidateRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Certificate not found"));
 
-        
         if (!cer.getCandidate().getId().equals(current.getId())) {
             throw new HttpAccessDenied("Access denied: You can only delete your own certificate");
         }
@@ -90,7 +87,7 @@ public class CertificateCandidateServiceImpl implements ICertificateCandidateSer
         iCertificateCandidateRepository.delete(cer);
     }
 
-    private CertificateCandidateResponse toResponse (CertificateCandidate cer){
+    private CertificateCandidateResponse toResponse(CertificateCandidate cer) {
         return CertificateCandidateResponse.builder()
                 .id(cer.getId())
                 .name(cer.getName())

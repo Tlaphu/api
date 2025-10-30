@@ -15,12 +15,12 @@ import java.util.List;
 public class FormCandidateCV {
 
     private String title;
-
+    private String template;
     
     private List<FormCertificateCandidate> certificates;
     private List<FormExperienceCandidate> experiences;
     private List<FormEducationCandidate> educations;
     private List<FormSkillsCandidate> skills;
-    private List<FormExperienceCandidate> projects;
+    private List<FormProjectCandidate> projects;
 }
 

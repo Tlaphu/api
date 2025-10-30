@@ -11,4 +11,5 @@ import lombok.NoArgsConstructor;
 @Builder
 public class CandidateCVRequest {
     private String title;
+    private String template;
 }

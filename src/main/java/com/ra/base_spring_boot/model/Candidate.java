@@ -57,7 +57,7 @@ public class Candidate {
     private Set<Job> favoriteJobs = new HashSet<>();
 
     private Integer gender;
-    private String Title;
+    
     private String link;
     private String Description;
     private String Experience;

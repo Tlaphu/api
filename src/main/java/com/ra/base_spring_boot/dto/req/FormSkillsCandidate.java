@@ -9,7 +9,9 @@ import jakarta.persistence.TemporalType;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Data
 public class FormSkillsCandidate {
+    private Long id;
     private String name;
     
     @Temporal(TemporalType.DATE)

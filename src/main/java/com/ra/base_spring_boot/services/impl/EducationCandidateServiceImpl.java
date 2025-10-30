@@ -7,7 +7,7 @@ import com.ra.base_spring_boot.model.Candidate;
 import com.ra.base_spring_boot.model.EducationCandidate;
 import com.ra.base_spring_boot.repository.ICandidateRepository;
 import com.ra.base_spring_boot.repository.IEducationCandidateRepository;
-import com.ra.base_spring_boot.security.jwt.JwtProvider;
+import com.ra.base_spring_boot.security.jwt.JwtProvider; // Cần import JwtProvider
 import com.ra.base_spring_boot.services.IEducationCandidateService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -20,31 +20,35 @@ import java.util.stream.Collectors;
 public class EducationCandidateServiceImpl implements IEducationCandidateService {
 
     private final IEducationCandidateRepository educationRepo;
-<<<<<<< HEAD
     private final ICandidateRepository candidateRepo;
-    @Override
-    public List<EducationCandidateResponse> getAllByCandidate(Long candidateId) {
-        
-        List<EducationCandidate> list = educationRepo.findAllByCandidate_Id(candidateId);
-        return list.stream().map(this::toResponse).collect(Collectors.toList());
-=======
     private final JwtProvider jwtProvider;
 
+    private EducationCandidateResponse toResponse(EducationCandidate edu) {
+        return EducationCandidateResponse.builder()
+                .id(edu.getId())
+                .nameEducation(edu.getName_education())
+                .major(edu.getMajor())
+                .startedAt(edu.getStarted_at())
+                .endAt(edu.getEnd_at())
+                .GPA(edu.getGPA())
+                .info(edu.getInfo())
+                .createdAt(edu.getCreated_at())
+                .updatedAt(edu.getUpdated_at())
+                .build();
+    }
+
     @Override
     public List<EducationCandidateResponse> getAllByCandidate(Long candidateId) {
-        Candidate current = jwtProvider.getCurrentCandidate();
 
-        return educationRepo.findAllByCandidate_Id(current.getId())
-                .stream()
-                .map(this::toResponse)
-                .collect(Collectors.toList());
->>>>>>> 35f005ea4ef9f6b42d1a183c717cd9073d171959
+        List<EducationCandidate> list = educationRepo.findAllByCandidate_Id(candidateId);
+
+        return list.stream().map(this::toResponse).collect(Collectors.toList());
     }
 
     @Override
     public EducationCandidateResponse createByCandidate(FormEducationCandidate request) {
-        Candidate current = jwtProvider.getCurrentCandidate();
 
+        Candidate current = jwtProvider.getCurrentCandidate();
 
         EducationCandidate edu = EducationCandidate.builder()
                 .candidate(current)
@@ -64,18 +68,14 @@ public class EducationCandidateServiceImpl implements IEducationCandidateService
 
     @Override
     public EducationCandidateResponse updateByCandidate(Long id, FormEducationCandidate request) {
+
+        Candidate current = jwtProvider.getCurrentCandidate();
+        Long currentCandidateId = current.getId();
+
         EducationCandidate edu = educationRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Education not found"));
 
-<<<<<<< HEAD
-        
-        if (edu.getCandidate() == null || !edu.getCandidate().getId().equals(candidateIdAsLong)) {
-=======
-        Candidate current = jwtProvider.getCurrentCandidate();
-
-
-        if (!edu.getCandidate().getId().equals(current.getId())) {
->>>>>>> 35f005ea4ef9f6b42d1a183c717cd9073d171959
+        if (edu.getCandidate() == null || !edu.getCandidate().getId().equals(currentCandidateId)) {
             throw new HttpAccessDenied("Unauthorized: cannot edit other candidate’s education");
         }
 
@@ -92,35 +92,18 @@ public class EducationCandidateServiceImpl implements IEducationCandidateService
 
     @Override
     public void deleteByCandidate(Long id) {
+
+        Candidate current = jwtProvider.getCurrentCandidate();
+        Long currentCandidateId = current.getId();
+
         EducationCandidate edu = educationRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Education not found"));
 
-<<<<<<< HEAD
-        
-        if (edu.getCandidate() == null || !edu.getCandidate().getId().equals(candidateIdAsLong)) {
-=======
-        Candidate current = jwtProvider.getCurrentCandidate();
+        if (edu.getCandidate() == null || !edu.getCandidate().getId().equals(currentCandidateId)) {
 
-
-        if (!edu.getCandidate().getId().equals(current.getId())) {
->>>>>>> 35f005ea4ef9f6b42d1a183c717cd9073d171959
             throw new HttpAccessDenied("Unauthorized: cannot delete other candidate’s education");
         }
 
         educationRepo.delete(edu);
-    }
-
-    private EducationCandidateResponse toResponse(EducationCandidate edu) {
-        return EducationCandidateResponse.builder()
-                .id(edu.getId())
-                .nameEducation(edu.getName_education())
-                .major(edu.getMajor())
-                .startedAt(edu.getStarted_at())
-                .endAt(edu.getEnd_at())
-                .GPA(edu.getGPA())
-                .info(edu.getInfo())
-                .createdAt(edu.getCreated_at())
-                .updatedAt(edu.getUpdated_at())
-                .build();
     }
 }
