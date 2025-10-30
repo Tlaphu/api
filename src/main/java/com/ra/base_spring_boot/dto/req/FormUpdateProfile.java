@@ -16,7 +16,6 @@ public class FormUpdateProfile {
 
     private String name;
 
-    @Email(message = "Email is invalid")
     private String email;
 
     private String phone;

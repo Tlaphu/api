@@ -7,7 +7,7 @@ import java.util.List;
 
 public interface IEducationCandidateService {
     List<EducationCandidateResponse> getAllByCandidate(Long candidateId);
-    EducationCandidateResponse createByCandidate(String candidateId, FormEducationCandidate request);
-    EducationCandidateResponse updateByCandidate(Long id, String candidateId, FormEducationCandidate request);
-    void deleteByCandidate(Long id, String candidateId);
+    EducationCandidateResponse createByCandidate (FormEducationCandidate request);
+    EducationCandidateResponse updateByCandidate(Long id, FormEducationCandidate request);
+    void deleteByCandidate(Long id);
 }
