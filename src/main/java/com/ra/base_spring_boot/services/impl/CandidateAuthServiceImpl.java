@@ -74,7 +74,7 @@ public class CandidateAuthServiceImpl implements ICandidateAuthService {
                 formRegisterCandidate.getName(),
                 confirmationLink
         );
-        System.out.println("✅ Activation email sent to: " + formRegisterCandidate.getEmail());
+        System.out.println(" Activation email sent to: " + formRegisterCandidate.getEmail());
     }
 
     @Override
@@ -132,7 +132,9 @@ public class CandidateAuthServiceImpl implements ICandidateAuthService {
         Candidate candidate = candidateRepository
                 .findByEmail(form.getEmail())
                 .orElseThrow(() -> new HttpBadRequest("Candidate account not found with this email."));
-
+        if (!candidate.isStatus()) {
+            throw new HttpBadRequest("Account is not activated.");
+        }
         String resetToken = UUID.randomUUID().toString();
 
         candidate.setResetToken(resetToken);
@@ -192,6 +194,7 @@ public class CandidateAuthServiceImpl implements ICandidateAuthService {
         candidate.setEmail(form.getEmail());
         candidate.setPhone(form.getPhone());
         candidate.setDescription(form.getDescription());
+        candidate.setTitle(form.getTitle());
         candidate.setAddress(form.getAddress());
         candidate.setDob(form.getDob());
         candidate.setGender(form.getGender());

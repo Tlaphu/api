@@ -28,10 +28,10 @@ public class FormUpdateProfile {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private Date dob;
 
-    private Integer gender; // 0 = female, 1 = male, 2 = other
+    private Integer gender;
 
     private String link;
 
 
-    private Integer isOpen; // 0 = đóng, 1 = mở
+    private Integer isOpen; 
 }

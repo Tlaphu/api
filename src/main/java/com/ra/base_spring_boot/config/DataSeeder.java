@@ -41,7 +41,7 @@ public class DataSeeder implements CommandLineRunner {
                     .build();
 
             adminRepository.save(admin);
-            System.out.println("✅ Default admin created: admin@gmail.com / 123456");
+            System.out.println("Default admin created: admin@gmail.com / 123456");
         }
     }
 }

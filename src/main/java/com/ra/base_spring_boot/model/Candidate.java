@@ -37,7 +37,7 @@ public class Candidate {
     private String verificationToken;
     @Column(unique = true) 
     private String resetToken;
-    
+    private String Title;
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "candidate_roles",

@@ -169,7 +169,9 @@ public class CompanyAuthServiceImpl implements ICompanyAuthService {
         AccountCompany accountCompany = accountCompanyRepository
             .findByEmail(form.getEmail()) 
             .orElseThrow(() -> new HttpBadRequest("Account not found with this email."));
-        
+        if (!accountCompany.isStatus()) {
+            throw new HttpBadRequest("Account is not activated.");
+        }
         String resetToken = UUID.randomUUID().toString();
         accountCompany.setResetToken(resetToken); 
         accountCompanyRepository.save(accountCompany); 
@@ -193,7 +195,7 @@ public class CompanyAuthServiceImpl implements ICompanyAuthService {
 
     @Override
     public void resetPassword(FormResetPassword form) {
-    
+        
         if (!form.getNewPassword().equals(form.getConfirmNewPassword())) {
             throw new HttpBadRequest("New passwords do not match.");
         }

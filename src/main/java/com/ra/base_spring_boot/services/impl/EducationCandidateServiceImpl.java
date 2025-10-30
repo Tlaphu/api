@@ -19,11 +19,10 @@ import java.util.stream.Collectors;
 public class EducationCandidateServiceImpl implements IEducationCandidateService {
 
     private final IEducationCandidateRepository educationRepo;
-    private final ICandidateRepository candidateRepo; // Giữ lại để tìm Candidate nếu cần (thường không cần trong Service này)
-
+    private final ICandidateRepository candidateRepo;
     @Override
     public List<EducationCandidateResponse> getAllByCandidate(Long candidateId) {
-        // Giả định Repository có phương thức findAllByCandidate_Id
+        
         List<EducationCandidate> list = educationRepo.findAllByCandidate_Id(candidateId);
         return list.stream().map(this::toResponse).collect(Collectors.toList());
     }
@@ -61,7 +60,7 @@ public class EducationCandidateServiceImpl implements IEducationCandidateService
         
         Long candidateIdAsLong = Long.parseLong(candidateId);
 
-        // Kiểm tra quyền sở hữu
+        
         if (edu.getCandidate() == null || !edu.getCandidate().getId().equals(candidateIdAsLong)) {
             throw new HttpAccessDenied("Unauthorized: cannot edit other candidate’s education");
         }
@@ -85,7 +84,7 @@ public class EducationCandidateServiceImpl implements IEducationCandidateService
         
         Long candidateIdAsLong = Long.parseLong(candidateId);
 
-        // Kiểm tra quyền sở hữu
+        
         if (edu.getCandidate() == null || !edu.getCandidate().getId().equals(candidateIdAsLong)) {
             throw new HttpAccessDenied("Unauthorized: cannot delete other candidate’s education");
         }
