@@ -219,6 +219,31 @@ public class CandidateAuthServiceImpl implements ICandidateAuthService {
         return mapCandidateToResponse(candidate);
     }
 
+    @Override
+    public void updateDescription(FormUpdateDescription form) {
+        Candidate candidate = jwtProvider.getCurrentCandidate();
+        if (candidate == null) {
+            throw new HttpBadRequest("Unauthorized: Candidate not found");
+        }
+
+        candidate.setDescription(form.getDescription());
+        candidate.setUpdated_at(new Date());
+        candidateRepository.save(candidate);
+    }
+
+    @Override
+    public void deleteDescription() {
+        Candidate candidate = jwtProvider.getCurrentCandidate();
+        if (candidate == null) {
+            throw new HttpBadRequest("Unauthorized: Candidate not found");
+        }
+
+        candidate.setDescription(null);
+        candidate.setUpdated_at(new Date());
+        candidateRepository.save(candidate);
+    }
+
+
     private CandidateResponse mapCandidateToResponse(Candidate candidate) {
         return CandidateResponse.builder()
                 .id(candidate.getId())
@@ -247,11 +272,11 @@ public class CandidateAuthServiceImpl implements ICandidateAuthService {
                         : candidate.getEducationCandidates().stream()
                                 .<EducationCandidateResponse>map(e -> EducationCandidateResponse.builder()
                                 .id(e.getId())
-                                .nameEducation(e.getName_education())
+                                .nameEducation(e.getNameEducation())
                                 .major(e.getMajor())
-                                .GPA(e.getGPA())
-                                .startedAt((e.getStarted_at()))
-                                .endAt((e.getEnd_at()))
+                                .gpa(e.getGpa())
+                                .startedAt((e.getStartedAt()))
+                                .endAt((e.getEndAt()))
                                 .info(e.getInfo())
                                 .build())
                                 .collect(Collectors.toList()))

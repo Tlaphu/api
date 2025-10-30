@@ -160,5 +160,27 @@ public class CandidateAuthController {
                         .build()
         );
     }
+    @PutMapping("/about")
+    public ResponseEntity<?> updateDescription(@RequestBody FormUpdateDescription form) {
+        authService.updateDescription(form);
+        return ResponseEntity.ok(
+                ResponseWrapper.builder()
+                        .status(HttpStatus.OK)
+                        .code(200)
+                        .data("Description updated successfully")
+                        .build()
+        );
+    }
 
+    @DeleteMapping("/about")
+    public ResponseEntity<?> deleteDescription() {
+        authService.deleteDescription();
+        return ResponseEntity.ok(
+                ResponseWrapper.builder()
+                        .status(HttpStatus.OK)
+                        .code(200)
+                        .data("Description deleted successfully")
+                        .build()
+        );
+    }
 }

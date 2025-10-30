@@ -42,9 +42,15 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
                 .collect(Collectors.toList());
 
         List<String> educationNames = candidateCV.getEducationCandidates().stream()
+<<<<<<< HEAD
                 .map(EducationCandidate::getName_education)
                 .collect(Collectors.toList());
 
+=======
+            .map(EducationCandidate::getNameEducation)
+            .collect(Collectors.toList());
+            
+>>>>>>> 1f30a81d790ecab57c3ee282eea67f509f150ff1
         List<String> experienceNames = candidateCV.getExperienceCandidates().stream()
                 .map(e -> e.getPosition() + " at " + e.getCompany())
                 .collect(Collectors.toList());
@@ -245,6 +251,7 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
         }
         
         return EducationCandidate.builder()
+<<<<<<< HEAD
                 .name_education(dto.getName_education())
                 .major(dto.getMajor())
                 .started_at(dto.getStartedAt())
@@ -256,6 +263,17 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
                 .created_at(new Date())
                 .updated_at(new Date())
                 .build();
+=======
+            .nameEducation(dto.getNameEducation())
+            .major(dto.getMajor()) 
+            .startedAt(dto.getStartedAt())
+            .endAt(dto.getEndAt())
+            .info(dto.getInfo()) 
+            .candidateCV(candidateCV) 
+            .startedAt(new Date())
+            .updatedAt(new Date())
+            .build(); 
+>>>>>>> 1f30a81d790ecab57c3ee282eea67f509f150ff1
     }
 
     private ExperienceCandidate mapToExperienceCandidate(FormExperienceCandidate dto, CandidateCV candidateCV) {

@@ -24,8 +24,7 @@ public class EducationCandidateController {
      */
     @GetMapping
     public ResponseEntity<?> getEducationList() {
-        List<EducationCandidateResponse> list = educationCandidateService.getAllByCandidate(null);
-
+        List<EducationCandidateResponse> list = educationCandidateService.getAllByCandidate();
         return ResponseEntity.ok(
                 ResponseWrapper.<List<EducationCandidateResponse>>builder()
                         .status(HttpStatus.OK)
