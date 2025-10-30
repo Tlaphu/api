@@ -7,10 +7,11 @@ import com.ra.base_spring_boot.model.Candidate;
 import com.ra.base_spring_boot.model.EducationCandidate;
 import com.ra.base_spring_boot.repository.ICandidateRepository;
 import com.ra.base_spring_boot.repository.IEducationCandidateRepository;
-import com.ra.base_spring_boot.security.jwt.JwtProvider; // Cần import JwtProvider
+import com.ra.base_spring_boot.security.jwt.JwtProvider; 
 import com.ra.base_spring_boot.services.IEducationCandidateService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional; 
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -26,24 +27,22 @@ public class EducationCandidateServiceImpl implements IEducationCandidateService
     private EducationCandidateResponse toResponse(EducationCandidate edu) {
         return EducationCandidateResponse.builder()
                 .id(edu.getId())
-                .nameEducation(edu.getName_education())
+                .nameEducation(edu.getNameEducation())
                 .major(edu.getMajor())
-                .startedAt(edu.getStarted_at())
-                .endAt(edu.getEnd_at())
-                .GPA(edu.getGPA())
+                .startedAt(edu.getStartedAt()) 
+                .endAt(edu.getEndAt()) 
+                .gpa(edu.getGpa()) // SỬA LỖI 9: Builder method là .gpa() (viết thường)
                 .info(edu.getInfo())
-                .createdAt(edu.getCreated_at())
-                .updatedAt(edu.getUpdated_at())
+                .createdAt(edu.getCreatedAt()) 
+                .updatedAt(edu.getUpdatedAt()) 
                 .build();
     }
 
     @Override
-<<<<<<< HEAD
-    public List<EducationCandidateResponse> getAllByCandidate(Long candidateId) {
-=======
+    @Transactional(readOnly = true)
     public List<EducationCandidateResponse> getAllByCandidate() {
         Candidate current = jwtProvider.getCurrentCandidate();
->>>>>>> 1f30a81d790ecab57c3ee282eea67f509f150ff1
+        Long candidateId = current.getId();
 
         List<EducationCandidate> list = educationRepo.findAllByCandidate_Id(candidateId);
 
@@ -51,6 +50,7 @@ public class EducationCandidateServiceImpl implements IEducationCandidateService
     }
 
     @Override
+    @Transactional
     public EducationCandidateResponse createByCandidate(FormEducationCandidate request) {
 
         Candidate current = jwtProvider.getCurrentCandidate();
@@ -58,9 +58,9 @@ public class EducationCandidateServiceImpl implements IEducationCandidateService
         EducationCandidate edu = EducationCandidate.builder()
                 .candidate(current)
                 .candidateCV(null)
-                .nameEducation(request.getNameEducation())
+                .nameEducation(request.getNameeducation()) // SỬA LỖI 10: Dùng getNameeducation()
                 .major(request.getMajor())
-                .gpa(request.getGpa())
+                .gpa(request.getGpa()) 
                 .startedAt(request.getStartedAt())
                 .endAt(request.getEndAt())
                 .info(request.getInfo())
@@ -72,6 +72,7 @@ public class EducationCandidateServiceImpl implements IEducationCandidateService
     }
 
     @Override
+    @Transactional
     public EducationCandidateResponse updateByCandidate(Long id, FormEducationCandidate request) {
 
         Candidate current = jwtProvider.getCurrentCandidate();
@@ -84,7 +85,7 @@ public class EducationCandidateServiceImpl implements IEducationCandidateService
             throw new HttpAccessDenied("Unauthorized: cannot edit other candidate’s education");
         }
 
-        edu.setNameEducation(request.getNameEducation());
+        edu.setNameEducation(request.getNameeducation()); // SỬA LỖI 11: Dùng getNameeducation()
         edu.setMajor(request.getMajor());
         edu.setStartedAt(request.getStartedAt());
         edu.setEndAt(request.getEndAt());
@@ -96,6 +97,7 @@ public class EducationCandidateServiceImpl implements IEducationCandidateService
     }
 
     @Override
+    @Transactional
     public void deleteByCandidate(Long id) {
 
         Candidate current = jwtProvider.getCurrentCandidate();
@@ -111,22 +113,4 @@ public class EducationCandidateServiceImpl implements IEducationCandidateService
 
         educationRepo.delete(edu);
     }
-<<<<<<< HEAD
 }
-=======
-
-    private EducationCandidateResponse toResponse(EducationCandidate edu) {
-        return EducationCandidateResponse.builder()
-                .id(edu.getId())
-                .nameEducation(edu.getNameEducation())
-                .major(edu.getMajor())
-                .startedAt(edu.getStartedAt())
-                .endAt(edu.getEndAt())
-                .gpa(edu.getGpa())
-                .info(edu.getInfo())
-                .createdAt(edu.getCreatedAt())
-                .updatedAt(edu.getUpdatedAt())
-                .build();
-    }
-}
->>>>>>> 1f30a81d790ecab57c3ee282eea67f509f150ff1

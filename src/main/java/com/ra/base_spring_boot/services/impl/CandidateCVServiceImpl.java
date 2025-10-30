@@ -33,7 +33,6 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
         Candidate candidate = candidateCV.getCandidate();
 
         List<String> projectNames = candidateCV.getProjectCandidates().stream()
-                // Sửa đổi logic hiển thị: ưu tiên Name, sau đó Info, cuối cùng là Link
                 .map(p -> p.getName() != null ? p.getName() : (p.getInfo() != null ? p.getInfo() : p.getLink()))
                 .collect(Collectors.toList());
 
@@ -42,15 +41,9 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
                 .collect(Collectors.toList());
 
         List<String> educationNames = candidateCV.getEducationCandidates().stream()
-<<<<<<< HEAD
-                .map(EducationCandidate::getName_education)
+                .map(EducationCandidate::getNameEducation)
                 .collect(Collectors.toList());
 
-=======
-            .map(EducationCandidate::getNameEducation)
-            .collect(Collectors.toList());
-            
->>>>>>> 1f30a81d790ecab57c3ee282eea67f509f150ff1
         List<String> experienceNames = candidateCV.getExperienceCandidates().stream()
                 .map(e -> e.getPosition() + " at " + e.getCompany())
                 .collect(Collectors.toList());
@@ -173,7 +166,6 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
             ProjectCandidate existing = projectCandidateRepository.findById(dto.getId())
                 .orElseThrow(() -> new HttpBadRequest("Project ID not found: " + dto.getId()));
             
-            
             if (dto.getName() != null) {
                 existing.setName(dto.getName());
             }
@@ -204,7 +196,6 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
             SkillsCandidate existing = skillsCandidateRepository.findById(dto.getId())
                 .orElseThrow(() -> new HttpBadRequest("Skill ID not found: " + dto.getId()));
             
-            
             if (dto.getName() != null) {
                 existing.setName(dto.getName());
             }
@@ -227,53 +218,40 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
             EducationCandidate existing = educationCandidateRepository.findById(dto.getId())
                 .orElseThrow(() -> new HttpBadRequest("Education ID not found: " + dto.getId()));
             
-            
-            if (dto.getName_education() != null) {
-                existing.setName_education(dto.getName_education());
+            if (dto.getNameeducation() != null) {
+                existing.setNameEducation(dto.getNameeducation());
             }
             if (dto.getMajor() != null) {
                 existing.setMajor(dto.getMajor());
             }
             if (dto.getStartedAt() != null) {
-                existing.setStarted_at(dto.getStartedAt());
+                existing.setStartedAt(dto.getStartedAt());
             }
             if (dto.getEndAt() != null) {
-                existing.setEnd_at(dto.getEndAt());
+                existing.setEndAt(dto.getEndAt());
             }
             if (dto.getInfo() != null) {
                 existing.setInfo(dto.getInfo());
             }
-            if (dto.getGPA() != null) {
-                existing.setGPA(dto.getGPA());
+            if (dto.getGpa() != null) {
+                existing.setGpa(dto.getGpa());
             }
-            existing.setUpdated_at(new Date());
+            existing.setUpdatedAt(new Date()); 
             return existing;
         }
         
         return EducationCandidate.builder()
-<<<<<<< HEAD
-                .name_education(dto.getName_education())
+                .nameEducation(dto.getNameeducation()) 
                 .major(dto.getMajor())
-                .started_at(dto.getStartedAt())
-                .end_at(dto.getEndAt())
+                .startedAt(dto.getStartedAt())
+                .endAt(dto.getEndAt())
                 .info(dto.getInfo())
-                .GPA(dto.getGPA())
+                .gpa(dto.getGpa()) 
                 .candidateCV(candidateCV)
                 .candidate(candidateCV.getCandidate())
-                .created_at(new Date())
-                .updated_at(new Date())
+                .createdAt(new Date())
+                .updatedAt(new Date())
                 .build();
-=======
-            .nameEducation(dto.getNameEducation())
-            .major(dto.getMajor()) 
-            .startedAt(dto.getStartedAt())
-            .endAt(dto.getEndAt())
-            .info(dto.getInfo()) 
-            .candidateCV(candidateCV) 
-            .startedAt(new Date())
-            .updatedAt(new Date())
-            .build(); 
->>>>>>> 1f30a81d790ecab57c3ee282eea67f509f150ff1
     }
 
     private ExperienceCandidate mapToExperienceCandidate(FormExperienceCandidate dto, CandidateCV candidateCV) {
@@ -282,13 +260,13 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
             ExperienceCandidate existing = experienceCandidateRepository.findById(dto.getId())
                 .orElseThrow(() -> new HttpBadRequest("Experience ID not found: " + dto.getId()));
             
-            
             if (dto.getPosition() != null) {
                 existing.setPosition(dto.getPosition());
             }
             if (dto.getCompany() != null) {
                 existing.setCompany(dto.getCompany());
             }
+            // SỬA LỖI: Gọi snake_case getter từ DTO (vì DTO có started_at/end_at)
             if (dto.getStarted_at() != null) {
                 existing.setStarted_at(dto.getStarted_at());
             }
@@ -321,13 +299,13 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
             CertificateCandidate existing = certificateCandidateRepository.findById(dto.getId())
                 .orElseThrow(() -> new HttpBadRequest("Certificate ID not found: " + dto.getId()));
             
-          
             if (dto.getName() != null) {
                 existing.setName(dto.getName());
             }
             if (dto.getOrganization() != null) {
                 existing.setOrganization(dto.getOrganization());
             }
+            // SỬA LỖI: Gọi snake_case getter từ DTO (vì DTO có started_at/end_at)
             if (dto.getStarted_at() != null) {
                 existing.setStarted_at(dto.getStarted_at());
             }

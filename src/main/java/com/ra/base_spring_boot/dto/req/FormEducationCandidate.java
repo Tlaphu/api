@@ -10,13 +10,9 @@ import java.util.Date;
 @Builder
 @Data
 public class FormEducationCandidate {
-<<<<<<< HEAD
     private Long id;
     private long candidateId;
-    private String name_education;
-=======
-    private String nameEducation;
->>>>>>> 1f30a81d790ecab57c3ee282eea67f509f150ff1
+    private String nameeducation;
     private String major;
     private String gpa;
     private Date startedAt;
