@@ -40,7 +40,7 @@ public class EducationCandidateController {
      */
     @PostMapping
     public ResponseEntity<?> createEducation(@RequestBody FormEducationCandidate request) {
-        EducationCandidateResponse newEdu = educationCandidateService.createByCandidate(null, request);
+        EducationCandidateResponse newEdu = educationCandidateService.createByCandidate(request);
 
         return ResponseEntity.created(URI.create("/api/v1/candidate/education"))
                 .body(ResponseWrapper.<EducationCandidateResponse>builder()
@@ -59,7 +59,7 @@ public class EducationCandidateController {
             @PathVariable Long id,
             @RequestBody FormEducationCandidate request) {
 
-        EducationCandidateResponse updated = educationCandidateService.updateByCandidate(id, null, request);
+        EducationCandidateResponse updated = educationCandidateService.updateByCandidate(id, request);
 
         return ResponseEntity.ok(
                 ResponseWrapper.<EducationCandidateResponse>builder()
@@ -75,7 +75,7 @@ public class EducationCandidateController {
      */
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteEducation(@PathVariable Long id) {
-        educationCandidateService.deleteByCandidate(id, null);
+        educationCandidateService.deleteByCandidate(id);
 
         return ResponseEntity.ok(
                 ResponseWrapper.<String>builder()
