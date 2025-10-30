@@ -26,8 +26,7 @@ public class CertificateCandidateServiceImpl implements ICertificateCandidateSer
     @Override
     public List<CertificateCandidateResponse> getCertificate(){
         Candidate current = jwtProvider.getCurrentCandidate();
-        
-        
+
         return iCertificateCandidateRepository.findAllByCandidate_Id(current.getId())
                 .stream()
                 .map(this::toResponse)

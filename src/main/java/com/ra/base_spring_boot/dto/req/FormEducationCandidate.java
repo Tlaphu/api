@@ -9,12 +9,12 @@ import java.util.Date;
 @AllArgsConstructor
 @Builder
 public class FormEducationCandidate {
-    private long candidateId;
-    private String name_education;
+    private String nameEducation;
     private String major;
-    private String GPA;
+    private String gpa;
     private Date startedAt;
     private Date endAt;
     private String info;
 }
+
 

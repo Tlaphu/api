@@ -23,7 +23,7 @@ public class EducationCandidateServiceImpl implements IEducationCandidateService
     private final JwtProvider jwtProvider;
 
     @Override
-    public List<EducationCandidateResponse> getAllByCandidate(Long candidateId) {
+    public List<EducationCandidateResponse> getAllByCandidate() {
         Candidate current = jwtProvider.getCurrentCandidate();
 
         return educationRepo.findAllByCandidate_Id(current.getId())
@@ -40,14 +40,14 @@ public class EducationCandidateServiceImpl implements IEducationCandidateService
         EducationCandidate edu = EducationCandidate.builder()
                 .candidate(current)
                 .candidateCV(null)
-                .name_education(request.getName_education())
+                .nameEducation(request.getNameEducation())
                 .major(request.getMajor())
-                .GPA(request.getGPA())
-                .started_at(request.getStartedAt())
-                .end_at(request.getEndAt())
+                .gpa(request.getGpa())
+                .startedAt(request.getStartedAt())
+                .endAt(request.getEndAt())
                 .info(request.getInfo())
-                .created_at(new Date())
-                .updated_at(new Date())
+                .createdAt(new Date())
+                .updatedAt(new Date())
                 .build();
 
         return toResponse(educationRepo.save(edu));
@@ -65,13 +65,13 @@ public class EducationCandidateServiceImpl implements IEducationCandidateService
             throw new HttpAccessDenied("Unauthorized: cannot edit other candidate’s education");
         }
 
-        edu.setName_education(request.getName_education());
+        edu.setNameEducation(request.getNameEducation());
         edu.setMajor(request.getMajor());
-        edu.setStarted_at(request.getStartedAt());
-        edu.setEnd_at(request.getEndAt());
-        edu.setGPA(request.getGPA());
+        edu.setStartedAt(request.getStartedAt());
+        edu.setEndAt(request.getEndAt());
+        edu.setGpa(request.getGpa());
         edu.setInfo(request.getInfo());
-        edu.setUpdated_at(new Date());
+        edu.setUpdatedAt(new Date());
 
         return toResponse(educationRepo.save(edu));
     }
@@ -94,14 +94,14 @@ public class EducationCandidateServiceImpl implements IEducationCandidateService
     private EducationCandidateResponse toResponse(EducationCandidate edu) {
         return EducationCandidateResponse.builder()
                 .id(edu.getId())
-                .nameEducation(edu.getName_education())
+                .nameEducation(edu.getNameEducation())
                 .major(edu.getMajor())
-                .startedAt(edu.getStarted_at())
-                .endAt(edu.getEnd_at())
-                .GPA(edu.getGPA())
+                .startedAt(edu.getStartedAt())
+                .endAt(edu.getEndAt())
+                .gpa(edu.getGpa())
                 .info(edu.getInfo())
-                .createdAt(edu.getCreated_at())
-                .updatedAt(edu.getUpdated_at())
+                .createdAt(edu.getCreatedAt())
+                .updatedAt(edu.getUpdatedAt())
                 .build();
     }
 }

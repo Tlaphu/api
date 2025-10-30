@@ -36,7 +36,7 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
             .collect(Collectors.toList());
             
         List<String> educationNames = candidateCV.getEducationCandidates().stream()
-            .map(EducationCandidate::getName_education)
+            .map(EducationCandidate::getNameEducation)
             .collect(Collectors.toList());
             
         List<String> experienceNames = candidateCV.getExperienceCandidates().stream()
@@ -178,14 +178,14 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
     
     private EducationCandidate mapToEducationCandidate(FormEducationCandidate dto, CandidateCV candidateCV) {
         return EducationCandidate.builder()
-            .name_education(dto.getName_education()) 
+            .nameEducation(dto.getNameEducation())
             .major(dto.getMajor()) 
-            .started_at(dto.getStartedAt()) 
-            .end_at(dto.getEndAt()) 
+            .startedAt(dto.getStartedAt())
+            .endAt(dto.getEndAt())
             .info(dto.getInfo()) 
             .candidateCV(candidateCV) 
-            .created_at(new Date())
-            .updated_at(new Date())
+            .startedAt(new Date())
+            .updatedAt(new Date())
             .build(); 
     }
     
