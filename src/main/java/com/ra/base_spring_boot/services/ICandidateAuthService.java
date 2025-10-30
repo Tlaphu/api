@@ -13,6 +13,9 @@ public interface ICandidateAuthService {
      */
     void register(FormRegisterCandidate formRegisterCandidate);
 
+    void updateDescription(FormUpdateDescription form);
+    void deleteDescription();
+
     /**
      * Login candidate with email + password
      */

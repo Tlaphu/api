@@ -216,6 +216,31 @@ public class CandidateAuthServiceImpl implements ICandidateAuthService {
         return mapCandidateToResponse(candidate);
     }
 
+    @Override
+    public void updateDescription(FormUpdateDescription form) {
+        Candidate candidate = jwtProvider.getCurrentCandidate();
+        if (candidate == null) {
+            throw new HttpBadRequest("Unauthorized: Candidate not found");
+        }
+
+        candidate.setDescription(form.getDescription());
+        candidate.setUpdated_at(new Date());
+        candidateRepository.save(candidate);
+    }
+
+    @Override
+    public void deleteDescription() {
+        Candidate candidate = jwtProvider.getCurrentCandidate();
+        if (candidate == null) {
+            throw new HttpBadRequest("Unauthorized: Candidate not found");
+        }
+
+        candidate.setDescription(null);
+        candidate.setUpdated_at(new Date());
+        candidateRepository.save(candidate);
+    }
+
+
     private CandidateResponse mapCandidateToResponse(Candidate candidate) {
         return CandidateResponse.builder()
                 .id(candidate.getId())
