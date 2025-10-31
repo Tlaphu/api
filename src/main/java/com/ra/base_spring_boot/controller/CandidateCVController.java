@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/v1/candidate/cv") 
+@RequestMapping("/api/v1/candidate/cv")
 @RequiredArgsConstructor
 @PreAuthorize("hasAuthority('ROLE_CANDIDATE')")
 public class CandidateCVController {
@@ -29,31 +29,31 @@ public class CandidateCVController {
     private Long getAuthenticatedCandidateId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !(authentication.getPrincipal() instanceof MyUserDetails)) {
-            throw new HttpBadRequest("Unauthorized access."); 
+            throw new HttpBadRequest("Unauthorized access.");
         }
         MyUserDetails userDetails = (MyUserDetails) authentication.getPrincipal();
-        return userDetails.getCandidate().getId(); 
+        return userDetails.getCandidate().getId();
     }
-    
+
     @PostMapping
     public ResponseEntity<CandidateCVResponse> createNewCV(@RequestBody FormCandidateCV cvForm) {
         Long candidateId = getAuthenticatedCandidateId();
         CandidateCV newCV = candidateCVService.createNewCV(cvForm, candidateId);
-        
+
         CandidateCVResponse cvResponse = candidateCVServiceImpl.mapToResponse(newCV);
-        
+
         return ResponseEntity.ok(cvResponse);
     }
-    
+
     @GetMapping
     public ResponseEntity<List<CandidateCVResponse>> getAllCandidateCVs() {
         Long candidateId = getAuthenticatedCandidateId();
         List<CandidateCV> cvList = candidateCVService.getAllCVsByCandidate(candidateId);
-        
+
         List<CandidateCVResponse> responseList = cvList.stream()
-            .map(candidateCVServiceImpl::mapToResponse)
-            .collect(Collectors.toList());
-            
+                .map(candidateCVServiceImpl::mapToResponse)
+                .collect(Collectors.toList());
+
         return ResponseEntity.ok(responseList);
     }
 
@@ -61,27 +61,38 @@ public class CandidateCVController {
     public ResponseEntity<CandidateCVResponse> getCVById(@PathVariable Long cvId) {
         Long candidateId = getAuthenticatedCandidateId();
         CandidateCV cvEntity = candidateCVService.getCVById(cvId, candidateId);
-        
+
         CandidateCVResponse cvResponse = candidateCVServiceImpl.mapToResponse(cvEntity);
-        
+
         return ResponseEntity.ok(cvResponse);
     }
-    
+
     @PutMapping("/{cvId}")
     public ResponseEntity<CandidateCVResponse> updateCV(@PathVariable Long cvId, @RequestBody FormCandidateCV cvForm) {
         Long candidateId = getAuthenticatedCandidateId();
         CandidateCV updatedCandidate = candidateCVService.updateCV(cvId, cvForm, candidateId);
-        
+
         CandidateCVResponse cvResponse = candidateCVServiceImpl.mapToResponse(updatedCandidate);
-        
-        return ResponseEntity.ok(cvResponse); 
+
+        return ResponseEntity.ok(cvResponse);
     }
-    
+
     @DeleteMapping("/{cvId}")
     public ResponseEntity<?> deleteCV(@PathVariable Long cvId) {
         Long candidateId = getAuthenticatedCandidateId();
         candidateCVService.deleteCV(cvId, candidateId);
-        
+
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{cvId}/export/latex")
+    public ResponseEntity<String> exportCVToLatex(@PathVariable Long cvId) {
+        Long candidateId = getAuthenticatedCandidateId();
+
+        CandidateCV cvEntity = candidateCVService.getCVById(cvId, candidateId);
+
+        String latexContent = candidateCVServiceImpl.generateLatexContent(cvEntity);
+
+        return ResponseEntity.ok(latexContent);
     }
 }
