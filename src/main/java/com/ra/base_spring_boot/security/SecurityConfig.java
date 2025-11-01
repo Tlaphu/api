@@ -82,7 +82,7 @@ public class SecurityConfig {
     public AuthenticationManager adminAuthManager() {
         return new ProviderManager(List.of(adminAuthProvider()));
     }
-    
+
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
@@ -98,35 +98,44 @@ public class SecurityConfig {
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }
-    
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        
+
         String candidateAuthPattern = "/api/v1/auth/candidate/**";
         String companyAuthPattern = "/api/v1/auth/company/**";
-        
+
         return http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                .requestMatchers(HttpMethod.GET, "/api/job/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/v1/auth/company/top20").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/v1/auth/company/{id}").permitAll()
-                
-                .requestMatchers(candidateAuthPattern).permitAll()
-                .requestMatchers(companyAuthPattern).permitAll()
-                
-                .requestMatchers("/api/v1/admin/login").permitAll()
-                
-                .requestMatchers("/api/v1/admin/**").hasAuthority(RoleName.ROLE_ADMIN.toString())
-                .requestMatchers("/api/v1/candidate/**").hasAuthority(RoleName.ROLE_CANDIDATE.toString())
-                .requestMatchers("/api/v1/company/**").hasAuthority(RoleName.ROLE_COMPANY.toString())
-                
-                .anyRequest().authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/job/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/auth/company/top20").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/auth/company/{id}").permitAll()
+                        .requestMatchers("/api/v1/auth/company/login").permitAll()
+                        .requestMatchers("/api/v1/auth/company/register").permitAll()
+                        .requestMatchers("/api/v1/auth/company/forgot-password").permitAll()
+                        .requestMatchers("/api/v1/auth/company/reset-password").permitAll()
+                        .requestMatchers("/api/v1/auth/company/verify").permitAll()
+
+                        .requestMatchers(candidateAuthPattern).permitAll()
+                        .requestMatchers(companyAuthPattern).permitAll()
+
+                        .requestMatchers("/api/v1/admin/login").permitAll()
+                        .requestMatchers("/api/v1/auth/company/change-password",
+                                "/api/v1/auth/company/update-profile",
+                                "/api/v1/auth/company/logout")
+                        .hasAuthority(RoleName.ROLE_COMPANY.toString())
+
+                        .requestMatchers("/api/v1/admin/**").hasAuthority(RoleName.ROLE_ADMIN.toString())
+                        .requestMatchers("/api/v1/candidate/**").hasAuthority(RoleName.ROLE_CANDIDATE.toString())
+                        .requestMatchers("/api/v1/company/**").hasAuthority(RoleName.ROLE_COMPANY.toString())
+
+                        .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .exceptionHandling(ex -> ex
-                    .authenticationEntryPoint(jwtEntryPoint)
-                    .accessDeniedHandler(accessDenied)
+                        .authenticationEntryPoint(jwtEntryPoint)
+                        .accessDeniedHandler(accessDenied)
                 )
                 .addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
