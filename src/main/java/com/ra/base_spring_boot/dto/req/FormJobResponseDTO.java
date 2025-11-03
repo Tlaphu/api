@@ -10,7 +10,7 @@ import lombok.*;
 @Builder
 public class FormJobResponseDTO {
 
-    private long id;
+    private Long id;
     private String title;
     private String description;
     private Double salary;
@@ -18,6 +18,8 @@ public class FormJobResponseDTO {
     private String desirable;
     private String benefits;
     private String workTime;
+    private Long companyId;
+    private Long locationId;
     private String companyName;
     private String companyLogo;
     private String locationName;

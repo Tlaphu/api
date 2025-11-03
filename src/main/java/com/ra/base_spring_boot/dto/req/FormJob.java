@@ -13,7 +13,9 @@ public class FormJob {
     private String desirable;
     private String benefits;
     private Date expire_at;
-    private String locationName; 
+    private long companyId; 
+    private long locationId;
+    
     private String companyName; 
     private long levelJobRelationsId;
     private String workTime; 
