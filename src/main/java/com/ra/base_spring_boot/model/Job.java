@@ -1,6 +1,8 @@
 package com.ra.base_spring_boot.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+
 import jakarta.persistence.*;
 import lombok.*;
 import java.util.Date;
@@ -24,7 +26,9 @@ public class Job {
     @ManyToOne
     @JoinColumn(name = "location_id")
     private Location location;
-
+    @OneToMany(mappedBy = "job")
+    @JsonManagedReference
+    private List<JobCandidate> jobCandidates;
     private String title;
     private String description;
     private Double salary;

@@ -2,10 +2,12 @@ package com.ra.base_spring_boot.services.impl;
 
 import com.ra.base_spring_boot.model.Candidate;
 import com.ra.base_spring_boot.model.Job;
+import com.ra.base_spring_boot.model.CandidateCV;
 import com.ra.base_spring_boot.model.JobCandidate;
 import com.ra.base_spring_boot.repository.IJobCandidateRepository;
 import com.ra.base_spring_boot.repository.JobRepository;
 import com.ra.base_spring_boot.repository.ICandidateRepository;
+import com.ra.base_spring_boot.repository.ICandidateCVRepository;
 import com.ra.base_spring_boot.services.JobCandidateService;
 import com.ra.base_spring_boot.dto.req.FormJobCandidate;
 import com.ra.base_spring_boot.dto.resp.JobCandidateResponse;
@@ -14,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.NoSuchElementException; 
 import java.util.stream.Collectors;
 
 @Service
@@ -22,27 +25,37 @@ public class JobCandidateServiceImpl implements JobCandidateService {
     private final IJobCandidateRepository jobCandidateRepository;
     private final JobRepository jobRepository;
     private final ICandidateRepository candidateRepository;
+    private final ICandidateCVRepository cvRepository; 
 
     @Autowired
     public JobCandidateServiceImpl(IJobCandidateRepository jobCandidateRepository,
-            JobRepository jobRepository,
-            ICandidateRepository candidateRepository) {
+                                   JobRepository jobRepository,
+                                   ICandidateRepository candidateRepository,
+                                   ICandidateCVRepository cvRepository) { 
         this.jobCandidateRepository = jobCandidateRepository;
         this.jobRepository = jobRepository;
         this.candidateRepository = candidateRepository;
+        this.cvRepository = cvRepository;
     }
 
     private JobCandidate toEntity(FormJobCandidate form) {
         Job job = jobRepository.findById(form.getJobId())
-                .orElseThrow(() -> new RuntimeException(String.format("Job not found with id: %d", form.getJobId())));
+                .orElseThrow(() -> new NoSuchElementException(String.format("Job not found with id: %d", form.getJobId())));
 
         Candidate candidate = candidateRepository.findById(form.getCandidateId())
-                .orElseThrow(() -> new RuntimeException(String.format("Candidate not found with id: %d", form.getCandidateId())));
+                .orElseThrow(() -> new NoSuchElementException(String.format("Candidate not found with id: %d", form.getCandidateId())));
+        
+        CandidateCV candidateCV = null;
+        if (form.getCvid() != null) {
+             candidateCV = cvRepository.findById(form.getCvid())
+                     .orElseThrow(() -> new NoSuchElementException(String.format("CV not found with id: %d", form.getCvid())));
+        }
 
         return JobCandidate.builder()
                 .job(job)
                 .candidate(candidate)
-                .cv_url(form.getCvUrl())
+                .candidateCV(candidateCV) 
+                
                 .cover_letter(form.getCoverLetter())
                 .status(form.getStatus() != null ? form.getStatus() : "APPLIED")
                 .build();
@@ -61,11 +74,16 @@ public class JobCandidateServiceImpl implements JobCandidateService {
         if (entity.getCandidate() != null) {
             Candidate candidate = entity.getCandidate();
             response.setCandidateId(candidate.getId());
-
             response.setCandidateName(candidate.getName());
         }
+        
+        
+        if (entity.getCandidateCV() != null) {
+             response.setCvId(entity.getCandidateCV().getId()); 
+        } else {
+             response.setCvId(null);
+        }
 
-        response.setCv_url(entity.getCv_url());
         response.setCover_letter(entity.getCover_letter());
         response.setStatus(entity.getStatus());
 
@@ -83,9 +101,19 @@ public class JobCandidateServiceImpl implements JobCandidateService {
     @Override
     public JobCandidateResponse update(Long id, FormJobCandidate form) {
         JobCandidate existingCandidate = jobCandidateRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("JobCandidate not found with id: " + id));
+                .orElseThrow(() -> new NoSuchElementException("JobCandidate not found with id: " + id));
 
-        existingCandidate.setCv_url(form.getCvUrl());
+       
+        if (form.getCvid() != null) {
+             CandidateCV candidateCV = cvRepository.findById(form.getCvid())
+                     .orElseThrow(() -> new NoSuchElementException(String.format("CV not found with id: %d", form.getCvid())));
+             
+             existingCandidate.setCandidateCV(candidateCV); 
+        } else {
+             
+             existingCandidate.setCandidateCV(null);
+        }
+        
         existingCandidate.setCover_letter(form.getCoverLetter());
         existingCandidate.setStatus(form.getStatus());
 
@@ -93,7 +121,8 @@ public class JobCandidateServiceImpl implements JobCandidateService {
 
         return toResponse(updatedJobCandidate);
     }
-
+    
+    
     @Override
     public Optional<JobCandidateResponse> findById(Long id) {
         return jobCandidateRepository.findById(id).map(this::toResponse);
@@ -109,7 +138,7 @@ public class JobCandidateServiceImpl implements JobCandidateService {
     @Override
     public void delete(Long id) {
         if (!jobCandidateRepository.existsById(id)) {
-            throw new RuntimeException("JobCandidate not found with id: " + id);
+            throw new NoSuchElementException("JobCandidate not found with id: " + id);
         }
 
         jobCandidateRepository.findById(id).ifPresent(jobCandidateRepository::delete);

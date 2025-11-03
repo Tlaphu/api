@@ -294,9 +294,10 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
                 .build();
     }
 
-    private CertificateCandidate mapToCertificateCandidate(FormCertificateCandidate dto, CandidateCV candidateCV) {
+private CertificateCandidate mapToCertificateCandidate(FormCertificateCandidate dto, CandidateCV candidateCV) {
         
         if (dto.getId() != null) {
+            
             CertificateCandidate existing = certificateCandidateRepository.findById(dto.getId())
                 .orElseThrow(() -> new HttpBadRequest("Certificate ID not found: " + dto.getId()));
             
@@ -320,6 +321,7 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
             return existing;
         }
 
+        
         return CertificateCandidate.builder()
                 .name(dto.getName())
                 .organization(dto.getOrganization())
@@ -332,12 +334,14 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
                 .updated_at(new Date())
                 .build();
     }
+    
     public String generateLatexContent(CandidateCV cvEntity) {
         Candidate candidate = cvEntity.getCandidate();
         SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
         
         
         StringBuilder latex = new StringBuilder();
+        
         latex.append("\\documentclass[10pt, a4paper]{article}\n");
         latex.append("\\usepackage[utf8]{inputenc}\n");
         latex.append("\\usepackage[T1]{fontenc}\n");
@@ -349,62 +353,69 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
         latex.append("\\begin{document}\n");
         
         
-        latex.append("\\centerline{\\Huge \\textbf{HỒ SƠ ỨNG VIÊN: ").append(cvEntity.getTitle()).append("}}\n\n");
+        
+        latex.append("\\centerline{\\Huge \\textbf{CANDIDATE PROFILE: ").append(cvEntity.getTitle()).append("}}\n\n");
         latex.append("\\hrule\n\n");
         
-        latex.append("\\textbf{Họ tên: } ").append(candidate.getName() != null ? candidate.getName() : "Chưa cập nhật").append("\\\\\n");
-        latex.append("\\textbf{Ngày sinh: } ").append(candidate.getDob() != null ? dateFormat.format(candidate.getDob()) : "Chưa cập nhật").append("\\\\\n");
-        latex.append("\\textbf{Email: } ").append(candidate.getEmail() != null ? candidate.getEmail() : "Chưa cập nhật").append("\\\\\n");
-        latex.append("\\textbf{SĐT: } ").append(candidate.getPhone() != null ? candidate.getPhone() : "Chưa cập nhật").append("\\\\\n");
-        latex.append("\\textbf{Địa chỉ: } ").append(candidate.getAddress() != null ? candidate.getAddress() : "Chưa cập nhật").append("\\\\\n");
-        latex.append("\\textbf{Link Hồ sơ: } \\url{").append(candidate.getLink() != null ? candidate.getLink() : "Không có").append("}\n\n");
+        
+        
+        latex.append("\\textbf{Full Name: } ").append(candidate.getName() != null ? candidate.getName() : "Not updated").append("\\\\\n");
+        latex.append("\\textbf{Date of Birth: } ").append(candidate.getDob() != null ? dateFormat.format(candidate.getDob()) : "Not updated").append("\\\\\n");
+        latex.append("\\textbf{Email: } ").append(candidate.getEmail() != null ? candidate.getEmail() : "Not updated").append("\\\\\n");
+        latex.append("\\textbf{Phone: } ").append(candidate.getPhone() != null ? candidate.getPhone() : "Not updated").append("\\\\\n");
+        latex.append("\\textbf{Address: } ").append(candidate.getAddress() != null ? candidate.getAddress() : "Not updated").append("\\\\\n");
+        latex.append("\\textbf{Profile Link: } \\url{").append(candidate.getLink() != null ? candidate.getLink() : "None").append("}\n\n");
+        
         
         
         if (candidate.getDevelopment() != null && !candidate.getDevelopment().isEmpty()) {
-            latex.append("\\section*{Mục tiêu nghề nghiệp}\n");
+            latex.append("\\section*{Career Objective}\n");
             latex.append(candidate.getDevelopment()).append("\n\n");
         }
         
         
+        
         if (candidate.getDescription() != null && !candidate.getDescription().isEmpty()) {
-            latex.append("\\section*{Tóm tắt}\n");
+            latex.append("\\section*{Summary}\n");
             latex.append(candidate.getDescription()).append("\n\n");
         }
 
         
         if (!cvEntity.getEducationCandidates().isEmpty()) {
-            latex.append("\\section*{Học vấn}\n");
+            latex.append("\\section*{Education}\n");
             for (EducationCandidate edu : cvEntity.getEducationCandidates()) {
-                String name = edu.getNameEducation() != null ? edu.getNameEducation() : "Không rõ trường";
-                String major = edu.getMajor() != null ? edu.getMajor() : "Không rõ chuyên ngành";
+                String name = edu.getNameEducation() != null ? edu.getNameEducation() : "Unknown institution";
+                String major = edu.getMajor() != null ? edu.getMajor() : "Unknown major";
                 String gpa = edu.getGpa() != null ? edu.getGpa() : "-";
 
                 latex.append("\\textbf{").append(name).append("}\\\\\n");
                 latex.append(major).append(" (GPA: ").append(gpa).append(")\\\\\n");
-                latex.append("Thời gian: ").append(dateFormat.format(edu.getStartedAt())).append(" -- ").append(dateFormat.format(edu.getEndAt())).append("\\\\\n");
-                latex.append("Chi tiết: ").append(edu.getInfo() != null ? edu.getInfo() : "Không có.").append("\n\n");
+                latex.append("Duration: ").append(dateFormat.format(edu.getStartedAt())).append(" -- ").append(dateFormat.format(edu.getEndAt())).append("\\\\\n");
+                latex.append("Details: ").append(edu.getInfo() != null ? edu.getInfo() : "None.").append("\n\n");
             }
         }
         
-       
+        
+        
         if (!cvEntity.getExperienceCandidates().isEmpty()) {
-            latex.append("\\section*{Kinh nghiệm làm việc}\n");
+            latex.append("\\section*{Work Experience}\n");
             for (ExperienceCandidate exp : cvEntity.getExperienceCandidates()) {
-                String position = exp.getPosition() != null ? exp.getPosition() : "Vị trí không rõ";
-                String company = exp.getCompany() != null ? exp.getCompany() : "Công ty không rõ";
+                String position = exp.getPosition() != null ? exp.getPosition() : "Unknown position";
+                String company = exp.getCompany() != null ? exp.getCompany() : "Unknown company";
 
-                latex.append("\\textbf{").append(position).append("} tại \\textbf{").append(company).append("}\\\\\n");
-                latex.append("Thời gian: ").append(dateFormat.format(exp.getStarted_at())).append(" -- ").append(dateFormat.format(exp.getEnd_at())).append("\\\\\n");
-                latex.append("Mô tả: ").append(exp.getInfo() != null ? exp.getInfo() : "Không có.").append("\n\n");
+                latex.append("\\textbf{").append(position).append("} at \\textbf{").append(company).append("}\\\\\n");
+                latex.append("Duration: ").append(dateFormat.format(exp.getStarted_at())).append(" -- ").append(dateFormat.format(exp.getEnd_at())).append("\\\\\n");
+                latex.append("Description: ").append(exp.getInfo() != null ? exp.getInfo() : "None.").append("\n\n");
             }
         }
 
+        
         
         if (!cvEntity.getProjectCandidates().isEmpty()) {
-            latex.append("\\section*{Dự án tiêu biểu}\n");
+            latex.append("\\section*{Featured Projects}\n");
             for (ProjectCandidate proj : cvEntity.getProjectCandidates()) {
-                latex.append("\\textbf{Dự án: ").append(proj.getName() != null ? proj.getName() : "Không tên").append("}\\\\\n");
-                latex.append("Mô tả: ").append(proj.getInfo() != null ? proj.getInfo() : "Không có.").append("\\\\\n");
+                latex.append("\\textbf{Project: ").append(proj.getName() != null ? proj.getName() : "Untitled").append("}\\\\\n");
+                latex.append("Description: ").append(proj.getInfo() != null ? proj.getInfo() : "None.").append("\\\\\n");
                 if (proj.getLink() != null) {
                     latex.append("Link: \\url{").append(proj.getLink()).append("}\n\n");
                 }
@@ -412,25 +423,29 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
         }
 
         
+       
         if (!cvEntity.getSkillCandidates().isEmpty()) {
-            latex.append("\\section*{Kỹ năng}\n");
+            latex.append("\\section*{Skills}\n");
             latex.append("\\begin{itemize}\n");
             for (SkillsCandidate skill : cvEntity.getSkillCandidates()) {
-                latex.append("    \\item ").append(skill.getName()).append("\n");
+                latex.append("    \\item ").append(skill.getName()).append("\n");
             }
             latex.append("\\end{itemize}\n\n");
         }
         
         
+       
         if (!cvEntity.getCertificateCandidates().isEmpty()) {
-            latex.append("\\section*{Chứng chỉ}\n");
+            latex.append("\\section*{Certificates}\n");
             for (CertificateCandidate cert : cvEntity.getCertificateCandidates()) {
                 latex.append("\\textbf{").append(cert.getName()).append("} (").append(cert.getOrganization()).append(")\\\\\n");
-                latex.append("Ngày cấp: ").append(dateFormat.format(cert.getStarted_at())).append(". Chi tiết: ").append(cert.getInfo() != null ? cert.getInfo() : "Không có.").append("\n\n");
+                latex.append("Issue Date: ").append(dateFormat.format(cert.getStarted_at())).append(". Details: ").append(cert.getInfo() != null ? cert.getInfo() : "None.").append("\n\n");
             }
         }
+        
         
         latex.append("\\end{document}\n");
         return latex.toString();
     }
 }
+

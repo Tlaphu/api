@@ -4,6 +4,8 @@ package com.ra.base_spring_boot.model;
 
 
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -20,13 +22,18 @@ public class JobCandidate {
 
     @ManyToOne
     @JoinColumn(name = "job_id")
+    @JsonBackReference
     private Job job;
 
     @ManyToOne
     @JoinColumn(name = "candidate_id")
+    @JsonBackReference
     private Candidate candidate;
-
-    private String cv_url;
+    @ManyToOne
+    @JoinColumn(name = "cv_id", nullable = true)
+    @JsonBackReference
+    private CandidateCV candidateCV;
+    
     private String cover_letter;
     private String status;
 

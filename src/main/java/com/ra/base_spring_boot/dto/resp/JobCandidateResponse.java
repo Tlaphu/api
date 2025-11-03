@@ -22,7 +22,7 @@ public class JobCandidateResponse {
     private Long candidateId;
     private String candidateName;
 
-    private String cv_url;
+    private Long cvId;
     private String cover_letter;
     private String status;
 

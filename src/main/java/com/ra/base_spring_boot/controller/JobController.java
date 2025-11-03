@@ -5,8 +5,8 @@ import com.ra.base_spring_boot.repository.ICompanyRepository;
 import com.ra.base_spring_boot.repository.ILocationRepository;
 import com.ra.base_spring_boot.repository.ICandidateRepository;
 import com.ra.base_spring_boot.repository.JobRepository;
-import com.ra.base_spring_boot.dto.req.FormJob; // Đã sửa đổi để chứa locationId
-import com.ra.base_spring_boot.dto.req.FormJobResponseDTO; // Đã sửa đổi để dùng Long cho ID
+import com.ra.base_spring_boot.dto.req.FormJob; 
+import com.ra.base_spring_boot.dto.req.FormJobResponseDTO; 
 import com.ra.base_spring_boot.dto.resp.DashboardStats;
 import com.ra.base_spring_boot.services.ICompanyAuthService;
 
