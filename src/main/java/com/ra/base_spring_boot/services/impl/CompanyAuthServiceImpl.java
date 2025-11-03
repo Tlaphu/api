@@ -222,6 +222,7 @@ public class CompanyAuthServiceImpl implements ICompanyAuthService {
         company.setLogo(form.getLogo());
         company.setLink_fb(form.getLinkFb());
         company.setLink_linkedin(form.getLinkLinkedin());
+        company.setLink_Github(form.getLink_Github());
         company.setDescription(form.getDescription());
         company.setCompanyPolicy(form.getCompanyPolicy());
         company.setUpdated_at(new Date());
@@ -273,6 +274,7 @@ public class CompanyAuthServiceImpl implements ICompanyAuthService {
                 .website(company.getWebsite())
                 .link_fb(company.getLink_fb())
                 .link_linkedin(company.getLink_linkedin())
+                .link_Github(company.getLink_Github())
                 .follower(company.getFollower())
                 .size(company.getSize())
                 .description(company.getDescription())
@@ -302,6 +304,7 @@ public class CompanyAuthServiceImpl implements ICompanyAuthService {
                         .website(company.getWebsite())
                         .link_fb(company.getLink_fb())
                         .link_linkedin(company.getLink_linkedin())
+                        .link_Github(company.getLink_Github())
                         .follower(company.getFollower())
                         .size(company.getSize())
                         .description(company.getDescription())
@@ -323,6 +326,7 @@ public class CompanyAuthServiceImpl implements ICompanyAuthService {
                 .website(company.getWebsite())
                 .link_fb(company.getLink_fb())
                 .link_linkedin(company.getLink_linkedin())
+                .link_Github(company.getLink_Github())
                 .follower(company.getFollower())
                 .size(company.getSize())
                 .description(company.getDescription())

@@ -33,7 +33,7 @@ public class Company {
     private Integer size;
     private String description;
     private String CompanyPolicy;
-    
+    private String link_Github;
     @Temporal(TemporalType.DATE)
     private Date created_at;
     @Temporal(TemporalType.DATE)

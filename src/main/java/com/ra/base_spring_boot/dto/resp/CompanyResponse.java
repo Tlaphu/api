@@ -20,6 +20,7 @@ public class CompanyResponse {
     private String website;
     private String link_fb;
     private String link_linkedin;
+    private String link_Github;
     private Integer follower;
     private Integer size;
     private String description;
