@@ -31,7 +31,12 @@ public class Company {
     private String link_linkedin;
     private Integer follower;
     private Integer size;
+    @Lob
+    @Column(name = "description", columnDefinition = "LONGTEXT")
     private String description;
+
+    @Lob
+    @Column(name = "CompanyPolicy", columnDefinition = "LONGTEXT")
     private String CompanyPolicy;
     private String link_Github;
     @Temporal(TemporalType.DATE)
