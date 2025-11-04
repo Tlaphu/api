@@ -116,7 +116,12 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/auth/company/forgot-password").permitAll()
                         .requestMatchers("/api/v1/auth/company/reset-password").permitAll()
                         .requestMatchers("/api/v1/auth/company/verify").permitAll()
-
+                        .requestMatchers("/api/v1/auth/candidate/login").permitAll()
+                        .requestMatchers("/api/v1/auth/candidate/register").permitAll()
+                        .requestMatchers("/api/v1/auth/candidate/forgot-password").permitAll()
+                        .requestMatchers("/api/v1/auth/candidate/reset-password").permitAll()
+                        .requestMatchers("/api/v1/auth/candidate/verify").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/location/**").permitAll()
                         .requestMatchers(candidateAuthPattern).permitAll()
                         .requestMatchers(companyAuthPattern).permitAll()
 
