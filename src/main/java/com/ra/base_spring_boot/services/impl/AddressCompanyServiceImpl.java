@@ -2,11 +2,15 @@ package com.ra.base_spring_boot.services.impl;
 
 import com.ra.base_spring_boot.dto.req.FormAddressCompany;
 import com.ra.base_spring_boot.dto.resp.AddressCompanyResponse;
+import com.ra.base_spring_boot.exception.HttpBadRequest;
 import com.ra.base_spring_boot.model.AddressCompany;
 import com.ra.base_spring_boot.model.Company;
 import com.ra.base_spring_boot.model.Location;
-import com.ra.base_spring_boot.repository.*;
+import com.ra.base_spring_boot.model.AccountCompany;
+import com.ra.base_spring_boot.repository.IAccountCompanyRepository;
 import com.ra.base_spring_boot.repository.IAddressCompanyRepository;
+import com.ra.base_spring_boot.repository.ILocationRepository;
+import com.ra.base_spring_boot.security.jwt.JwtProvider;
 import com.ra.base_spring_boot.services.IAddressCompanyService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -20,13 +24,19 @@ import java.util.List;
 public class AddressCompanyServiceImpl implements IAddressCompanyService {
 
     private final IAddressCompanyRepository addressRepository;
-    private final IAccountCompanyRepository companyRepository;
+    private final IAccountCompanyRepository accountCompanyRepository;
     private final ILocationRepository locationRepository;
+    private final JwtProvider jwtProvider;
 
     @Override
-    public List<AddressCompanyResponse> getByCompanyEmail(String email) {
-        var accountCompany = companyRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Company" + email + " not found"));
+    public List<AddressCompanyResponse> getAllForCurrentCompany() {
+        String email = jwtProvider.getCompanyUsername();
+        if (email == null) {
+            throw new HttpBadRequest("Unauthorized: company not found");
+        }
+
+        AccountCompany accountCompany = accountCompanyRepository.findByEmail(email)
+                .orElseThrow(() -> new HttpBadRequest("Company " + email + " not found"));
         Company company = accountCompany.getCompany();
 
         return addressRepository.findByCompany(company)
@@ -36,13 +46,18 @@ public class AddressCompanyServiceImpl implements IAddressCompanyService {
     }
 
     @Override
-    public AddressCompanyResponse createForCompany(String email, FormAddressCompany form) {
-        var accountCompany = companyRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Company" + email + " not found"));
+    public AddressCompanyResponse create(FormAddressCompany form) {
+        String email = jwtProvider.getCompanyUsername();
+        if (email == null) {
+            throw new HttpBadRequest("Unauthorized: company not found");
+        }
+
+        AccountCompany accountCompany = accountCompanyRepository.findByEmail(email)
+                .orElseThrow(() -> new HttpBadRequest("Company " + email + " not found"));
         Company company = accountCompany.getCompany();
 
         Location location = locationRepository.findById(form.getLocationId())
-                .orElseThrow(() -> new RuntimeException("Cannot found company location" + form.getLocationId()));
+                .orElseThrow(() -> new HttpBadRequest("Location not found with id: " + form.getLocationId()));
 
         AddressCompany address = AddressCompany.builder()
                 .company(company)
@@ -56,20 +71,25 @@ public class AddressCompanyServiceImpl implements IAddressCompanyService {
     }
 
     @Override
-    public AddressCompanyResponse updateForCompany(String email, Long id, FormAddressCompany form) {
-        var accountCompany = companyRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Company" + email + " not found"));
+    public AddressCompanyResponse update(Long id, FormAddressCompany form) {
+        String email = jwtProvider.getCompanyUsername();
+        if (email == null) {
+            throw new HttpBadRequest("Unauthorized: company not found");
+        }
+
+        AccountCompany accountCompany = accountCompanyRepository.findByEmail(email)
+                .orElseThrow(() -> new HttpBadRequest("Company " + email + " not found"));
         Company company = accountCompany.getCompany();
 
         AddressCompany address = addressRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Cannot found location with id :" + id));
+                .orElseThrow(() -> new HttpBadRequest("Address not found with id: " + id));
 
         if (!address.getCompany().getId().equals(company.getId())) {
-            throw new RuntimeException("You cannot change");
+            throw new HttpBadRequest("You do not have permission to update this address");
         }
 
         Location location = locationRepository.findById(form.getLocationId())
-                .orElseThrow(() -> new RuntimeException("Cannot found company location " + form.getLocationId()));
+                .orElseThrow(() -> new HttpBadRequest("Location not found with id: " + form.getLocationId()));
 
         address.setAddress(form.getAddress());
         address.setMap_url(form.getMapUrl());
@@ -80,16 +100,21 @@ public class AddressCompanyServiceImpl implements IAddressCompanyService {
     }
 
     @Override
-    public void deleteForCompany(String email, Long id) {
-        var accountCompany = companyRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Company" + email + " not found"));
+    public void delete(Long id) {
+        String email = jwtProvider.getCompanyUsername();
+        if (email == null) {
+            throw new HttpBadRequest("Unauthorized: company not found");
+        }
+
+        AccountCompany accountCompany = accountCompanyRepository.findByEmail(email)
+                .orElseThrow(() -> new HttpBadRequest("Company " + email + " not found"));
         Company company = accountCompany.getCompany();
 
         AddressCompany address = addressRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Cannot found location with id :" + id));
+                .orElseThrow(() -> new HttpBadRequest("Address not found with id: " + id));
 
         if (!address.getCompany().getId().equals(company.getId())) {
-            throw new RuntimeException("You");
+            throw new HttpBadRequest("You do not have permission to delete this address");
         }
 
         addressRepository.delete(address);

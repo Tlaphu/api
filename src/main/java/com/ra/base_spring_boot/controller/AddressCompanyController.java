@@ -1,52 +1,90 @@
 package com.ra.base_spring_boot.controller;
 
+import com.ra.base_spring_boot.dto.ResponseWrapper;
 import com.ra.base_spring_boot.dto.req.FormAddressCompany;
 import com.ra.base_spring_boot.dto.resp.AddressCompanyResponse;
 import com.ra.base_spring_boot.services.IAddressCompanyService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.security.Principal;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/address-companies")
+@RequestMapping("/api/v1/company/addresses")
 @RequiredArgsConstructor
 public class AddressCompanyController {
 
-    private final IAddressCompanyService service;
+    private final IAddressCompanyService addressCompanyService;
 
-    @PreAuthorize("hasAuthority('ROLE_COMPANY')")
+    /**
+     *
+     */
     @GetMapping
-    public ResponseEntity<List<AddressCompanyResponse>> getAllForCompany(Principal principal) {
-        String email = principal.getName();
-        return ResponseEntity.ok(service.getByCompanyEmail(email));
+    public ResponseEntity<ResponseWrapper<List<AddressCompanyResponse>>> getAll() {
+        List<AddressCompanyResponse> addresses = addressCompanyService.getAllForCurrentCompany();
+
+        return ResponseEntity.ok(
+                ResponseWrapper.<List<AddressCompanyResponse>>builder()
+                        .status(HttpStatus.OK)
+                        .code(HttpStatus.OK.value())
+                        .data(addresses)
+                        .build()
+        );
     }
 
-    @PreAuthorize("hasAuthority('ROLE_COMPANY')")
+    /**
+     *
+     */
     @PostMapping
-    public ResponseEntity<AddressCompanyResponse> create(@RequestBody FormAddressCompany form,
-            Principal principal) {
-        String email = principal.getName();
-        return ResponseEntity.ok(service.createForCompany(email, form));
+    public ResponseEntity<ResponseWrapper<AddressCompanyResponse>> create(
+            @Valid @RequestBody FormAddressCompany form
+    ) {
+        AddressCompanyResponse response = addressCompanyService.create(form);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(
+                ResponseWrapper.<AddressCompanyResponse>builder()
+                        .status(HttpStatus.CREATED)
+                        .code(HttpStatus.CREATED.value())
+                        .data(response)
+                        .build()
+        );
     }
 
-    @PreAuthorize("hasAuthority('ROLE_COMPANY')")
+    /**
+     *
+     */
     @PutMapping("/{id}")
-    public ResponseEntity<AddressCompanyResponse> update(@PathVariable Long id,
-            @RequestBody FormAddressCompany form,
-            Principal principal) {
-        String email = principal.getName();
-        return ResponseEntity.ok(service.updateForCompany(email, id, form));
+    public ResponseEntity<ResponseWrapper<AddressCompanyResponse>> update(
+            @PathVariable Long id,
+            @Valid @RequestBody FormAddressCompany form
+    ) {
+        AddressCompanyResponse response = addressCompanyService.update(id, form);
+
+        return ResponseEntity.ok(
+                ResponseWrapper.<AddressCompanyResponse>builder()
+                        .status(HttpStatus.OK)
+                        .code(HttpStatus.OK.value())
+                        .data(response)
+                        .build()
+        );
     }
 
-    @PreAuthorize("hasAuthority('ROLE_COMPANY')")
+    /**
+     *
+     */
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id, Principal principal) {
-        String email = principal.getName();
-        service.deleteForCompany(email, id);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<ResponseWrapper<String>> delete(@PathVariable Long id) {
+        addressCompanyService.delete(id);
+
+        return ResponseEntity.ok(
+                ResponseWrapper.<String>builder()
+                        .status(HttpStatus.OK)
+                        .code(HttpStatus.OK.value())
+                        .data("Address deleted successfully")
+                        .build()
+        );
     }
 }
