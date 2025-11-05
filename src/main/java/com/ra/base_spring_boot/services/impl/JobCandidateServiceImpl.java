@@ -1,22 +1,20 @@
 package com.ra.base_spring_boot.services.impl;
 
-import com.ra.base_spring_boot.model.Candidate;
-import com.ra.base_spring_boot.model.Job;
-import com.ra.base_spring_boot.model.CandidateCV;
-import com.ra.base_spring_boot.model.JobCandidate;
+import com.ra.base_spring_boot.model.*;
 import com.ra.base_spring_boot.repository.IJobCandidateRepository;
 import com.ra.base_spring_boot.repository.JobRepository;
 import com.ra.base_spring_boot.repository.ICandidateRepository;
 import com.ra.base_spring_boot.repository.ICandidateCVRepository;
+import com.ra.base_spring_boot.security.jwt.JwtProvider;
 import com.ra.base_spring_boot.services.JobCandidateService;
 import com.ra.base_spring_boot.dto.req.FormJobCandidate;
 import com.ra.base_spring_boot.dto.resp.JobCandidateResponse;
+import com.ra.base_spring_boot.dto.resp.CandidateResponse;
+import com.ra.base_spring_boot.dto.resp.SkillsCandidateResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.NoSuchElementException; 
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -25,17 +23,19 @@ public class JobCandidateServiceImpl implements JobCandidateService {
     private final IJobCandidateRepository jobCandidateRepository;
     private final JobRepository jobRepository;
     private final ICandidateRepository candidateRepository;
-    private final ICandidateCVRepository cvRepository; 
+    private final ICandidateCVRepository cvRepository;
+    private final JwtProvider jwtProvider;
 
     @Autowired
     public JobCandidateServiceImpl(IJobCandidateRepository jobCandidateRepository,
                                    JobRepository jobRepository,
                                    ICandidateRepository candidateRepository,
-                                   ICandidateCVRepository cvRepository) { 
+                                   ICandidateCVRepository cvRepository, JwtProvider jwtProvider) {
         this.jobCandidateRepository = jobCandidateRepository;
         this.jobRepository = jobRepository;
         this.candidateRepository = candidateRepository;
         this.cvRepository = cvRepository;
+        this.jwtProvider = jwtProvider;
     }
 
     private JobCandidate toEntity(FormJobCandidate form) {
@@ -156,5 +156,72 @@ public class JobCandidateServiceImpl implements JobCandidateService {
         return jobCandidateRepository.findByCandidateId(candidateId).stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
+    }
+    @Override
+    public List<CandidateResponse> getSuitableCandidatesForCompanyJob(Long jobId) {
+
+        AccountCompany company = jwtProvider.getCurrentAccountCompany();
+        if (company == null) {
+            throw new NoSuchElementException("Unauthorized: Company not found or token invalid");
+        }
+
+
+        Job job = jobRepository.findById(jobId)
+                .orElseThrow(() -> new NoSuchElementException("Job not found with id: " + jobId));
+
+        if (!job.getCompany().getId().equals(company.getId())) {
+            throw new SecurityException("You are not allowed to access this job");
+        }
+
+        Set<Skill> requiredSkills = job.getSkills();
+        if (requiredSkills == null || requiredSkills.isEmpty()) {
+            throw new NoSuchElementException("Job does not have any required skills");
+        }
+
+        List<Candidate> candidates = candidateRepository.findAll()
+                .stream()
+                .filter(Candidate::isStatus)
+                .toList();
+
+        List<Candidate> suitable = candidates.stream()
+                .filter(c -> c.getSkillCandidates() != null && c.getSkillCandidates().stream()
+                        .anyMatch(sc -> requiredSkills.stream()
+                                .anyMatch(rs -> rs.getName().equalsIgnoreCase(sc.getSkill().getName()))))
+                .collect(Collectors.toList());
+
+        suitable.sort(Comparator.comparingInt(c -> {
+            Optional<SkillsCandidate> topLevel = c.getSkillCandidates().stream()
+                    .max(Comparator.comparingInt(sc -> levelRank(sc.getLevelJob())));
+            return -topLevel.map(sc -> levelRank(sc.getLevelJob())).orElse(0);
+        }));
+
+        return suitable.stream()
+                .map(c -> CandidateResponse.builder()
+                        .id(c.getId())
+                        .name(c.getName())
+                        .email(c.getEmail())
+                        .phone(c.getPhone())
+                        .Title(c.getTitle())
+                        .description(c.getDescription())
+                        .skills(c.getSkillCandidates().stream()
+                                .map(s -> SkillsCandidateResponse.builder()
+                                        .id(s.getId())
+                                        .skillName(s.getSkill().getName())
+                                        .levelJobName(s.getLevelJob().getName())
+                                        .build())
+                                .collect(Collectors.toList()))
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    private int levelRank(LevelJob levelJob) {
+        if (levelJob == null || levelJob.getName() == null) return 0;
+        return switch (levelJob.getName().toUpperCase()) {
+            case "JUNIOR" -> 1;
+            case "MIDDLE" -> 2;
+            case "SENIOR" -> 3;
+            case "INTERN" -> 4;
+            default -> 0;
+        };
     }
 }
