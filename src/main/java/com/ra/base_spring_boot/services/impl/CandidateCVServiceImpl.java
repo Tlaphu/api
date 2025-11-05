@@ -223,7 +223,7 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
             EducationCandidate existing = educationCandidateRepository.findById(dto.getId())
                     .orElseThrow(() -> new HttpBadRequest("Education ID not found: " + dto.getId()));
 
-            if (dto.getNameeducation() != null) existing.setNameEducation(dto.getNameeducation());
+            if (dto.getNameEducation() != null) existing.setNameEducation(dto.getNameEducation());
             if (dto.getMajor() != null) existing.setMajor(dto.getMajor());
             if (dto.getStartedAt() != null) existing.setStartedAt(dto.getStartedAt());
             if (dto.getEndAt() != null) existing.setEndAt(dto.getEndAt());
@@ -234,7 +234,7 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
         }
 
         return EducationCandidate.builder()
-                .nameEducation(dto.getNameeducation())
+                .nameEducation(dto.getNameEducation())
                 .major(dto.getMajor())
                 .startedAt(dto.getStartedAt())
                 .endAt(dto.getEndAt())
