@@ -12,7 +12,7 @@ import java.util.Date;
 public class FormEducationCandidate {
     private Long id;
     private long candidateId;
-    private String nameeducation;
+    private String nameEducation;
     private String major;
     private String gpa;
     private Date startedAt;

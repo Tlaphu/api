@@ -55,7 +55,7 @@ public class Job {
     @JsonIgnore
     private List<TypeJobRelation> typeJobRelations;
 
-    @OneToMany(mappedBy = "job", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "job", cascade = CascadeType.ALL, orphanRemoval = true )
     @JsonIgnore
     private List<LevelJobRelation> levelJobRelations;
     @ManyToMany

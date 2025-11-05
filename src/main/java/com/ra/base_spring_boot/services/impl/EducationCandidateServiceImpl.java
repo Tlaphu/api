@@ -58,7 +58,7 @@ public class EducationCandidateServiceImpl implements IEducationCandidateService
         EducationCandidate edu = EducationCandidate.builder()
                 .candidate(current)
                 .candidateCV(null)
-                .nameEducation(request.getNameeducation()) // SỬA LỖI 10: Dùng getNameeducation()
+                .nameEducation(request.getNameEducation())
                 .major(request.getMajor())
                 .gpa(request.getGpa()) 
                 .startedAt(request.getStartedAt())
@@ -85,7 +85,7 @@ public class EducationCandidateServiceImpl implements IEducationCandidateService
             throw new HttpAccessDenied("Unauthorized: cannot edit other candidate’s education");
         }
 
-        edu.setNameEducation(request.getNameeducation()); // SỬA LỖI 11: Dùng getNameeducation()
+        edu.setNameEducation(request.getNameEducation());
         edu.setMajor(request.getMajor());
         edu.setStartedAt(request.getStartedAt());
         edu.setEndAt(request.getEndAt());
