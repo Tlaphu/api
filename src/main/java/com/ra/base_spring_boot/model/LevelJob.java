@@ -17,7 +17,7 @@ public class    LevelJob {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY) 
     private Long id;
-
+    @Column(nullable = false, unique = true)
     private String name;
 
     @Temporal(TemporalType.DATE)
@@ -27,7 +27,7 @@ public class    LevelJob {
     private Date updated_at;
 
 
-    @OneToMany(mappedBy = "levelJob", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "levelJob", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private List<LevelJobRelation> levelJobRelations;
     @OneToMany(mappedBy = "levelJob", cascade = CascadeType.ALL, orphanRemoval = true)

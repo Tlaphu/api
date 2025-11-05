@@ -25,7 +25,7 @@ public class CandidateResponse {
     private String experience;
     private String development;
 
-    private List<SkillCandidateResponse> skills;
+    private List<SkillsCandidateResponse> skills;
     private List<EducationCandidateResponse> educations;
     private List<ExperienceCandidateResponse> experiences;
     private List<CertificateCandidateResponse> certificates;

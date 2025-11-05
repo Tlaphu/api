@@ -262,12 +262,14 @@ public class CandidateAuthServiceImpl implements ICandidateAuthService {
                 .development(candidate.getDevelopment())
                 .skills(candidate.getSkillCandidates() == null ? null
                         : candidate.getSkillCandidates().stream()
-                                .map(s -> SkillCandidateResponse.builder()
+                        .map(s -> SkillsCandidateResponse.builder()
                                 .id(s.getId())
-                                .name(s.getName() != null ? s.getName() : null)
-                                .level_job_id(s.getLevelJob() != null ? s.getLevelJob().getId().toString() : null)
+                                .skillName(s.getSkill() != null ? s.getSkill().getName() : null)
+                                .levelJobName(s.getLevelJob() != null ? s.getLevelJob().getName() : null)
+                                .createdAt(s.getCreatedAt())
+                                .updatedAt(s.getUpdatedAt())
                                 .build())
-                                .collect(Collectors.toList()))
+                        .collect(Collectors.toList()))
                 .educations(candidate.getEducationCandidates() == null ? null
                         : candidate.getEducationCandidates().stream()
                                 .<EducationCandidateResponse>map(e -> EducationCandidateResponse.builder()

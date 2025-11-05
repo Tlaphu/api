@@ -5,8 +5,11 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
+
 @Entity
 @Table(name = "job")
 @NoArgsConstructor
@@ -16,7 +19,7 @@ import java.util.List;
 @Builder
 public class Job {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY) 
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne
@@ -37,8 +40,8 @@ public class Job {
     private String requirements;
     private String desirable;
     private String benefits;
-     private String workTime;
-     
+    private String workTime;
+
     @Temporal(TemporalType.DATE)
     private Date expire_at;
 
@@ -48,11 +51,19 @@ public class Job {
     @Temporal(TemporalType.DATE)
     private Date updated_at;
     private String status;
-    @OneToMany(mappedBy = "job", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "job", cascade = CascadeType.ALL,orphanRemoval = true)
     @JsonIgnore
     private List<TypeJobRelation> typeJobRelations;
 
-    @OneToMany(mappedBy = "job", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "job", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private List<LevelJobRelation> levelJobRelations;
+    @ManyToMany
+    @JoinTable(
+            name = "job_skills",
+            joinColumns = @JoinColumn(name = "job_id"),
+            inverseJoinColumns = @JoinColumn(name = "skill_id")
+    )
+    private Set<Skill> skills;
+
 }

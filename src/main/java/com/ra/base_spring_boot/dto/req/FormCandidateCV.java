@@ -20,7 +20,7 @@ public class FormCandidateCV {
     private List<FormCertificateCandidate> certificates;
     private List<FormExperienceCandidate> experiences;
     private List<FormEducationCandidate> educations;
-    private List<FormSkillsCandidate> skills;
+    private List<FormSkillCandidate> skills;
     private List<FormProjectCandidate> projects;
 }
 

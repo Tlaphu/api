@@ -4,7 +4,7 @@ import com.ra.base_spring_boot.dto.req.*;
 import com.ra.base_spring_boot.dto.resp.CandidateCVResponse;
 import com.ra.base_spring_boot.exception.HttpBadRequest;
 import com.ra.base_spring_boot.model.*;
-import com.ra.base_spring_boot.repository.*; 
+import com.ra.base_spring_boot.repository.*;
 import com.ra.base_spring_boot.services.ICandidateCVService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -22,13 +22,15 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
 
     private final ICandidateRepository candidateRepository;
     private final ICandidateCVRepository candidateCVRepository;
-    
+
     private final IProjectRepository projectCandidateRepository;
     private final ISkillsCandidateRepository skillsCandidateRepository;
+    private final SkillRepository skillRepository;
     private final IEducationCandidateRepository educationCandidateRepository;
     private final IExperienceCandidateRepository experienceCandidateRepository;
     private final ICertificateCandidateRepository certificateCandidateRepository;
 
+    //=================== MAPPING TO RESPONSE ===================//
     public CandidateCVResponse mapToResponse(CandidateCV candidateCV) {
 
         Candidate candidate = candidateCV.getCandidate();
@@ -38,7 +40,7 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
                 .collect(Collectors.toList());
 
         List<String> skillNames = candidateCV.getSkillCandidates().stream()
-                .map(SkillsCandidate::getName)
+                .map(s -> s.getSkill() != null ? s.getSkill().getName() : "Unknown Skill")
                 .collect(Collectors.toList());
 
         List<String> educationNames = candidateCV.getEducationCandidates().stream()
@@ -70,6 +72,8 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
                 .build();
     }
 
+    //=================== CRUD CORE ===================//
+
     @Override
     @Transactional
     public CandidateCV createNewCV(FormCandidateCV cvForm, Long candidateId) {
@@ -98,7 +102,7 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
                 .orElseThrow(() -> new HttpBadRequest("CV not found or does not belong to this candidate."));
 
         existingCV.setTitle(cvForm.getTitle());
-        existingCV.setTemplate(cvForm.getTitle());
+        existingCV.setTemplate(cvForm.getTemplate());
         existingCV.setUpdated_at(new Date());
 
         updateAllCVDetails(existingCV, cvForm);
@@ -112,7 +116,7 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
                 (FormProjectCandidate dto) -> mapToProjectCandidate(dto, candidateCV));
 
         updateList(candidateCV.getSkillCandidates(), cvForm.getSkills(),
-                (FormSkillsCandidate dto) -> mapToSkillCandidate(dto, candidateCV));
+                (FormSkillCandidate dto) -> mapToSkillCandidate(dto, candidateCV));
 
         updateList(candidateCV.getEducationCandidates(), cvForm.getEducations(),
                 (FormEducationCandidate dto) -> mapToEducationCandidate(dto, candidateCV));
@@ -153,6 +157,7 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
         candidateCVRepository.deleteAll(cvList);
     }
 
+    //=================== UPDATE LIST GENERIC ===================//
     private <E, D> void updateList(List<E> entityList, List<D> dtoList, Function<D, E> mapper) {
         if (dtoList != null) {
             entityList.clear();
@@ -161,25 +166,20 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
         }
     }
 
+    //=================== MAPPING METHODS ===================//
+
     private ProjectCandidate mapToProjectCandidate(FormProjectCandidate dto, CandidateCV candidateCV) {
-        
         if (dto.getId() != null) {
             ProjectCandidate existing = projectCandidateRepository.findById(dto.getId())
-                .orElseThrow(() -> new HttpBadRequest("Project ID not found: " + dto.getId()));
-            
-            if (dto.getName() != null) {
-                existing.setName(dto.getName());
-            }
-            if (dto.getInfo() != null) {
-                existing.setInfo(dto.getInfo());
-            }
-            if (dto.getLink() != null) {
-                existing.setLink(dto.getLink());
-            }
+                    .orElseThrow(() -> new HttpBadRequest("Project ID not found: " + dto.getId()));
+
+            if (dto.getName() != null) existing.setName(dto.getName());
+            if (dto.getInfo() != null) existing.setInfo(dto.getInfo());
+            if (dto.getLink() != null) existing.setLink(dto.getLink());
             existing.setUpdated_at(new Date());
             return existing;
         }
-        
+
         return ProjectCandidate.builder()
                 .name(dto.getName())
                 .info(dto.getInfo())
@@ -191,63 +191,55 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
                 .build();
     }
 
-    private SkillsCandidate mapToSkillCandidate(FormSkillsCandidate dto, CandidateCV candidateCV) {
-        
-        if (dto.getId() != null) {
-            SkillsCandidate existing = skillsCandidateRepository.findById(dto.getId())
-                .orElseThrow(() -> new HttpBadRequest("Skill ID not found: " + dto.getId()));
-            
-            if (dto.getName() != null) {
-                existing.setName(dto.getName());
+    private SkillsCandidate mapToSkillCandidate(FormSkillCandidate dto, CandidateCV candidateCV) {
+        Skill skill = null;
+        if (dto.getSkillId() != null) {
+            skill = skillRepository.findById(dto.getSkillId())
+                    .orElseThrow(() -> new HttpBadRequest("Skill not found with ID: " + dto.getSkillId()));
+        }
+
+        if (dto.getSkillId() != null) {
+            SkillsCandidate existing = skillsCandidateRepository.findById(dto.getSkillId())
+                    .orElseThrow(() -> new HttpBadRequest("SkillCandidate not found with ID: " + dto.getSkillId()));
+
+            if (skill != null) {
+                existing.setSkill(skill);
             }
-            existing.setUpdated_at(new Date());
+            existing.setUpdatedAt(new Date());
             return existing;
         }
 
         return SkillsCandidate.builder()
-                .name(dto.getName())
+                .skill(skill)
                 .candidateCV(candidateCV)
                 .candidate(candidateCV.getCandidate())
-                .created_at(new Date())
-                .updated_at(new Date())
+                .createdAt(new Date())
+                .updatedAt(new Date())
                 .build();
     }
 
     private EducationCandidate mapToEducationCandidate(FormEducationCandidate dto, CandidateCV candidateCV) {
-        
         if (dto.getId() != null) {
             EducationCandidate existing = educationCandidateRepository.findById(dto.getId())
-                .orElseThrow(() -> new HttpBadRequest("Education ID not found: " + dto.getId()));
-            
-            if (dto.getNameeducation() != null) {
-                existing.setNameEducation(dto.getNameeducation());
-            }
-            if (dto.getMajor() != null) {
-                existing.setMajor(dto.getMajor());
-            }
-            if (dto.getStartedAt() != null) {
-                existing.setStartedAt(dto.getStartedAt());
-            }
-            if (dto.getEndAt() != null) {
-                existing.setEndAt(dto.getEndAt());
-            }
-            if (dto.getInfo() != null) {
-                existing.setInfo(dto.getInfo());
-            }
-            if (dto.getGpa() != null) {
-                existing.setGpa(dto.getGpa());
-            }
-            existing.setUpdatedAt(new Date()); 
+                    .orElseThrow(() -> new HttpBadRequest("Education ID not found: " + dto.getId()));
+
+            if (dto.getNameeducation() != null) existing.setNameEducation(dto.getNameeducation());
+            if (dto.getMajor() != null) existing.setMajor(dto.getMajor());
+            if (dto.getStartedAt() != null) existing.setStartedAt(dto.getStartedAt());
+            if (dto.getEndAt() != null) existing.setEndAt(dto.getEndAt());
+            if (dto.getInfo() != null) existing.setInfo(dto.getInfo());
+            if (dto.getGpa() != null) existing.setGpa(dto.getGpa());
+            existing.setUpdatedAt(new Date());
             return existing;
         }
-        
+
         return EducationCandidate.builder()
-                .nameEducation(dto.getNameeducation()) 
+                .nameEducation(dto.getNameeducation())
                 .major(dto.getMajor())
                 .startedAt(dto.getStartedAt())
                 .endAt(dto.getEndAt())
                 .info(dto.getInfo())
-                .gpa(dto.getGpa()) 
+                .gpa(dto.getGpa())
                 .candidateCV(candidateCV)
                 .candidate(candidateCV.getCandidate())
                 .createdAt(new Date())
@@ -256,27 +248,15 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
     }
 
     private ExperienceCandidate mapToExperienceCandidate(FormExperienceCandidate dto, CandidateCV candidateCV) {
-        
         if (dto.getId() != null) {
             ExperienceCandidate existing = experienceCandidateRepository.findById(dto.getId())
-                .orElseThrow(() -> new HttpBadRequest("Experience ID not found: " + dto.getId()));
-            
-            if (dto.getPosition() != null) {
-                existing.setPosition(dto.getPosition());
-            }
-            if (dto.getCompany() != null) {
-                existing.setCompany(dto.getCompany());
-            }
-            
-            if (dto.getStarted_at() != null) {
-                existing.setStarted_at(dto.getStarted_at());
-            }
-            if (dto.getEnd_at() != null) {
-                existing.setEnd_at(dto.getEnd_at());
-            }
-            if (dto.getInfo() != null) {
-                existing.setInfo(dto.getInfo());
-            }
+                    .orElseThrow(() -> new HttpBadRequest("Experience ID not found: " + dto.getId()));
+
+            if (dto.getPosition() != null) existing.setPosition(dto.getPosition());
+            if (dto.getCompany() != null) existing.setCompany(dto.getCompany());
+            if (dto.getStarted_at() != null) existing.setStarted_at(dto.getStarted_at());
+            if (dto.getEnd_at() != null) existing.setEnd_at(dto.getEnd_at());
+            if (dto.getInfo() != null) existing.setInfo(dto.getInfo());
             existing.setUpdated_at(new Date());
             return existing;
         }
@@ -294,34 +274,20 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
                 .build();
     }
 
-private CertificateCandidate mapToCertificateCandidate(FormCertificateCandidate dto, CandidateCV candidateCV) {
-        
+    private CertificateCandidate mapToCertificateCandidate(FormCertificateCandidate dto, CandidateCV candidateCV) {
         if (dto.getId() != null) {
-            
             CertificateCandidate existing = certificateCandidateRepository.findById(dto.getId())
-                .orElseThrow(() -> new HttpBadRequest("Certificate ID not found: " + dto.getId()));
-            
-            if (dto.getName() != null) {
-                existing.setName(dto.getName());
-            }
-            if (dto.getOrganization() != null) {
-                existing.setOrganization(dto.getOrganization());
-            }
-            
-            if (dto.getStarted_at() != null) {
-                existing.setStarted_at(dto.getStarted_at());
-            }
-            if (dto.getEnd_at() != null) {
-                existing.setEnd_at(dto.getEnd_at());
-            }
-            if (dto.getInfo() != null) {
-                existing.setInfo(dto.getInfo());
-            }
+                    .orElseThrow(() -> new HttpBadRequest("Certificate ID not found: " + dto.getId()));
+
+            if (dto.getName() != null) existing.setName(dto.getName());
+            if (dto.getOrganization() != null) existing.setOrganization(dto.getOrganization());
+            if (dto.getStarted_at() != null) existing.setStarted_at(dto.getStarted_at());
+            if (dto.getEnd_at() != null) existing.setEnd_at(dto.getEnd_at());
+            if (dto.getInfo() != null) existing.setInfo(dto.getInfo());
             existing.setUpdated_at(new Date());
             return existing;
         }
 
-        
         return CertificateCandidate.builder()
                 .name(dto.getName())
                 .organization(dto.getOrganization())
@@ -334,14 +300,14 @@ private CertificateCandidate mapToCertificateCandidate(FormCertificateCandidate 
                 .updated_at(new Date())
                 .build();
     }
-    
+
+    //=================== GENERATE LATEX ===================//
     public String generateLatexContent(CandidateCV cvEntity) {
         Candidate candidate = cvEntity.getCandidate();
         SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
-        
-        
+
         StringBuilder latex = new StringBuilder();
-        
+
         latex.append("\\documentclass[10pt, a4paper]{article}\n");
         latex.append("\\usepackage[utf8]{inputenc}\n");
         latex.append("\\usepackage[T1]{fontenc}\n");
@@ -351,36 +317,27 @@ private CertificateCandidate mapToCertificateCandidate(FormCertificateCandidate 
         latex.append("\\geometry{a4paper, margin=1in}\n");
         latex.append("\\pagestyle{empty}\n");
         latex.append("\\begin{document}\n");
-        
-        
-        
+
         latex.append("\\centerline{\\Huge \\textbf{CANDIDATE PROFILE: ").append(cvEntity.getTitle()).append("}}\n\n");
         latex.append("\\hrule\n\n");
-        
-        
-        
+
         latex.append("\\textbf{Full Name: } ").append(candidate.getName() != null ? candidate.getName() : "Not updated").append("\\\\\n");
         latex.append("\\textbf{Date of Birth: } ").append(candidate.getDob() != null ? dateFormat.format(candidate.getDob()) : "Not updated").append("\\\\\n");
         latex.append("\\textbf{Email: } ").append(candidate.getEmail() != null ? candidate.getEmail() : "Not updated").append("\\\\\n");
         latex.append("\\textbf{Phone: } ").append(candidate.getPhone() != null ? candidate.getPhone() : "Not updated").append("\\\\\n");
         latex.append("\\textbf{Address: } ").append(candidate.getAddress() != null ? candidate.getAddress() : "Not updated").append("\\\\\n");
         latex.append("\\textbf{Profile Link: } \\url{").append(candidate.getLink() != null ? candidate.getLink() : "None").append("}\n\n");
-        
-        
-        
+
         if (candidate.getDevelopment() != null && !candidate.getDevelopment().isEmpty()) {
             latex.append("\\section*{Career Objective}\n");
             latex.append(candidate.getDevelopment()).append("\n\n");
         }
-        
-        
-        
+
         if (candidate.getDescription() != null && !candidate.getDescription().isEmpty()) {
             latex.append("\\section*{Summary}\n");
             latex.append(candidate.getDescription()).append("\n\n");
         }
 
-        
         if (!cvEntity.getEducationCandidates().isEmpty()) {
             latex.append("\\section*{Education}\n");
             for (EducationCandidate edu : cvEntity.getEducationCandidates()) {
@@ -394,9 +351,7 @@ private CertificateCandidate mapToCertificateCandidate(FormCertificateCandidate 
                 latex.append("Details: ").append(edu.getInfo() != null ? edu.getInfo() : "None.").append("\n\n");
             }
         }
-        
-        
-        
+
         if (!cvEntity.getExperienceCandidates().isEmpty()) {
             latex.append("\\section*{Work Experience}\n");
             for (ExperienceCandidate exp : cvEntity.getExperienceCandidates()) {
@@ -409,8 +364,6 @@ private CertificateCandidate mapToCertificateCandidate(FormCertificateCandidate 
             }
         }
 
-        
-        
         if (!cvEntity.getProjectCandidates().isEmpty()) {
             latex.append("\\section*{Featured Projects}\n");
             for (ProjectCandidate proj : cvEntity.getProjectCandidates()) {
@@ -422,19 +375,15 @@ private CertificateCandidate mapToCertificateCandidate(FormCertificateCandidate 
             }
         }
 
-        
-       
         if (!cvEntity.getSkillCandidates().isEmpty()) {
             latex.append("\\section*{Skills}\n");
             latex.append("\\begin{itemize}\n");
             for (SkillsCandidate skill : cvEntity.getSkillCandidates()) {
-                latex.append("    \\item ").append(skill.getName()).append("\n");
+                latex.append("    \\item ").append(skill.getSkill() != null ? skill.getSkill().getName() : "Unknown Skill").append("\n");
             }
             latex.append("\\end{itemize}\n\n");
         }
-        
-        
-       
+
         if (!cvEntity.getCertificateCandidates().isEmpty()) {
             latex.append("\\section*{Certificates}\n");
             for (CertificateCandidate cert : cvEntity.getCertificateCandidates()) {
@@ -442,10 +391,8 @@ private CertificateCandidate mapToCertificateCandidate(FormCertificateCandidate 
                 latex.append("Issue Date: ").append(dateFormat.format(cert.getStarted_at())).append(". Details: ").append(cert.getInfo() != null ? cert.getInfo() : "None.").append("\n\n");
             }
         }
-        
-        
+
         latex.append("\\end{document}\n");
         return latex.toString();
     }
 }
-

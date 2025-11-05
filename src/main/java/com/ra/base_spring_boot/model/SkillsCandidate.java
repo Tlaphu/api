@@ -1,40 +1,47 @@
 package com.ra.base_spring_boot.model;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.util.Date;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
 @Entity
+@Table(name = "skills_candidates")
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
 @Setter
 @Builder
 public class SkillsCandidate {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY) 
-    private Long id; 
 
-    @ManyToOne
-    @JoinColumn(name = "candidate_id")
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "candidate_id", nullable = false)
     @JsonBackReference
     private Candidate candidate;
 
-    private String name;
-    
-    @ManyToOne
-    @JsonIgnore 
-    @JoinColumn(name = "cv_id", nullable = true) 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "skill_id", nullable = false)
+    private Skill skill;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cv_id")
+    @JsonIgnore
     private CandidateCV candidateCV;
-    @ManyToOne
-    @JsonIgnore 
-    @JoinColumn(name = "level_job_id") 
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "level_job_id")
+    @JsonIgnore
     private LevelJob levelJob;
-    @Temporal(TemporalType.DATE)
-    private Date created_at;
-    @Temporal(TemporalType.DATE)
-    private Date updated_at;
+
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date createdAt;
+
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date updatedAt;
 }

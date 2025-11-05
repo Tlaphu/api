@@ -116,7 +116,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/auth/company/forgot-password").permitAll()
                         .requestMatchers("/api/v1/auth/company/reset-password").permitAll()
                         .requestMatchers("/api/v1/auth/company/verify").permitAll()
-
+                        .requestMatchers("/api/v1/auth/candidate/login").permitAll()
                         .requestMatchers(candidateAuthPattern).permitAll()
                         .requestMatchers(companyAuthPattern).permitAll()
 

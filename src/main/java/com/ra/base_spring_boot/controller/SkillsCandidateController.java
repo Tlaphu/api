@@ -1,8 +1,8 @@
 package com.ra.base_spring_boot.controller;
 
+import com.ra.base_spring_boot.dto.resp.SkillsCandidateResponse;
 import com.ra.base_spring_boot.dto.ResponseWrapper;
 import com.ra.base_spring_boot.dto.req.FormSkillCandidate;
-import com.ra.base_spring_boot.dto.resp.SkillsCandidateResponse;
 import com.ra.base_spring_boot.services.ISkillsCandidateService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
