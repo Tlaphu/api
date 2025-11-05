@@ -1,6 +1,7 @@
 package com.ra.base_spring_boot.services;
 
 import com.ra.base_spring_boot.dto.req.*;
+import com.ra.base_spring_boot.dto.resp.CandidateResponse;
 import com.ra.base_spring_boot.dto.resp.CompanyResponse;
 import com.ra.base_spring_boot.dto.resp.JwtResponse;
 import com.ra.base_spring_boot.model.Company;
@@ -49,5 +50,7 @@ public interface ICompanyAuthService {
     CompanyResponse findById(Long id);
     void activateAccount(String token);
     void resetPassword(FormResetPassword form);
+
+    CandidateResponse findCandidateById(Long id);
 }
 

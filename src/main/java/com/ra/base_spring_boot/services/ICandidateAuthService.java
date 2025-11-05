@@ -45,4 +45,5 @@ public interface ICandidateAuthService {
 
     void resetPassword(FormResetPassword form);
     CandidateResponse getCurrentCandidateProfile();
+
 }

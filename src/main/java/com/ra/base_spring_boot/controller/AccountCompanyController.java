@@ -2,6 +2,7 @@ package com.ra.base_spring_boot.controller;
 
 import com.ra.base_spring_boot.dto.ResponseWrapper;
 import com.ra.base_spring_boot.dto.req.*;
+import com.ra.base_spring_boot.dto.resp.CandidateResponse;
 import com.ra.base_spring_boot.dto.resp.JwtResponse;
 import com.ra.base_spring_boot.services.ICompanyAuthService;
 
@@ -14,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/auth/company")
 @RequiredArgsConstructor
-public class AccountCompanyController {
+public class    AccountCompanyController {
 
     private final ICompanyAuthService companyAuthService;
 
@@ -113,6 +114,20 @@ public class AccountCompanyController {
                         .status(HttpStatus.OK)
                         .code(200)
                         .data("Company account activated successfully! You can now log in.")
+                        .build()
+        );
+    }
+    /**
+     * @apiNote L
+     */
+    @GetMapping("/candidate/{id}")
+    public ResponseEntity<?> getCandidateById(@PathVariable Long id) {
+        CandidateResponse candidate = companyAuthService.findCandidateById(id);
+        return ResponseEntity.ok(
+                ResponseWrapper.<CandidateResponse>builder()
+                        .status(HttpStatus.OK)
+                        .code(200)
+                        .data(candidate)
                         .build()
         );
     }

@@ -11,7 +11,7 @@ import com.ra.base_spring_boot.security.principle.MyCompanyDetails;
 import com.ra.base_spring_boot.services.ICompanyAuthService;
 import com.ra.base_spring_boot.services.IRoleService;
 import com.ra.base_spring_boot.services.EmailService;
-import lombok.RequiredArgsConstructor;
+import com.ra.base_spring_boot.repository.ICandidateRepository;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -39,6 +39,8 @@ public class CompanyAuthServiceImpl implements ICompanyAuthService {
     private final AuthenticationManager companyAuthManager;
     private final JwtProvider jwtProvider;
     private final EmailService emailService;
+    private final ICandidateRepository candidateRepository;
+
 
     public CompanyAuthServiceImpl(
             IRoleService roleService,
@@ -49,7 +51,7 @@ public class CompanyAuthServiceImpl implements ICompanyAuthService {
             ITypeCompanyRepository typeCompanyRepository,
             @Qualifier("companyAuthManager") AuthenticationManager companyAuthManager,
             JwtProvider jwtProvider,
-            EmailService emailService
+            EmailService emailService, ICandidateRepository candidateRepository
     ) {
         this.roleService = roleService;
         this.accountCompanyRepository = accountCompanyRepository;
@@ -60,6 +62,7 @@ public class CompanyAuthServiceImpl implements ICompanyAuthService {
         this.companyAuthManager = companyAuthManager;
         this.jwtProvider = jwtProvider;
         this.emailService = emailService;
+        this.candidateRepository = candidateRepository;
     }
 
     @Override
@@ -336,6 +339,72 @@ public class CompanyAuthServiceImpl implements ICompanyAuthService {
                 .typeCompanyName(
                         company.getTypeCompany() != null ? company.getTypeCompany().getName() : null
                 )
+                .build();
+    }
+    @Override
+    public CandidateResponse findCandidateById(Long id) {
+        Candidate candidate = candidateRepository.findById(id)
+                .orElseThrow(() -> new HttpBadRequest("Candidate not found with id: " + id));
+
+        return CandidateResponse.builder()
+                .id(candidate.getId())
+                .name(candidate.getName())
+                .email(candidate.getEmail())
+                .phone(candidate.getPhone())
+                .address(candidate.getAddress())
+                .gender(candidate.getGender())
+                .dob(candidate.getDob())
+                .link(candidate.getLink())
+                .status(candidate.isStatus())
+                .isOpen(candidate.getIsOpen())
+                .Title(candidate.getTitle())
+                .description(candidate.getDescription())
+                .experience(candidate.getExperience())
+                .development(candidate.getDevelopment())
+                .skills(candidate.getSkillCandidates() == null ? null :
+                        candidate.getSkillCandidates().stream()
+                                .map(s -> SkillsCandidateResponse.builder()
+                                        .id(s.getId())
+                                        .skillName(s.getSkill() != null ? s.getSkill().getName() : null)
+                                        .levelJobName(s.getLevelJob() != null ? s.getLevelJob().getName() : null)
+                                        .createdAt(s.getCreatedAt())
+                                        .updatedAt(s.getUpdatedAt())
+                                        .build())
+                                .collect(Collectors.toList()))
+                .educations(candidate.getEducationCandidates() == null ? null :
+                        candidate.getEducationCandidates().stream()
+                                .map(e -> EducationCandidateResponse.builder()
+                                        .id(e.getId())
+                                        .nameEducation(e.getNameEducation())
+                                        .major(e.getMajor())
+                                        .gpa(e.getGpa())
+                                        .startedAt(e.getStartedAt())
+                                        .endAt(e.getEndAt())
+                                        .info(e.getInfo())
+                                        .build())
+                                .collect(Collectors.toList()))
+                .experiences(candidate.getExperienceCandidates() == null ? null :
+                        candidate.getExperienceCandidates().stream()
+                                .map(ex -> ExperienceCandidateResponse.builder()
+                                        .id(ex.getId())
+                                        .company(ex.getCompany())
+                                        .position(ex.getPosition())
+                                        .started_at(ex.getStarted_at())
+                                        .end_at(ex.getEnd_at())
+                                        .info(ex.getInfo())
+                                        .build())
+                                .collect(Collectors.toList()))
+                .certificates(candidate.getCertificateCandidates() == null ? null :
+                        candidate.getCertificateCandidates().stream()
+                                .map(c -> CertificateCandidateResponse.builder()
+                                        .id(c.getId())
+                                        .name(c.getName())
+                                        .organization(c.getOrganization())
+                                        .started_at(c.getStarted_at())
+                                        .end_at(c.getEnd_at())
+                                        .info(c.getInfo())
+                                        .build())
+                                .collect(Collectors.toList()))
                 .build();
     }
 }

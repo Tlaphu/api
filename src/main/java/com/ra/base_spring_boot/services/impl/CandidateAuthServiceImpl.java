@@ -306,4 +306,5 @@ public class CandidateAuthServiceImpl implements ICandidateAuthService {
                                 .collect(Collectors.toList()))
                 .build();
     }
+
 }
