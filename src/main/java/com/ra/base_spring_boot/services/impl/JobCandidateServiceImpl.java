@@ -68,6 +68,15 @@ public class JobCandidateServiceImpl implements JobCandidateService {
             Job job = entity.getJob();
             response.setJobId(job.getId());
             response.setJobTitle(job.getTitle());
+
+            if (job.getLocation() != null) {
+                Long locationId = job.getLocation().getId();
+                if (locationId != null) {
+                    response.setJobLocationId(Long.parseLong(locationId.toString()));
+                }
+            } else {
+                response.setJobLocationId(null);
+            }
         }
 
         if (entity.getCandidate() != null) {
@@ -75,6 +84,14 @@ public class JobCandidateServiceImpl implements JobCandidateService {
             response.setCandidateId(candidate.getId());
             response.setCandidateName(candidate.getName());
             response.setCandidateTitle(candidate.getTitle());
+
+            Set<SkillsCandidate> skills = candidate.getSkillCandidates();
+            if (skills != null && !skills.isEmpty()) {
+                Optional<SkillsCandidate> firstSkill = skills.stream().findFirst();
+                firstSkill.ifPresent(sc -> response.setSkillcandidateId(sc.getId()));
+            } else {
+                response.setSkillcandidateId(null);
+            }
         }
 
         if (entity.getCandidateCV() != null) {
@@ -109,7 +126,6 @@ public class JobCandidateServiceImpl implements JobCandidateService {
 
             existingCandidate.setCandidateCV(candidateCV);
         } else {
-
             existingCandidate.setCandidateCV(null);
         }
 
@@ -163,7 +179,6 @@ public class JobCandidateServiceImpl implements JobCandidateService {
         if (company == null) {
             throw new NoSuchElementException("Unauthorized: Company not found or token invalid");
         }
-
 
         Job job = jobRepository.findById(jobId)
                 .orElseThrow(() -> new NoSuchElementException("Job not found with id: " + jobId));
