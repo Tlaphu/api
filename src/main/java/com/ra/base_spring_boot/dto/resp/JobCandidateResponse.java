@@ -18,9 +18,12 @@ public class JobCandidateResponse {
 
     private Long jobId;
     private String jobTitle;
-
+    private String jobLocationId;
     private Long candidateId;
     private String candidateName;
+    private String candidateTitle;
+    private Long skillcandidateId;
+
 
     private Long cvId;
     private String cover_letter;
