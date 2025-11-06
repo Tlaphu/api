@@ -69,14 +69,7 @@ public class JobCandidateServiceImpl implements JobCandidateService {
             response.setJobId(job.getId());
             response.setJobTitle(job.getTitle());
 
-            if (job.getLocation() != null) {
-                Long locationId = job.getLocation().getId();
-                if (locationId != null) {
-                    response.setJobLocationId(Long.parseLong(locationId.toString()));
-                }
-            } else {
-                response.setJobLocationId(null);
-            }
+
         }
 
         if (entity.getCandidate() != null) {
@@ -84,6 +77,7 @@ public class JobCandidateServiceImpl implements JobCandidateService {
             response.setCandidateId(candidate.getId());
             response.setCandidateName(candidate.getName());
             response.setCandidateTitle(candidate.getTitle());
+            response.setCandidateAddress(candidate.getAddress());
 
             Set<SkillsCandidate> skills = candidate.getSkillCandidates();
             if (skills != null && !skills.isEmpty()) {
@@ -217,6 +211,7 @@ public class JobCandidateServiceImpl implements JobCandidateService {
                         .phone(c.getPhone())
                         .Title(c.getTitle())
                         .description(c.getDescription())
+                        .address(c.getAddress())
                         .skills(c.getSkillCandidates().stream()
                                 .map(s -> SkillsCandidateResponse.builder()
                                         .id(s.getId())

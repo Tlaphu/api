@@ -4,7 +4,7 @@ spring:
   datasource:
     url: jdbc:mysql://localhost:3306/base_core?createDatabaseIfNotExist=true
     username: root
-    password: Giadat9898@
+    password: 123456789
   jooq:
     sql-dialect: org.hibernate.dialect.MySQL8Dialect
   jpa:
