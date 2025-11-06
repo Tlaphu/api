@@ -88,12 +88,15 @@ public class AddressCompanyServiceImpl implements IAddressCompanyService {
             throw new HttpBadRequest("You do not have permission to update this address");
         }
 
-        Location location = locationRepository.findById(form.getLocationId())
-                .orElseThrow(() -> new HttpBadRequest("Location not found with id: " + form.getLocationId()));
+
+        if (form.getLocationId() != null) {
+            Location location = locationRepository.findById(form.getLocationId())
+                    .orElseThrow(() -> new HttpBadRequest("Location not found with id: " + form.getLocationId()));
+            address.setLocation(location);
+        }
 
         address.setAddress(form.getAddress());
         address.setMap_url(form.getMapUrl());
-        address.setLocation(location);
 
         addressRepository.save(address);
         return toResponse(address);

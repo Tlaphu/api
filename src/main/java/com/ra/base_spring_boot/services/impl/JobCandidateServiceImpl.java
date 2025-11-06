@@ -69,12 +69,15 @@ public class JobCandidateServiceImpl implements JobCandidateService {
             Job job = entity.getJob();
             response.setJobId(job.getId());
             response.setJobTitle(job.getTitle());
+            response.setJobLocationId(job.getLocation());
         }
 
         if (entity.getCandidate() != null) {
             Candidate candidate = entity.getCandidate();
             response.setCandidateId(candidate.getId());
             response.setCandidateName(candidate.getName());
+            response.setCandidateTitle(candidate.getTitle());
+            response.setSkillcandidateId(candidate.getId());
         }
         
         
