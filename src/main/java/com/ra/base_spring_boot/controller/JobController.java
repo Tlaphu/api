@@ -34,7 +34,7 @@ public class JobController {
     private final ICandidateRepository candidateRepository;
     private final JobCandidateService jobCandidateService;
 
-    private final SkillRepository skillRepository;
+    private final ISkillRepository skillRepository;
     private final LevelJobRepository levelJobRepository;
     private final LevelJobRelationRepository levelJobRelationRepository;
 
