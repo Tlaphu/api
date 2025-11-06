@@ -1,6 +1,7 @@
 package com.ra.base_spring_boot.services;
 
 import com.ra.base_spring_boot.dto.req.FormJobCandidate;
+import com.ra.base_spring_boot.dto.resp.CandidateResponse;
 import com.ra.base_spring_boot.dto.resp.JobCandidateResponse;
 
 import java.util.List;
@@ -16,4 +17,6 @@ public interface JobCandidateService {
 
     List<JobCandidateResponse> findByJobId(Long jobId);
     List<JobCandidateResponse> findByCandidateId(Long candidateId);
+
+    List<CandidateResponse> getSuitableCandidatesForCompanyJob(Long jobId);
 }

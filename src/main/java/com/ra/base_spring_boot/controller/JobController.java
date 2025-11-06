@@ -1,5 +1,6 @@
 package com.ra.base_spring_boot.controller;
 
+import com.ra.base_spring_boot.dto.resp.CandidateResponse;
 import com.ra.base_spring_boot.model.*;
 import com.ra.base_spring_boot.repository.ICompanyRepository;
 import com.ra.base_spring_boot.repository.ILocationRepository;
@@ -10,6 +11,7 @@ import com.ra.base_spring_boot.dto.req.FormJobResponseDTO;
 import com.ra.base_spring_boot.dto.resp.DashboardStats;
 import com.ra.base_spring_boot.services.ICompanyAuthService;
 
+import com.ra.base_spring_boot.services.JobCandidateService;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.ResponseEntity;
@@ -33,7 +35,7 @@ public class JobController {
     private final ILocationRepository locationRepository;
     private final ICompanyAuthService companyAuthService;
     private final ICandidateRepository candidateRepository;
-
+    private final JobCandidateService jobCandidateService;
     
     @Scheduled(cron = "0 30 1 * * *")
     @Transactional
@@ -404,5 +406,10 @@ public class JobController {
                 .build();
 
         return ResponseEntity.ok(stats);
+    }
+    @GetMapping("/{jobId}/suitable-candidates")
+    public ResponseEntity<?> getSuitableCandidates(@PathVariable Long jobId) {
+        List<CandidateResponse> responses = jobCandidateService.getSuitableCandidatesForCompanyJob(jobId);
+        return ResponseEntity.ok(responses);
     }
 }

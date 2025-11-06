@@ -18,7 +18,7 @@ public class LevelJobDataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        List<String> defaultLevels = Arrays.asList("Intern", "Junior", "Middle", "Senior");
+        List<String> defaultLevels = Arrays.asList("INTERN", "JUNIOR", "MIDDLE", "SENIOR");
 
         for (String levelName : defaultLevels) {
             // Nếu chưa có thì thêm mới
