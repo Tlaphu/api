@@ -27,6 +27,7 @@ public class SkillsCandidate {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "skill_id", nullable = false)
+    @JsonIgnore
     private Skill skill;
 
     @ManyToOne(fetch = FetchType.LAZY)

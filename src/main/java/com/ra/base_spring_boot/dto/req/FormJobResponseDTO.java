@@ -1,7 +1,7 @@
 package com.ra.base_spring_boot.dto.req;
 
 import java.util.Date;
-
+import java.util.List;
 import lombok.*;
 
 @Data
@@ -18,12 +18,16 @@ public class FormJobResponseDTO {
     private String desirable;
     private String benefits;
     private String workTime;
-    private Long companyId;
     private Long locationId;
     private String companyName;
     private String companyLogo;
-    private String locationName;
+
+
     private String levelJobName;
+
+
+    private List<String> skillNames;
+
     private Date created_at;
     private Date expire_at;
     private String status;

@@ -13,7 +13,7 @@ import java.util.Set;
 @Getter
 @Setter
 @Builder
-public class    LevelJob {
+public class LevelJob {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY) 
     private Long id;
