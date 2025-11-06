@@ -21,7 +21,7 @@ public class SkillsCandidateServiceImpl implements ISkillsCandidateService {
 
     private final ISkillsCandidateRepository skillsRepo;
     private final LevelJobRepository levelJobRepository;
-    private final SkillRepository skillRepository;
+    private final ISkillRepository ISkillRepository;
     private final JwtProvider jwtProvider;
 
     @Override
@@ -39,7 +39,7 @@ public class SkillsCandidateServiceImpl implements ISkillsCandidateService {
         Candidate current = jwtProvider.getCurrentCandidate();
 
 
-        Skill skill = skillRepository.findById(req.getSkillId())
+        Skill skill = ISkillRepository.findById(req.getSkillId())
                 .orElseThrow(() -> new HttpBadRequest("Skill not found with ID: " + req.getSkillId()));
 
 
@@ -73,7 +73,7 @@ public class SkillsCandidateServiceImpl implements ISkillsCandidateService {
 
 
         if (req.getSkillId() != null) {
-            Skill skill = skillRepository.findById(req.getSkillId())
+            Skill skill = ISkillRepository.findById(req.getSkillId())
                     .orElseThrow(() -> new HttpBadRequest("Skill not found with ID: " + req.getSkillId()));
             existing.setSkill(skill);
         }

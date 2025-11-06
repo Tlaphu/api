@@ -25,7 +25,7 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
 
     private final IProjectRepository projectCandidateRepository;
     private final ISkillsCandidateRepository skillsCandidateRepository;
-    private final SkillRepository skillRepository;
+    private final ISkillRepository ISkillRepository;
     private final IEducationCandidateRepository educationCandidateRepository;
     private final IExperienceCandidateRepository experienceCandidateRepository;
     private final ICertificateCandidateRepository certificateCandidateRepository;
@@ -194,7 +194,7 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
     private SkillsCandidate mapToSkillCandidate(FormSkillCandidate dto, CandidateCV candidateCV) {
         Skill skill = null;
         if (dto.getSkillId() != null) {
-            skill = skillRepository.findById(dto.getSkillId())
+            skill = ISkillRepository.findById(dto.getSkillId())
                     .orElseThrow(() -> new HttpBadRequest("Skill not found with ID: " + dto.getSkillId()));
         }
 

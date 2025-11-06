@@ -7,7 +7,7 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
 @Repository
-public interface SkillRepository extends JpaRepository<Skill, Long> {
+public interface ISkillRepository extends JpaRepository<Skill, Long> {
 
     Optional<Skill> findByNameIgnoreCase(String name);
 
