@@ -40,7 +40,8 @@ public class JwtTokenFilter extends OncePerRequestFilter {
                 || path.equals("/api/v1/auth/candidate/register")
                 || path.equals("/api/v1/auth/company/login")
                 || path.equals("/api/v1/auth/company/register")
-                || path.equals("/api/v1/auth/admin/login");
+                || path.equals("/api/v1/auth/admin/login")
+                || path.equals("/api/v1/skills");
 
         if (isPublicJobGet ||
                 isPublicAuth ||
