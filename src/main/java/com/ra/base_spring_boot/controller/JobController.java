@@ -332,8 +332,8 @@ public class JobController {
                 .created_at(job.getCreated_at())
                 .expire_at(job.getExpire_at())
                 .status(job.getStatus())
-                .levelJobName(levelJobName)
-                .skillNames(skillNames)
+
+
                 .build();
 
         return ResponseEntity.ok(dto);

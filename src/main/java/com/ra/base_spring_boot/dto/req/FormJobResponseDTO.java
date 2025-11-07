@@ -24,10 +24,10 @@ public class FormJobResponseDTO {
     private String companyLogo;
 
 
-    private String levelJobName;
 
 
-    private List<String> skillNames;
+
+
 
     private Date created_at;
     private Date expire_at;
