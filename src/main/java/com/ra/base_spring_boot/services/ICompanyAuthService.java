@@ -4,6 +4,7 @@ import com.ra.base_spring_boot.dto.req.*;
 import com.ra.base_spring_boot.dto.resp.CandidateResponse;
 import com.ra.base_spring_boot.dto.resp.CompanyResponse;
 import com.ra.base_spring_boot.dto.resp.JwtResponse;
+import com.ra.base_spring_boot.model.AccountCompany;
 import com.ra.base_spring_boot.model.Company;
 import java.util.List;
 public interface ICompanyAuthService {
@@ -12,6 +13,8 @@ public interface ICompanyAuthService {
      * Register a new company account
      */
     void register(FormRegisterCompany formRegisterCompany);
+
+    AccountCompany getCurrentAccountCompany();
 
     /**
      * Login company with email + password

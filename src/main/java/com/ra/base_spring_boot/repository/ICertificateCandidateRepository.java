@@ -9,4 +9,5 @@ import java.util.List;
 @Repository
 public interface ICertificateCandidateRepository extends JpaRepository<CertificateCandidate, Long> {
     List<CertificateCandidate> findAllByCandidate_Id(Long candidateId);
+    void deleteByCandidateCVId(Long cvId);
 }

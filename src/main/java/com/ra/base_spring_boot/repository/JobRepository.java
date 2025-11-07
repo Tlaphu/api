@@ -17,7 +17,7 @@ public interface JobRepository extends JpaRepository<Job, Long> {
     @Query("SELECT j FROM Job j WHERE j.expire_at < :expireAt AND j.status <> :status")
     List<Job> findJobsToExpire(@Param("expireAt") Date expireAt, @Param("status") String status);
 
-    List<Job> findByCompanyId(Long companyId);
+    List<Job> findByCompanyIdAndStatus(Long companyId, String status);
 
     Long countByStatus(String status);
 

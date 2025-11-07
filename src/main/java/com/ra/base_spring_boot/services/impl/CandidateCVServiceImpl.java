@@ -15,6 +15,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -30,7 +31,12 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
     private final IExperienceCandidateRepository experienceCandidateRepository;
     private final ICertificateCandidateRepository certificateCandidateRepository;
 
-    //=================== MAPPING TO RESPONSE ===================//
+    // Repository mới cho Archive (ĐỘC LẬP)
+    private final ICandidateCVArchiveRepository candidateCVArchiveRepository;
+
+    // Repository cần thiết để giải quyết lỗi Foreign Key khi xóa CV
+    private final IJobCandidateRepository jobCandidateRepository;
+
     public CandidateCVResponse mapToResponse(CandidateCV candidateCV) {
 
         Candidate candidate = candidateCV.getCandidate();
@@ -72,7 +78,6 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
                 .build();
     }
 
-    //=================== CRUD CORE ===================//
 
     @Override
     @Transactional
@@ -92,7 +97,12 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
 
         updateAllCVDetails(newCV, cvForm);
 
-        return candidateCVRepository.save(newCV);
+        CandidateCV savedCV = candidateCVRepository.save(newCV);
+
+        // Đồng bộ để lưu ID chi tiết vào bảng Archive
+        syncCVToArchive(savedCV);
+
+        return savedCV;
     }
 
     @Override
@@ -107,7 +117,12 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
 
         updateAllCVDetails(existingCV, cvForm);
 
-        return candidateCVRepository.save(existingCV);
+        CandidateCV savedCV = candidateCVRepository.save(existingCV);
+
+        // Đồng bộ để lưu ID chi tiết vào bảng Archive
+        syncCVToArchive(savedCV);
+
+        return savedCV;
     }
 
     private void updateAllCVDetails(CandidateCV candidateCV, FormCandidateCV cvForm) {
@@ -147,17 +162,45 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
         CandidateCV cv = candidateCVRepository.findByIdAndCandidate_Id(cvId, candidateId)
                 .orElseThrow(() -> new HttpBadRequest("CV not found or does not belong to this candidate."));
 
+
+        candidateCVArchiveRepository.deleteByCandidateCVId(cvId);
+
+
+        skillsCandidateRepository.deleteByCandidateCVId(cvId);
+
+        // b. Xóa ProjectCandidate
+        projectCandidateRepository.deleteByCandidateCVId(cvId);
+
+        // c. Xóa EducationCandidate
+        educationCandidateRepository.deleteByCandidateCVId(cvId);
+
+        // d. Xóa ExperienceCandidate
+        experienceCandidateRepository.deleteByCandidateCVId(cvId);
+
+        // e. Xóa CertificateCandidate
+        certificateCandidateRepository.deleteByCandidateCVId(cvId);
+
+        // 3. Xóa JobCandidate (Đã giải quyết lỗi khóa ngoại đầu tiên)
+        jobCandidateRepository.deleteByCandidateCVId(cvId);
+
+        // 4. Xóa CandidateCV (Bảng CHA)
         candidateCVRepository.delete(cv);
     }
-
     @Override
     @Transactional
     public void clearAllCandidateDetails(Long candidateId) {
+        // 1. Xóa tất cả bản ghi Archive liên quan đến Candidate này
+        candidateCVArchiveRepository.deleteByCandidateId(candidateId);
+
+
         List<CandidateCV> cvList = candidateCVRepository.findByCandidate_Id(candidateId);
+
+
+
         candidateCVRepository.deleteAll(cvList);
     }
 
-    //=================== UPDATE LIST GENERIC ===================//
+
     private <E, D> void updateList(List<E> entityList, List<D> dtoList, Function<D, E> mapper) {
         if (dtoList != null) {
             entityList.clear();
@@ -166,7 +209,7 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
         }
     }
 
-    //=================== MAPPING METHODS ===================//
+
 
     private ProjectCandidate mapToProjectCandidate(FormProjectCandidate dto, CandidateCV candidateCV) {
         if (dto.getId() != null) {
@@ -198,9 +241,9 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
                     .orElseThrow(() -> new HttpBadRequest("Skill not found with ID: " + dto.getSkillId()));
         }
 
-        if (dto.getSkillId() != null) {
-            SkillsCandidate existing = skillsCandidateRepository.findById(dto.getSkillId())
-                    .orElseThrow(() -> new HttpBadRequest("SkillCandidate not found with ID: " + dto.getSkillId()));
+        if (dto.getId() != null) {
+            SkillsCandidate existing = skillsCandidateRepository.findById(dto.getId())
+                    .orElseThrow(() -> new HttpBadRequest("SkillCandidate not found with ID: " + dto.getId()));
 
             if (skill != null) {
                 existing.setSkill(skill);
@@ -301,7 +344,99 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
                 .build();
     }
 
-    //=================== GENERATE LATEX ===================//
+    // PHƯƠNG THỨC ĐỒNG BỘ ĐỂ LƯU CÁC ID CHI TIẾT VÀO BẢNG ARCHIVE (SỬ DỤNG ID LONG)
+    private void syncCVToArchive(CandidateCV cvEntity) {
+
+        Optional<CandidateCVArchive> existingArchive = candidateCVArchiveRepository.findByCandidateCVIdAndCandidateId(
+                cvEntity.getId(), cvEntity.getCandidate().getId()
+        );
+
+        CandidateCVArchive archive = existingArchive.orElse(CandidateCVArchive.builder()
+                .candidateId(cvEntity.getCandidate().getId()) // Lưu ID Long
+                .candidateCVId(cvEntity.getId())             // Lưu ID Long
+                .createdAt(new Date())
+                .build());
+
+        // Lấy danh sách ID và nối thành chuỗi
+        archive.setSkillCandidateIds(
+                cvEntity.getSkillCandidates().stream()
+                        .map(s -> String.valueOf(s.getId()))
+                        .collect(Collectors.joining(","))
+        );
+
+        archive.setEducationCandidateIds(
+                cvEntity.getEducationCandidates().stream()
+                        .map(e -> String.valueOf(e.getId()))
+                        .collect(Collectors.joining(","))
+        );
+
+        archive.setExperienceCandidateIds(
+                cvEntity.getExperienceCandidates().stream()
+                        .map(e -> String.valueOf(e.getId()))
+                        .collect(Collectors.joining(","))
+        );
+
+        archive.setCertificateCandidateIds(
+                cvEntity.getCertificateCandidates().stream()
+                        .map(c -> String.valueOf(c.getId()))
+                        .collect(Collectors.joining(","))
+        );
+
+        archive.setProjectCandidateIds(
+                cvEntity.getProjectCandidates().stream()
+                        .map(p -> String.valueOf(p.getId()))
+                        .collect(Collectors.joining(","))
+        );
+
+        archive.setTitle(cvEntity.getTitle());
+        archive.setUpdatedAt(new Date());
+
+        candidateCVArchiveRepository.save(archive);
+    }
+
+
+    @Override
+    @Transactional
+    public void deleteCVArchive(Long archiveId) {
+
+        candidateCVArchiveRepository.findById(archiveId)
+                .orElseThrow(() -> new HttpBadRequest("CV Archive not found with ID: " + archiveId));
+
+
+        candidateCVArchiveRepository.deleteById(archiveId);
+    }
+
+    @Override
+    @Transactional
+    public CandidateCVArchive updateCVArchive(Long archiveId, FormCandidateCVArchive updateForm) {
+        CandidateCVArchive existingArchive = candidateCVArchiveRepository.findById(archiveId)
+                .orElseThrow(() -> new HttpBadRequest("CV Archive not found with ID: " + archiveId));
+
+
+        if (updateForm.getTitle() != null) {
+            existingArchive.setTitle(updateForm.getTitle());
+        }
+
+
+        if (updateForm.getSkillCandidateIds() != null) {
+            existingArchive.setSkillCandidateIds(updateForm.getSkillCandidateIds());
+        }
+
+        if (updateForm.getEducationCandidateIds() != null) {
+            existingArchive.setEducationCandidateIds(updateForm.getEducationCandidateIds());
+        }
+
+        existingArchive.setUpdatedAt(new Date());
+
+        return candidateCVArchiveRepository.save(existingArchive);
+    }
+
+
+    public CandidateCVArchive mapArchiveToResponse(CandidateCVArchive archive) {
+
+        return archive;
+    }
+
     public String generateLatexContent(CandidateCV cvEntity) {
         Candidate candidate = cvEntity.getCandidate();
         SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
