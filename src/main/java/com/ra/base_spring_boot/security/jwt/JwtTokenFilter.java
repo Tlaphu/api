@@ -11,6 +11,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -73,10 +74,16 @@ public class JwtTokenFilter extends OncePerRequestFilter {
                             UserDetails companyDetails = companyDetailsService.loadUserByUsername(email);
                             if (jwtProvider.validateCompanyToken(token, ((MyCompanyDetails) companyDetails).getAccountCompany())) {
                                 UsernamePasswordAuthenticationToken authentication =
-                                        new UsernamePasswordAuthenticationToken(companyDetails, null, companyDetails.getAuthorities());
+                                        new UsernamePasswordAuthenticationToken(
+                                                companyDetails, // ✅ principal là MyCompanyDetails
+                                                null,
+                                                companyDetails.getAuthorities()
+                                        );
+                                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request)); // ✅ thêm dòng này
                                 SecurityContextHolder.getContext().setAuthentication(authentication);
                             }
                         }
+
                         case "admin" -> {
                             UserDetails adminDetails = adminDetailsService.loadUserByUsername(email);
                             if (jwtProvider.validateAdminToken(token, ((MyAdminDetails) adminDetails).getAdmin())) {

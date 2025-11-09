@@ -52,5 +52,7 @@ public interface ICompanyAuthService {
     void resetPassword(FormResetPassword form);
 
     CandidateResponse findCandidateById(Long id);
+
+    List<CandidateResponse> getSuitableCandidatesForCompanyJob(Long jobId);
 }
 

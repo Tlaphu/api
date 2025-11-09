@@ -524,7 +524,7 @@ public class JobController {
     }
     @GetMapping("/{jobId}/suitable-candidates")
     public ResponseEntity<?> getSuitableCandidates(@PathVariable Long jobId) {
-        List<CandidateResponse> responses = jobCandidateService.getSuitableCandidatesForCompanyJob(jobId);
+        List<CandidateResponse> responses = companyAuthService.getSuitableCandidatesForCompanyJob(jobId);
         return ResponseEntity.ok(responses);
     }
 }

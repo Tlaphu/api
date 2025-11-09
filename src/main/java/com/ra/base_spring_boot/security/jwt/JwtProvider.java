@@ -1,8 +1,10 @@
     package com.ra.base_spring_boot.security.jwt;
 
+    import ch.qos.logback.classic.Logger;
     import com.ra.base_spring_boot.model.Admin;
     import com.ra.base_spring_boot.model.Candidate;
     import com.ra.base_spring_boot.model.AccountCompany;
+    import com.ra.base_spring_boot.security.principle.MyAdminDetails;
     import com.ra.base_spring_boot.security.principle.MyCompanyDetails;
     import com.ra.base_spring_boot.security.principle.MyUserDetails;
     import io.jsonwebtoken.Claims;
@@ -10,6 +12,7 @@
     import io.jsonwebtoken.SignatureAlgorithm;
     import io.jsonwebtoken.io.Decoders;
     import io.jsonwebtoken.security.Keys;
+    import lombok.extern.slf4j.Slf4j;
     import org.springframework.beans.factory.annotation.Value;
     import org.springframework.security.core.Authentication;
     import org.springframework.security.core.context.SecurityContextHolder;
@@ -17,7 +20,9 @@
 
     import java.security.Key;
     import java.util.*;
+    import java.util.function.Function;
 
+    @Slf4j
     @Component
     public class JwtProvider {
         @Value("${jwt.secret.key}")
@@ -34,7 +39,7 @@
             return extractClaim(token, Claims::getExpiration);
         }
 
-        public <T> T extractClaim(String token, java.util.function.Function<Claims, T> claimsResolver) {
+        public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
             final Claims claims = extractAllClaims(token);
             return claimsResolver.apply(claims);
         }
@@ -97,7 +102,7 @@
         public Candidate getCurrentCandidate() {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             if (authentication != null && authentication.isAuthenticated()
-                    && authentication.getPrincipal() instanceof com.ra.base_spring_boot.security.principle.MyUserDetails userDetails) {
+                    && authentication.getPrincipal() instanceof MyUserDetails userDetails) {
                 return userDetails.getCandidate();
             }
             return null;
@@ -105,12 +110,25 @@
 
         public AccountCompany getCurrentAccountCompany() {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            if (authentication != null && authentication.isAuthenticated()
-                    && authentication.getPrincipal() instanceof com.ra.base_spring_boot.security.principle.MyCompanyDetails companyDetails) {
+
+            if (authentication == null) {
+                log.warn("⚠️ No authentication found in SecurityContext");
+                return null;
+            }
+
+            if (!authentication.isAuthenticated()) {
+                log.warn("⚠️ Authentication not authenticated: {}", authentication);
+                return null;
+            }
+
+            if (authentication.getPrincipal() instanceof MyCompanyDetails companyDetails) {
                 return companyDetails.getAccountCompany();
             }
+
+            log.warn("⚠️ Principal is not MyCompanyDetails: {}", authentication.getPrincipal().getClass().getSimpleName());
             return null;
         }
+
 
 
         public String getCandidateUsername() {
@@ -138,7 +156,7 @@
         public Admin getCurrentAdmin() {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             if (authentication != null && authentication.isAuthenticated()
-                    && authentication.getPrincipal() instanceof com.ra.base_spring_boot.security.principle.MyAdminDetails adminDetails) {
+                    && authentication.getPrincipal() instanceof MyAdminDetails adminDetails) {
                 return adminDetails.getAdmin();
             }
             return null;
