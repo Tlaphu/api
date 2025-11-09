@@ -16,6 +16,7 @@ public class FormJob {
     private Date expire_at;
 
     private Long locationId;
+
     private String companyName;
     private String workTime;
     private String status;

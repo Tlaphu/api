@@ -6,4 +6,5 @@ import java.util.List;
 
 public interface IEducationCandidateRepository extends JpaRepository<EducationCandidate, Long> {
     List<EducationCandidate> findAllByCandidate_Id(Long candidateId);
+    void deleteByCandidateCVId(Long cvId);
 }

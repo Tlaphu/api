@@ -7,16 +7,14 @@ import com.ra.base_spring_boot.dto.req.FormJob;
 import com.ra.base_spring_boot.dto.req.FormJobResponseDTO;
 import com.ra.base_spring_boot.dto.resp.DashboardStats;
 import com.ra.base_spring_boot.services.ICompanyAuthService;
-
 import com.ra.base_spring_boot.services.JobCandidateService;
 import lombok.RequiredArgsConstructor;
-
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.*;
 import java.util.stream.Collectors;
 import java.time.Instant;
@@ -33,7 +31,6 @@ public class JobController {
     private final ICompanyAuthService companyAuthService;
     private final ICandidateRepository candidateRepository;
     private final JobCandidateService jobCandidateService;
-
     private final ISkillRepository skillRepository;
     private final LevelJobRepository levelJobRepository;
     private final LevelJobRelationRepository levelJobRelationRepository;
@@ -68,7 +65,6 @@ public class JobController {
         Date currentDate = new Date();
         String inactiveStatus = "INACTIVE";
 
-
         List<Job> jobsToDeactivate = jobRepository.findJobsToExpire(currentDate, inactiveStatus);
 
         if (jobsToDeactivate.isEmpty()) {
@@ -97,8 +93,7 @@ public class JobController {
 
         Company company = companyOpt.get();
 
-
-        List<Job> companyJobs = jobRepository.findByCompanyId(company.getId());
+        List<Job> companyJobs = jobRepository.findByCompanyIdAndStatus(company.getId(), "ACTIVE");
 
         if (companyJobs.isEmpty()) {
             return ResponseEntity.ok(Collections.emptyList());
@@ -117,6 +112,7 @@ public class JobController {
                         .companyName(company.getName())
                         .companyLogo(company.getLogo())
                         .locationId(job.getLocation() != null ? job.getLocation().getId() : null)
+                        .locationName(job.getLocation() != null ? job.getLocation().getName() : null)
                         .created_at(job.getCreated_at())
                         .expire_at(job.getExpire_at())
                         .status(job.getStatus())
@@ -132,9 +128,27 @@ public class JobController {
     @Transactional
     public ResponseEntity<?> create(@RequestBody FormJob form) {
 
+        AccountCompany currentAccountCompany = companyAuthService.getCurrentAccountCompany();
+        if (currentAccountCompany == null) {
+            return ResponseEntity.status(403).body("Access denied. Company must be logged in.");
+        }
+
+        // Đã sửa: Sử dụng findByAccountId để tìm Company qua ID của AccountCompany
+        Optional<Company> companyOpt = companyRepository.findByAccountId(currentAccountCompany.getId());
+        if (companyOpt.isEmpty()) {
+            return ResponseEntity.status(404).body("Associated Company profile not found for the logged-in user.");
+        }
+
+        Company company = companyOpt.get();
+
+        // THÊM LOGIC KIỂM TRA TÊN CÔNG TY
+        if (form.getCompanyName() == null || form.getCompanyName().trim().isEmpty() ||
+                !company.getName().equalsIgnoreCase(form.getCompanyName())) {
+            return ResponseEntity.status(400).body("The 'companyName' in the request body must match your logged-in company name.");
+        }
+
         Location location = null;
         Long locationId = form.getLocationId();
-
 
         if (locationId != null) {
             Optional<Location> locationOpt = locationRepository.findById(locationId);
@@ -145,20 +159,6 @@ public class JobController {
             }
         }
 
-
-        String companyName = form.getCompanyName();
-        if (companyName == null || companyName.trim().isEmpty()) {
-            return ResponseEntity.status(400).body("Company name must be provided in the request body.");
-        }
-
-        Optional<Company> companyOpt = companyRepository.findByName(companyName);
-        if (companyOpt.isEmpty()) {
-            return ResponseEntity.status(404).body("Company not found with name: " + companyName);
-        }
-
-        Company company = companyOpt.get();
-
-
         Set<Skill> skills = new HashSet<>();
         if (form.getSkillIds() != null && !form.getSkillIds().isEmpty()) {
             skills = new HashSet<>(skillRepository.findAllById(form.getSkillIds()));
@@ -166,7 +166,6 @@ public class JobController {
                 return ResponseEntity.status(404).body("One or more Skills not found.");
             }
         }
-
 
         LevelJob levelJob = null;
         if (form.getLevelJobId() != null) {
@@ -177,17 +176,13 @@ public class JobController {
             levelJob = levelJobOpt.get();
         }
 
-
         String autoRequirements = buildAutoRequirements(levelJob, skills);
-
 
         Job job = Job.builder()
                 .title(form.getTitle())
                 .description(form.getDescription())
                 .salary(form.getSalary())
-                // Ghi đè Requirements bằng chuỗi tự động
                 .requirements(autoRequirements)
-
                 .desirable(form.getDesirable())
                 .benefits(form.getBenefits())
                 .workTime(form.getWorkTime())
@@ -201,7 +196,6 @@ public class JobController {
 
         Job savedJob = jobRepository.save(job);
 
-
         if (levelJob != null) {
             LevelJobRelation relation = LevelJobRelation.builder()
                     .job(savedJob)
@@ -210,20 +204,17 @@ public class JobController {
             levelJobRelationRepository.save(relation);
         }
 
-
         FormJobResponseDTO response = FormJobResponseDTO.builder()
                 .id(savedJob.getId())
                 .title(savedJob.getTitle())
                 .description(savedJob.getDescription())
                 .salary(savedJob.getSalary())
-                .requirements(savedJob.getRequirements()) // Trả về chuỗi tự động
+                .requirements(savedJob.getRequirements())
                 .desirable(form.getDesirable())
                 .benefits(form.getBenefits())
                 .workTime(form.getWorkTime())
-
                 .companyName(company.getName())
                 .companyLogo(company.getLogo())
-
                 .locationId(location != null ? location.getId() : null)
                 .created_at(savedJob.getCreated_at())
                 .expire_at(savedJob.getExpire_at())
@@ -251,6 +242,7 @@ public class JobController {
                         .companyName(job.getCompany() != null ? job.getCompany().getName() : "N/A")
                         .companyLogo(job.getCompany() != null ? job.getCompany().getLogo() : "N/A")
                         .locationId(job.getLocation() != null ? job.getLocation().getId() : null)
+                        .locationName(job.getLocation() != null ? job.getLocation().getName() : "N/A")
                         .created_at(job.getCreated_at())
                         .expire_at(job.getExpire_at())
                         .status(job.getStatus())
@@ -284,6 +276,7 @@ public class JobController {
                         .companyName(job.getCompany() != null ? job.getCompany().getName() : "N/A")
                         .companyLogo(job.getCompany() != null ? job.getCompany().getLogo() : "N/A")
                         .locationId(job.getLocation() != null ? job.getLocation().getId() : null)
+                        .locationName(job.getLocation() != null ? job.getLocation().getName() : "N/A")
                         .created_at(job.getCreated_at())
                         .expire_at(job.getExpire_at())
                         .status(job.getStatus())
@@ -302,12 +295,10 @@ public class JobController {
 
         Job job = jobOpt.get();
 
-        // Lấy LevelJob Name
         String levelJobName = job.getLevelJobRelations() != null && !job.getLevelJobRelations().isEmpty()
                 ? job.getLevelJobRelations().get(0).getLevelJob().getName()
                 : null;
 
-        // Lấy danh sách tên Skills
         List<String> skillNames = job.getSkills().stream()
                 .map(Skill::getName)
                 .collect(Collectors.toList());
@@ -325,11 +316,10 @@ public class JobController {
                 .companyName(job.getCompany() != null ? job.getCompany().getName() : null)
                 .companyLogo(job.getCompany() != null ? job.getCompany().getLogo() : null)
                 .locationId(job.getLocation() != null ? job.getLocation().getId() : null)
+                .locationName(job.getLocation() != null ? job.getLocation().getName() : null)
                 .created_at(job.getCreated_at())
                 .expire_at(job.getExpire_at())
                 .status(job.getStatus())
-                .levelJobName(levelJobName)
-                .skillNames(skillNames)
                 .build();
 
         return ResponseEntity.ok(dto);
@@ -347,6 +337,36 @@ public class JobController {
 
         Job job = jobOpt.get();
 
+        AccountCompany currentAccountCompany = companyAuthService.getCurrentAccountCompany();
+        if (currentAccountCompany == null) {
+            return ResponseEntity.status(403).body("Access denied. Company must be logged in.");
+        }
+
+        // Đã sửa: Sử dụng findByAccountId
+        Optional<Company> currentCompanyOpt = companyRepository.findByAccountId(currentAccountCompany.getId());
+
+        if (currentCompanyOpt.isEmpty()) {
+            return ResponseEntity.status(403).body("Access denied. Company profile not found.");
+        }
+
+        Company currentCompany = currentCompanyOpt.get();
+
+        // THÊM LOGIC KIỂM TRA TÊN CÔNG TY TRONG FORM KHI UPDATE
+        if (form.getCompanyName() == null || form.getCompanyName().trim().isEmpty() ||
+                !currentCompany.getName().equalsIgnoreCase(form.getCompanyName())) {
+            return ResponseEntity.status(400).body("The 'companyName' in the request body must match your logged-in company name.");
+        }
+
+
+        boolean isAdmin = SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+        if (!isAdmin && (job.getCompany() == null || !job.getCompany().getId().equals(currentCompany.getId()))) {
+            return ResponseEntity.status(403).body("Access denied. You can only update your own job listings.");
+        }
+
+        Company companyToSet = currentCompany;
+
         Location location = null;
         Long locationId = form.getLocationId();
         if (locationId != null) {
@@ -357,22 +377,8 @@ public class JobController {
                 return ResponseEntity.status(404).body("Location not found with ID: " + locationId);
             }
         } else {
-
             location = job.getLocation();
         }
-
-        String companyName = form.getCompanyName();
-        if (companyName == null || companyName.trim().isEmpty()) {
-            return ResponseEntity.status(400).body("Company name must be provided in the request body.");
-        }
-
-        Optional<Company> companyOpt = companyRepository.findByName(companyName);
-        if (companyOpt.isEmpty()) {
-            return ResponseEntity.status(404).body("Company not found with name: " + companyName);
-        }
-
-        Company company = companyOpt.get();
-
 
         Set<Skill> skills = new HashSet<>();
         if (form.getSkillIds() != null) {
@@ -393,12 +399,10 @@ public class JobController {
             }
             newLevelJob = levelJobOpt.get();
 
-
             if (job.getLevelJobRelations() != null) {
                 levelJobRelationRepository.deleteAll(job.getLevelJobRelations());
                 job.getLevelJobRelations().clear();
             }
-
 
             LevelJobRelation newRelation = LevelJobRelation.builder()
                     .job(job)
@@ -407,23 +411,17 @@ public class JobController {
             levelJobRelationRepository.save(newRelation);
         }
 
-
         String autoRequirements = buildAutoRequirements(newLevelJob, skills);
-
 
         job.setTitle(form.getTitle());
         job.setDescription(form.getDescription());
         job.setSalary(form.getSalary());
-
-
         job.setRequirements(autoRequirements);
-
         job.setDesirable(form.getDesirable());
         job.setBenefits(form.getBenefits());
         job.setWorkTime(form.getWorkTime());
         job.setLocation(location);
-        job.setCompany(company);
-
+        job.setCompany(companyToSet);
 
         if (form.getStatus() != null && !form.getStatus().trim().isEmpty()) {
             job.setStatus(form.getStatus());
@@ -439,13 +437,14 @@ public class JobController {
                 .title(job.getTitle())
                 .description(job.getDescription())
                 .salary(job.getSalary())
-                .requirements(job.getRequirements()) // Trả về chuỗi tự động
+                .requirements(job.getRequirements())
                 .desirable(form.getDesirable())
                 .benefits(form.getBenefits())
                 .workTime(form.getWorkTime())
-                .companyName(company.getName())
-                .companyLogo(company.getLogo())
+                .companyName(companyToSet.getName())
+                .companyLogo(companyToSet.getLogo())
                 .locationId(job.getLocation() != null ? job.getLocation().getId() : null)
+                .locationName(job.getLocation() != null ? job.getLocation().getName() : null)
                 .created_at(job.getCreated_at())
                 .expire_at(job.getExpire_at())
                 .status(job.getStatus())
@@ -460,6 +459,29 @@ public class JobController {
         Optional<Job> jobOpt = jobRepository.findById(id);
         if (jobOpt.isEmpty()) {
             return ResponseEntity.status(404).body("Job not found");
+        }
+
+        Job job = jobOpt.get();
+
+        AccountCompany currentAccountCompany = companyAuthService.getCurrentAccountCompany();
+        if (currentAccountCompany == null) {
+            return ResponseEntity.status(403).body("Access denied. Company must be logged in.");
+        }
+
+        // Đã sửa: Sử dụng findByAccountId
+        Optional<Company> currentCompanyOpt = companyRepository.findByAccountId(currentAccountCompany.getId());
+
+        if (currentCompanyOpt.isEmpty()) {
+            return ResponseEntity.status(403).body("Access denied. Company profile not found.");
+        }
+
+        Company currentCompany = currentCompanyOpt.get();
+
+        boolean isAdmin = SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+        if (!isAdmin && (job.getCompany() == null || !job.getCompany().getId().equals(currentCompany.getId()))) {
+            return ResponseEntity.status(403).body("Access denied. You can only delete your own job listings.");
         }
 
         jobRepository.deleteById(id);
@@ -488,6 +510,7 @@ public class JobController {
                         .companyName(job.getCompany() != null ? job.getCompany().getName() : "N/A")
                         .companyLogo(job.getCompany() != null ? job.getCompany().getLogo() : "N/A")
                         .locationId(job.getLocation() != null ? job.getLocation().getId() : null)
+                        .locationName(job.getLocation() != null ? job.getLocation().getName() : null)
                         .created_at(job.getCreated_at())
                         .expire_at(job.getExpire_at())
                         .status(job.getStatus())
@@ -506,10 +529,8 @@ public class JobController {
 
         Long candidateCount = candidateRepository.count();
 
-
         Instant tenDaysAgo = Instant.now().minus(10, ChronoUnit.DAYS);
         Date startDate = Date.from(tenDaysAgo);
-
 
         Long newJobsCount = jobRepository.countNewActiveJobs("ACTIVE",startDate);
 
@@ -522,9 +543,27 @@ public class JobController {
 
         return ResponseEntity.ok(stats);
     }
+
+    @PreAuthorize("hasAuthority('ROLE_COMPANY')")
     @GetMapping("/{jobId}/suitable-candidates")
     public ResponseEntity<?> getSuitableCandidates(@PathVariable Long jobId) {
-        List<CandidateResponse> responses = companyAuthService.getSuitableCandidatesForCompanyJob(jobId);
+
+        Job job = jobRepository.findById(jobId)
+                .orElseThrow(() -> new RuntimeException("Job not found"));
+
+        AccountCompany currentAccountCompany = companyAuthService.getCurrentAccountCompany();
+        if (currentAccountCompany == null) {
+            return ResponseEntity.status(403).body("Access denied. Company must be logged in.");
+        }
+
+
+        Optional<Company> currentCompanyOpt = companyRepository.findByAccountId(currentAccountCompany.getId());
+
+        if (currentCompanyOpt.isEmpty() || !job.getCompany().getId().equals(currentCompanyOpt.get().getId())) {
+            return ResponseEntity.status(403).body("Access denied. You can only view candidates for your own job listings.");
+        }
+
+        List<CandidateResponse> responses = jobCandidateService.getSuitableCandidatesForCompanyJob(jobId);
         return ResponseEntity.ok(responses);
     }
 }

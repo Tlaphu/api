@@ -8,6 +8,7 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class FormSkillCandidate {
+    private Long id;
     private Long skillId;
     private Long levelJobId;
 }

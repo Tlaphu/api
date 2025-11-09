@@ -22,7 +22,7 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
+import com.ra.base_spring_boot.model.AccountCompany;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -111,7 +111,11 @@ public class CompanyAuthServiceImpl implements ICompanyAuthService {
 
         System.out.println("✅ New Company Account registered successfully, pending Admin approval: " + form.getEmail());
     }
+    @Override
+    public AccountCompany getCurrentAccountCompany() {
 
+        return jwtProvider.getCurrentAccountCompany();
+    }
     @Override
     public JwtResponse login(FormLogin formLogin) {
         Authentication authentication;

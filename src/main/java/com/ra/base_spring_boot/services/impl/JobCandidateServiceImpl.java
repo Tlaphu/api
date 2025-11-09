@@ -68,6 +68,8 @@ public class JobCandidateServiceImpl implements JobCandidateService {
             Job job = entity.getJob();
             response.setJobId(job.getId());
             response.setJobTitle(job.getTitle());
+
+
         }
 
         if (entity.getCandidate() != null) {
@@ -75,6 +77,15 @@ public class JobCandidateServiceImpl implements JobCandidateService {
             response.setCandidateId(candidate.getId());
             response.setCandidateName(candidate.getName());
             response.setCandidateTitle(candidate.getTitle());
+            response.setCandidateAddress(candidate.getAddress());
+
+            Set<SkillsCandidate> skills = candidate.getSkillCandidates();
+            if (skills != null && !skills.isEmpty()) {
+                Optional<SkillsCandidate> firstSkill = skills.stream().findFirst();
+                firstSkill.ifPresent(sc -> response.setSkillcandidateId(sc.getId()));
+            } else {
+                response.setSkillcandidateId(null);
+            }
         }
 
         if (entity.getCandidateCV() != null) {
@@ -109,7 +120,6 @@ public class JobCandidateServiceImpl implements JobCandidateService {
 
             existingCandidate.setCandidateCV(candidateCV);
         } else {
-
             existingCandidate.setCandidateCV(null);
         }
 
@@ -156,4 +166,71 @@ public class JobCandidateServiceImpl implements JobCandidateService {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public List<CandidateResponse> getSuitableCandidatesForCompanyJob(Long jobId) {
+
+        AccountCompany company = jwtProvider.getCurrentAccountCompany();
+        if (company == null) {
+            throw new NoSuchElementException("Unauthorized: Company not found or token invalid");
+        }
+
+        Job job = jobRepository.findById(jobId)
+                .orElseThrow(() -> new NoSuchElementException("Job not found with id: " + jobId));
+
+        if (!job.getCompany().getId().equals(company.getId())) {
+            throw new SecurityException("You are not allowed to access this job");
+        }
+
+        Set<Skill> requiredSkills = job.getSkills();
+        if (requiredSkills == null || requiredSkills.isEmpty()) {
+            throw new NoSuchElementException("Job does not have any required skills");
+        }
+
+        List<Candidate> candidates = candidateRepository.findAll()
+                .stream()
+                .filter(Candidate::isStatus)
+                .toList();
+
+        List<Candidate> suitable = candidates.stream()
+                .filter(c -> c.getSkillCandidates() != null && c.getSkillCandidates().stream()
+                        .anyMatch(sc -> requiredSkills.stream()
+                                .anyMatch(rs -> rs.getName().equalsIgnoreCase(sc.getSkill().getName()))))
+                .collect(Collectors.toList());
+
+        suitable.sort(Comparator.comparingInt(c -> {
+            Optional<SkillsCandidate> topLevel = c.getSkillCandidates().stream()
+                    .max(Comparator.comparingInt(sc -> levelRank(sc.getLevelJob())));
+            return -topLevel.map(sc -> levelRank(sc.getLevelJob())).orElse(0);
+        }));
+
+        return suitable.stream()
+                .map(c -> CandidateResponse.builder()
+                        .id(c.getId())
+                        .name(c.getName())
+                        .email(c.getEmail())
+                        .phone(c.getPhone())
+                        .Title(c.getTitle())
+                        .description(c.getDescription())
+                        .address(c.getAddress())
+                        .skills(c.getSkillCandidates().stream()
+                                .map(s -> SkillsCandidateResponse.builder()
+                                        .id(s.getId())
+                                        .skillName(s.getSkill().getName())
+                                        .levelJobName(s.getLevelJob().getName())
+                                        .build())
+                                .collect(Collectors.toList()))
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    private int levelRank(LevelJob levelJob) {
+        if (levelJob == null || levelJob.getName() == null) return 0;
+        return switch (levelJob.getName().toUpperCase()) {
+            case "JUNIOR" -> 1;
+            case "MIDDLE" -> 2;
+            case "SENIOR" -> 3;
+            case "INTERN" -> 4;
+            default -> 0;
+        };
+    }
 }

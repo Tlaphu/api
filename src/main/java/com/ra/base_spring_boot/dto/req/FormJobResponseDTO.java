@@ -19,14 +19,15 @@ public class FormJobResponseDTO {
     private String benefits;
     private String workTime;
     private Long locationId;
+    private String locationName;
     private String companyName;
     private String companyLogo;
 
 
-    private String levelJobName;
 
 
-    private List<String> skillNames;
+
+
 
     private Date created_at;
     private Date expire_at;
