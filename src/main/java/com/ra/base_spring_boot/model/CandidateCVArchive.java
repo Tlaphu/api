@@ -17,12 +17,32 @@ public class CandidateCVArchive {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    @Column(name = "candidate_name", nullable = false)
+    private String candidateName;
 
-    // CHỈ LƯU ID - KHÔNG DÙNG @ManyToOne VÀ @JoinColumn
+    @Temporal(TemporalType.DATE)
+    @Column(name = "dob")
+    private Date dob;
+
+    @Column(name = "email")
+    private String email;
+
+    @Column(name = "phone")
+    private String phone;
+
+    @Column(name = "address", columnDefinition = "TEXT")
+    private String address;
+
+    @Column(name = "link", columnDefinition = "TEXT")
+    private String link; // Link LinkedIn/CV/etc.
+
+    @Column(name = "development", columnDefinition = "TEXT")
+    private String development; // Mục tiêu nghề nghiệp
+
     @Column(name = "candidate_id", nullable = false)
     private Long candidateId;
 
-    // CHỈ LƯU ID - KHÔNG DÙNG @ManyToOne VÀ @JoinColumn
+
     @Column(name = "candidate_cv_id", nullable = false)
     private Long candidateCVId;
 

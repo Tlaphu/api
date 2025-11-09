@@ -37,7 +37,14 @@ public class CandidateCV {
     @Temporal(TemporalType.TIMESTAMP)
     private Date updated_at;
 
- 
+    private String name; // Tên hiển thị trong CV
+    private Date dob;    // Ngày sinh hiển thị trong CV
+    private String email;
+    private String phone;
+    private String address;
+    private String link; // Link LinkedIn/CV/etc.
+    private String description; // Tóm tắt/Giới thiệu bản thân
+    private String development; // Mục tiêu nghề nghiệp
     
     @OneToMany(mappedBy = "candidateCV", cascade = CascadeType.ALL, orphanRemoval = true)
     @Default

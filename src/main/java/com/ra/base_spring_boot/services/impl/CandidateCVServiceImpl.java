@@ -31,10 +31,8 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
     private final IExperienceCandidateRepository experienceCandidateRepository;
     private final ICertificateCandidateRepository certificateCandidateRepository;
 
-    // Repository mới cho Archive (ĐỘC LẬP)
     private final ICandidateCVArchiveRepository candidateCVArchiveRepository;
 
-    // Repository cần thiết để giải quyết lỗi Foreign Key khi xóa CV
     private final IJobCandidateRepository jobCandidateRepository;
 
     public CandidateCVResponse mapToResponse(CandidateCV candidateCV) {
@@ -78,6 +76,18 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
                 .build();
     }
 
+    private void mapPersonalInfo(CandidateCV cvEntity, FormCandidateCV cvForm, Candidate candidate) {
+
+        cvEntity.setName(cvForm.getName() != null ? cvForm.getName() : candidate.getName());
+        cvEntity.setDob(cvForm.getDob() != null ? cvForm.getDob() : candidate.getDob());
+        cvEntity.setEmail(cvForm.getEmail() != null ? cvForm.getEmail() : candidate.getEmail());
+        cvEntity.setPhone(cvForm.getPhone() != null ? cvForm.getPhone() : candidate.getPhone());
+        cvEntity.setAddress(cvForm.getAddress() != null ? cvForm.getAddress() : candidate.getAddress());
+        cvEntity.setLink(cvForm.getLink() != null ? cvForm.getLink() : candidate.getLink());
+        cvEntity.setDescription(cvForm.getDescription() != null ? cvForm.getDescription() : candidate.getDescription());
+        cvEntity.setDevelopment(cvForm.getDevelopment() != null ? cvForm.getDevelopment() : candidate.getDevelopment());
+    }
+
 
     @Override
     @Transactional
@@ -93,13 +103,14 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
                 .updated_at(new Date())
                 .build();
 
+        mapPersonalInfo(newCV, cvForm, candidate);
+
         newCV = candidateCVRepository.save(newCV);
 
         updateAllCVDetails(newCV, cvForm);
 
         CandidateCV savedCV = candidateCVRepository.save(newCV);
 
-        // Đồng bộ để lưu ID chi tiết vào bảng Archive
         syncCVToArchive(savedCV);
 
         return savedCV;
@@ -111,15 +122,18 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
         CandidateCV existingCV = candidateCVRepository.findByIdAndCandidate_Id(cvId, candidateId)
                 .orElseThrow(() -> new HttpBadRequest("CV not found or does not belong to this candidate."));
 
+        Candidate candidate = existingCV.getCandidate();
+
         existingCV.setTitle(cvForm.getTitle());
         existingCV.setTemplate(cvForm.getTemplate());
         existingCV.setUpdated_at(new Date());
+
+        mapPersonalInfo(existingCV, cvForm, candidate);
 
         updateAllCVDetails(existingCV, cvForm);
 
         CandidateCV savedCV = candidateCVRepository.save(existingCV);
 
-        // Đồng bộ để lưu ID chi tiết vào bảng Archive
         syncCVToArchive(savedCV);
 
         return savedCV;
@@ -168,28 +182,21 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
 
         skillsCandidateRepository.deleteByCandidateCVId(cvId);
 
-        // b. Xóa ProjectCandidate
         projectCandidateRepository.deleteByCandidateCVId(cvId);
 
-        // c. Xóa EducationCandidate
         educationCandidateRepository.deleteByCandidateCVId(cvId);
 
-        // d. Xóa ExperienceCandidate
         experienceCandidateRepository.deleteByCandidateCVId(cvId);
 
-        // e. Xóa CertificateCandidate
         certificateCandidateRepository.deleteByCandidateCVId(cvId);
 
-        // 3. Xóa JobCandidate (Đã giải quyết lỗi khóa ngoại đầu tiên)
         jobCandidateRepository.deleteByCandidateCVId(cvId);
 
-        // 4. Xóa CandidateCV (Bảng CHA)
         candidateCVRepository.delete(cv);
     }
     @Override
     @Transactional
     public void clearAllCandidateDetails(Long candidateId) {
-        // 1. Xóa tất cả bản ghi Archive liên quan đến Candidate này
         candidateCVArchiveRepository.deleteByCandidateId(candidateId);
 
 
@@ -344,7 +351,6 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
                 .build();
     }
 
-    // PHƯƠNG THỨC ĐỒNG BỘ ĐỂ LƯU CÁC ID CHI TIẾT VÀO BẢNG ARCHIVE (SỬ DỤNG ID LONG)
     private void syncCVToArchive(CandidateCV cvEntity) {
 
         Optional<CandidateCVArchive> existingArchive = candidateCVArchiveRepository.findByCandidateCVIdAndCandidateId(
@@ -352,12 +358,19 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
         );
 
         CandidateCVArchive archive = existingArchive.orElse(CandidateCVArchive.builder()
-                .candidateId(cvEntity.getCandidate().getId()) // Lưu ID Long
-                .candidateCVId(cvEntity.getId())             // Lưu ID Long
+                .candidateId(cvEntity.getCandidate().getId())
+                .candidateCVId(cvEntity.getId())
                 .createdAt(new Date())
                 .build());
 
-        // Lấy danh sách ID và nối thành chuỗi
+        archive.setCandidateName(cvEntity.getName());
+        archive.setDob(cvEntity.getDob());
+        archive.setEmail(cvEntity.getEmail());
+        archive.setPhone(cvEntity.getPhone());
+        archive.setAddress(cvEntity.getAddress());
+        archive.setLink(cvEntity.getLink());
+        archive.setDevelopment(cvEntity.getDevelopment());
+
         archive.setSkillCandidateIds(
                 cvEntity.getSkillCandidates().stream()
                         .map(s -> String.valueOf(s.getId()))

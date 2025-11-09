@@ -556,7 +556,7 @@ public class JobController {
             return ResponseEntity.status(403).body("Access denied. Company must be logged in.");
         }
 
- 
+
         Optional<Company> currentCompanyOpt = companyRepository.findByAccountId(currentAccountCompany.getId());
 
         if (currentCompanyOpt.isEmpty() || !job.getCompany().getId().equals(currentCompanyOpt.get().getId())) {

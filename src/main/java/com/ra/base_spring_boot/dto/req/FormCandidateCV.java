@@ -16,7 +16,14 @@ public class FormCandidateCV {
 
     private String title;
     private String template;
-    
+    private String name;
+    private Date dob;
+    private String email;
+    private String phone;
+    private String address;
+    private String link;
+    private String description;
+    private String development;
     private List<FormCertificateCandidate> certificates;
     private List<FormExperienceCandidate> experiences;
     private List<FormEducationCandidate> educations;
