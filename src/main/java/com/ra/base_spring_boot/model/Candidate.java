@@ -94,5 +94,7 @@ public class Candidate {
     @Builder.Default
     private Set<CertificateCandidate> certificateCandidates = new HashSet<>();
 
-    
+    @OneToMany(mappedBy = "candidate", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private Set<ProjectCandidate> projectCandidates = new HashSet<>();
 }

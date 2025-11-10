@@ -411,6 +411,17 @@ public class CompanyAuthServiceImpl implements ICompanyAuthService {
                                         .info(c.getInfo())
                                         .build())
                                 .collect(Collectors.toList()))
+                .project(candidate.getProjectCandidates() == null ? null :
+                        candidate.getProjectCandidates().stream()
+                                .map(p -> ProjectCandidateResponse.builder()
+                                        .id(p.getId())
+                                        .name(p.getName())
+                                        .link(p.getLink())
+                                        .started_at(p.getStarted_at())
+                                        .end_at(p.getEnd_at())
+                                        .info(p.getInfo())
+                                        .build())
+                                .collect(Collectors.toList()))
                 .build();
     }
     @Override

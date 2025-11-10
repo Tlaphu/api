@@ -29,5 +29,6 @@ public class CandidateResponse {
     private List<EducationCandidateResponse> educations;
     private List<ExperienceCandidateResponse> experiences;
     private List<CertificateCandidateResponse> certificates;
+    private List<ProjectCandidateResponse> project;
     private List<JobCandidateResponse> jobs;
 }
