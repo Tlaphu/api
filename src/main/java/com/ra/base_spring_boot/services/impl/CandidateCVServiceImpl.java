@@ -208,21 +208,29 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
     }
 
 
+    /**
+     * KHÔI PHỤC entityList.clear() để ngăn dữ liệu nhân bản/trùng lặp.
+     * Để ngăn xóa khỏi DB, phải loại bỏ orphanRemoval = true khỏi CandidateCV.
+     */
     private <E, D> void updateList(List<E> entityList, List<D> dtoList, Function<D, E> mapper) {
         if (dtoList != null) {
-            entityList.clear();
+            entityList.clear(); // BẮT BUỘC có để đồng bộ danh sách đúng
             List<E> newEntities = dtoList.stream().map(mapper).collect(Collectors.toList());
             entityList.addAll(newEntities);
         }
     }
 
 
-
+    /**
+     * Sửa đổi: Ngăn chặn cập nhật dữ liệu của Entity đã tồn tại (nếu dto.getId() != null),
+     * nhưng vẫn tạo Entity mới (nếu dto.getId() == null).
+     */
     private ProjectCandidate mapToProjectCandidate(FormProjectCandidate dto, CandidateCV candidateCV) {
         if (dto.getId() != null) {
             ProjectCandidate existing = projectCandidateRepository.findById(dto.getId())
                     .orElseThrow(() -> new HttpBadRequest("Project ID not found: " + dto.getId()));
 
+            existing.setUpdated_at(new Date());
             return existing;
         }
 
@@ -237,6 +245,11 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
                 .build();
     }
 
+
+    /**
+     * Sửa đổi: Ngăn chặn cập nhật dữ liệu của Entity đã tồn tại (nếu dto.getId() != null),
+     * nhưng vẫn tạo Entity mới (nếu dto.getId() == null).
+     */
     private SkillsCandidate mapToSkillCandidate(FormSkillCandidate dto, CandidateCV candidateCV) {
         Skill skill = null;
         if (dto.getSkillId() != null) {
@@ -248,9 +261,6 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
             SkillsCandidate existing = skillsCandidateRepository.findById(dto.getId())
                     .orElseThrow(() -> new HttpBadRequest("SkillCandidate not found with ID: " + dto.getId()));
 
-            if (skill != null) {
-                existing.setSkill(skill);
-            }
             existing.setUpdatedAt(new Date());
             return existing;
         }
@@ -264,13 +274,16 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
                 .build();
     }
 
+    /**
+     * Sửa đổi: Ngăn chặn cập nhật dữ liệu của Entity đã tồn tại (nếu dto.getId() != null),
+     * nhưng vẫn tạo Entity mới (nếu dto.getId() == null).
+     */
     private EducationCandidate mapToEducationCandidate(FormEducationCandidate dto, CandidateCV candidateCV) {
         if (dto.getId() != null) {
             EducationCandidate existing = educationCandidateRepository.findById(dto.getId())
                     .orElseThrow(() -> new HttpBadRequest("Education ID not found: " + dto.getId()));
 
-
-
+            existing.setUpdatedAt(new Date());
             return existing;
         }
 
@@ -288,12 +301,17 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
                 .build();
     }
 
+
+    /**
+     * Sửa đổi: Ngăn chặn cập nhật dữ liệu của Entity đã tồn tại (nếu dto.getId() != null),
+     * nhưng vẫn tạo Entity mới (nếu dto.getId() == null).
+     */
     private ExperienceCandidate mapToExperienceCandidate(FormExperienceCandidate dto, CandidateCV candidateCV) {
         if (dto.getId() != null) {
             ExperienceCandidate existing = experienceCandidateRepository.findById(dto.getId())
                     .orElseThrow(() -> new HttpBadRequest("Experience ID not found: " + dto.getId()));
 
-
+            existing.setUpdated_at(new Date());
             return existing;
         }
 
@@ -310,12 +328,17 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
                 .build();
     }
 
+
+    /**
+     * Sửa đổi: Ngăn chặn cập nhật dữ liệu của Entity đã tồn tại (nếu dto.getId() != null),
+     * nhưng vẫn tạo Entity mới (nếu dto.getId() == null).
+     */
     private CertificateCandidate mapToCertificateCandidate(FormCertificateCandidate dto, CandidateCV candidateCV) {
         if (dto.getId() != null) {
             CertificateCandidate existing = certificateCandidateRepository.findById(dto.getId())
                     .orElseThrow(() -> new HttpBadRequest("Certificate ID not found: " + dto.getId()));
 
-
+            existing.setUpdated_at(new Date());
             return existing;
         }
 
@@ -344,7 +367,7 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
                 .createdAt(new Date())
                 .build());
 
-        // Cập nhật thông tin cá nhân
+
         archive.setCandidateName(cvEntity.getName());
         archive.setDob(cvEntity.getDob());
         archive.setEmail(cvEntity.getEmail());
@@ -353,7 +376,7 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
         archive.setLink(cvEntity.getLink());
         archive.setDevelopment(cvEntity.getDevelopment());
 
-        // --- 1. SKILL (Lưu ID và Tên) ---
+
         archive.setSkillCandidateIds(
                 cvEntity.getSkillCandidates().stream()
                         .map(s -> String.valueOf(s.getId()))
@@ -365,7 +388,7 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
                         .collect(Collectors.joining(" | "))
         );
 
-        // --- 2. EDUCATION (Lưu ID và các trường tóm tắt) ---
+
         archive.setEducationCandidateIds(
                 cvEntity.getEducationCandidates().stream()
                         .map(e -> String.valueOf(e.getId()))
@@ -386,14 +409,14 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
                         .map(e -> e.getMajor() != null ? e.getMajor() : "Unknown Major")
                         .collect(Collectors.joining(" | "))
         );
-        // Lưu ý: Đảm bảo tên trường này khớp với Entity của CandidateCVArchive
+
         archive.setEductaionCandidateInfo(
                 cvEntity.getEducationCandidates().stream()
                         .map(e -> e.getInfo() != null ? e.getInfo() : "None")
                         .collect(Collectors.joining(" | "))
         );
 
-        // --- 3. EXPERIENCE (Lưu ID và các trường tóm tắt) ---
+
         archive.setExperienceCandidateIds(
                 cvEntity.getExperienceCandidates().stream()
                         .map(e -> String.valueOf(e.getId()))
@@ -420,7 +443,7 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
                         .collect(Collectors.joining(" | "))
         );
 
-        // --- 4. CERTIFICATE (Lưu ID và các trường tóm tắt) ---
+
         archive.setCertificateCandidateIds(
                 cvEntity.getCertificateCandidates().stream()
                         .map(c -> String.valueOf(c.getId()))
@@ -442,7 +465,7 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
                         .collect(Collectors.joining(" | "))
         );
 
-        // --- 5. PROJECT (Lưu ID và các trường tóm tắt) ---
+
         archive.setProjectCandidateIds(
                 cvEntity.getProjectCandidates().stream()
                         .map(p -> String.valueOf(p.getId()))

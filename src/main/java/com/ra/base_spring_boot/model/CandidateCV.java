@@ -4,11 +4,11 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Builder.Default; 
+import lombok.Builder.Default;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.ArrayList; 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -23,12 +23,12 @@ public class CandidateCV {
     private Long id;
 
     private String template;
-    private String title; 
+    private String title;
 
-    
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "candidate_id", nullable = false)
-    @JsonIgnore 
+    @JsonIgnore
     private Candidate candidate;
 
     @Temporal(TemporalType.TIMESTAMP)
@@ -45,24 +45,29 @@ public class CandidateCV {
     private String link; // Link LinkedIn/CV/etc.
     private String description; // Tóm tắt/Giới thiệu bản thân
     private String development; // Mục tiêu nghề nghiệp
-    
-    @OneToMany(mappedBy = "candidateCV", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Default
-    private List<SkillsCandidate> skillCandidates = new ArrayList<>(); 
 
-    @OneToMany(mappedBy = "candidateCV", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Default
-    private List<ProjectCandidate> projectCandidates = new ArrayList<>(); 
 
-    @OneToMany(mappedBy = "candidateCV", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "candidateCV", cascade = CascadeType.ALL)
     @Default
-    private List<EducationCandidate> educationCandidates = new ArrayList<>(); 
-    
-    @OneToMany(mappedBy = "candidateCV", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<SkillsCandidate> skillCandidates = new ArrayList<>();
+
+
+    @OneToMany(mappedBy = "candidateCV", cascade = CascadeType.ALL)
     @Default
-    private List<ExperienceCandidate> experienceCandidates = new ArrayList<>(); 
-    
-    @OneToMany(mappedBy = "candidateCV", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ProjectCandidate> projectCandidates = new ArrayList<>();
+
+
+    @OneToMany(mappedBy = "candidateCV", cascade = CascadeType.ALL)
     @Default
-    private List<CertificateCandidate> certificateCandidates = new ArrayList<>(); 
+    private List<EducationCandidate> educationCandidates = new ArrayList<>();
+
+
+    @OneToMany(mappedBy = "candidateCV", cascade = CascadeType.ALL)
+    @Default
+    private List<ExperienceCandidate> experienceCandidates = new ArrayList<>();
+
+
+    @OneToMany(mappedBy = "candidateCV", cascade = CascadeType.ALL)
+    @Default
+    private List<CertificateCandidate> certificateCandidates = new ArrayList<>();
 }
