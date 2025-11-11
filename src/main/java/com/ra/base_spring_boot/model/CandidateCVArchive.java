@@ -140,7 +140,7 @@ public class CandidateCVArchive {
     @Column(name = "updated_at", nullable = false)
     private Date updatedAt;
 
-    // --- Lifecycle Callbacks (Giữ nguyên) ---
+
     @PrePersist
     protected void onCreate() {
         createdAt = new Date();

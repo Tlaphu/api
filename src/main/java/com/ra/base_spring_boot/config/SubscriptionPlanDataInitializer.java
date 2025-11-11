@@ -24,7 +24,7 @@ public class SubscriptionPlanDataInitializer implements CommandLineRunner {
         // --- Gói 2: VIP 1 Năm ---
         ensurePlanExists("VIP_Y", "Gói VIP 1 Năm", new BigDecimal("360000.00"), 365);
 
-        System.out.println("✅ SubscriptionPlan default data ensured: VIP_M and VIP_Y");
+        System.out.println("SubscriptionPlan default data ensured: VIP_M and VIP_Y");
     }
 
     /**
@@ -32,12 +32,10 @@ public class SubscriptionPlanDataInitializer implements CommandLineRunner {
      */
     private void ensurePlanExists(String planCode, String name, BigDecimal price, Integer durationInDays) {
 
-        // 1. Kiểm tra xem gói dịch vụ đã tồn tại chưa (Giả định bạn có hàm findByPlanCode trong Repository)
-        // Nếu chưa có hàm đó, ta sẽ phải dùng findById hoặc findAll() và duyệt qua.
 
         Optional<SubscriptionPlan> existingPlan = subscriptionPlanRepository.findByPlanCode(planCode);
 
-        // 2. Nếu chưa có, tạo mới và lưu vào DB
+
         if (existingPlan.isEmpty()) {
             SubscriptionPlan newPlan = SubscriptionPlan.builder()
                     .planCode(planCode)
