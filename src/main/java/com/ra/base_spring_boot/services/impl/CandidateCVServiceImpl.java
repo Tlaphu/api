@@ -223,10 +223,6 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
             ProjectCandidate existing = projectCandidateRepository.findById(dto.getId())
                     .orElseThrow(() -> new HttpBadRequest("Project ID not found: " + dto.getId()));
 
-            if (dto.getName() != null) existing.setName(dto.getName());
-            if (dto.getInfo() != null) existing.setInfo(dto.getInfo());
-            if (dto.getLink() != null) existing.setLink(dto.getLink());
-            existing.setUpdated_at(new Date());
             return existing;
         }
 
@@ -273,13 +269,8 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
             EducationCandidate existing = educationCandidateRepository.findById(dto.getId())
                     .orElseThrow(() -> new HttpBadRequest("Education ID not found: " + dto.getId()));
 
-            if (dto.getNameEducation() != null) existing.setNameEducation(dto.getNameEducation());
-            if (dto.getMajor() != null) existing.setMajor(dto.getMajor());
-            if (dto.getStartedAt() != null) existing.setStartedAt(dto.getStartedAt());
-            if (dto.getEndAt() != null) existing.setEndAt(dto.getEndAt());
-            if (dto.getInfo() != null) existing.setInfo(dto.getInfo());
-            if (dto.getGpa() != null) existing.setGpa(dto.getGpa());
-            existing.setUpdatedAt(new Date());
+
+
             return existing;
         }
 
@@ -302,12 +293,7 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
             ExperienceCandidate existing = experienceCandidateRepository.findById(dto.getId())
                     .orElseThrow(() -> new HttpBadRequest("Experience ID not found: " + dto.getId()));
 
-            if (dto.getPosition() != null) existing.setPosition(dto.getPosition());
-            if (dto.getCompany() != null) existing.setCompany(dto.getCompany());
-            if (dto.getStarted_at() != null) existing.setStarted_at(dto.getStarted_at());
-            if (dto.getEnd_at() != null) existing.setEnd_at(dto.getEnd_at());
-            if (dto.getInfo() != null) existing.setInfo(dto.getInfo());
-            existing.setUpdated_at(new Date());
+
             return existing;
         }
 
@@ -329,12 +315,7 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
             CertificateCandidate existing = certificateCandidateRepository.findById(dto.getId())
                     .orElseThrow(() -> new HttpBadRequest("Certificate ID not found: " + dto.getId()));
 
-            if (dto.getName() != null) existing.setName(dto.getName());
-            if (dto.getOrganization() != null) existing.setOrganization(dto.getOrganization());
-            if (dto.getStarted_at() != null) existing.setStarted_at(dto.getStarted_at());
-            if (dto.getEnd_at() != null) existing.setEnd_at(dto.getEnd_at());
-            if (dto.getInfo() != null) existing.setInfo(dto.getInfo());
-            existing.setUpdated_at(new Date());
+
             return existing;
         }
 
