@@ -6,4 +6,6 @@ import java.util.List;
 public interface ISkillsCandidateRepository extends JpaRepository<SkillsCandidate, Long> {
     List<SkillsCandidate> findAllByCandidate_Id(Long candidateId);
     void deleteByCandidateCVId(Long cvId);
+
+    boolean existsByCandidate_IdAndSkill_Id(Long candidateId, Long skillId);
 }

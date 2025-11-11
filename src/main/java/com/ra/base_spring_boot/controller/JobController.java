@@ -1,5 +1,6 @@
 package com.ra.base_spring_boot.controller;
 
+import com.ra.base_spring_boot.dto.ResponseWrapper;
 import com.ra.base_spring_boot.dto.resp.CandidateResponse;
 import com.ra.base_spring_boot.model.*;
 import com.ra.base_spring_boot.repository.*;
@@ -9,6 +10,7 @@ import com.ra.base_spring_boot.dto.resp.DashboardStats;
 import com.ra.base_spring_boot.services.ICompanyAuthService;
 import com.ra.base_spring_boot.services.JobCandidateService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -544,26 +546,31 @@ public class JobController {
         return ResponseEntity.ok(stats);
     }
 
-    @PreAuthorize("hasAuthority('ROLE_COMPANY')")
+    @PreAuthorize("hasAuthority('ROLE_COMPANY') or hasAuthority('ROLE_ADMIN')")
     @GetMapping("/{jobId}/suitable-candidates")
     public ResponseEntity<?> getSuitableCandidates(@PathVariable Long jobId) {
+        List<CandidateResponse> candidates = companyAuthService.getSuitableCandidatesForCompanyJob(jobId);
 
-        Job job = jobRepository.findById(jobId)
-                .orElseThrow(() -> new RuntimeException("Job not found"));
-
-        AccountCompany currentAccountCompany = companyAuthService.getCurrentAccountCompany();
-        if (currentAccountCompany == null) {
-            return ResponseEntity.status(403).body("Access denied. Company must be logged in.");
-        }
-
-
-        Optional<Company> currentCompanyOpt = companyRepository.findByAccountId(currentAccountCompany.getId());
-
-        if (currentCompanyOpt.isEmpty() || !job.getCompany().getId().equals(currentCompanyOpt.get().getId())) {
-            return ResponseEntity.status(403).body("Access denied. You can only view candidates for your own job listings.");
-        }
-
-        List<CandidateResponse> responses = jobCandidateService.getSuitableCandidatesForCompanyJob(jobId);
-        return ResponseEntity.ok(responses);
+        return ResponseEntity.ok(
+                ResponseWrapper.builder()
+                        .status(HttpStatus.OK)
+                        .code(HttpStatus.OK.value())
+                        .data(candidates)
+                        .build()
+        );
     }
+    @PreAuthorize("hasAuthority('ROLE_COMPANY') or hasAuthority('ROLE_ADMIN')")
+    @GetMapping("/candidates/top-skill")
+    public ResponseEntity<?> getAllCandidatesBySkillScore() {
+        List<CandidateResponse> candidates = companyAuthService.getAllCandidatesBySkillScore();
+
+        return ResponseEntity.ok(
+                ResponseWrapper.builder()
+                        .status(HttpStatus.OK)
+                        .code(HttpStatus.OK.value())
+                        .data(candidates)
+                        .build()
+        );
+    }
+
 }
