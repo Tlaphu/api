@@ -10,4 +10,6 @@ public interface IJobCandidateRepository extends JpaRepository<JobCandidate, Lon
      List<JobCandidate> findByJobId(Long jobId);
      List<JobCandidate> findByCandidateId(Long candidateId);
     void deleteByCandidateCVId(Long cvId);
+
+    boolean existsByJob_IdAndCandidateCV_Id(Long jobId, Long cvId);
 }

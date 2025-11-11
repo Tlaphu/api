@@ -56,6 +56,15 @@ public class Candidate {
     @Builder.Default
     private Set<Job> favoriteJobs = new HashSet<>();
 
+    @ManyToMany
+    @JoinTable(
+            name = "candidate_favorite_companies",
+            joinColumns = @JoinColumn(name = "candidate_id"),
+            inverseJoinColumns = @JoinColumn(name = "company_id")
+    )
+    @Builder.Default
+    private Set<Company> favoriteCompanies = new HashSet<>();
+
     private Integer gender;
     
     private String link;
