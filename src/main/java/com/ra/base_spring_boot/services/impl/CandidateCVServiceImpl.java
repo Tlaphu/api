@@ -363,6 +363,7 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
                 .createdAt(new Date())
                 .build());
 
+        // Cập nhật thông tin cá nhân
         archive.setCandidateName(cvEntity.getName());
         archive.setDob(cvEntity.getDob());
         archive.setEmail(cvEntity.getEmail());
@@ -371,34 +372,115 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
         archive.setLink(cvEntity.getLink());
         archive.setDevelopment(cvEntity.getDevelopment());
 
+        // --- 1. SKILL (Lưu ID và Tên) ---
         archive.setSkillCandidateIds(
                 cvEntity.getSkillCandidates().stream()
                         .map(s -> String.valueOf(s.getId()))
                         .collect(Collectors.joining(","))
         );
+        archive.setSkillCandidateNames(
+                cvEntity.getSkillCandidates().stream()
+                        .map(s -> s.getSkill() != null ? s.getSkill().getName() : "Unknown Skill")
+                        .collect(Collectors.joining(" | "))
+        );
 
+        // --- 2. EDUCATION (Lưu ID và các trường tóm tắt) ---
         archive.setEducationCandidateIds(
                 cvEntity.getEducationCandidates().stream()
                         .map(e -> String.valueOf(e.getId()))
                         .collect(Collectors.joining(","))
         );
+        archive.setEducationCandidateNames(
+                cvEntity.getEducationCandidates().stream()
+                        .map(e -> e.getNameEducation() != null ? e.getNameEducation() : "Unknown School")
+                        .collect(Collectors.joining(" | "))
+        );
+        archive.setEducationCandidateGPA(
+                cvEntity.getEducationCandidates().stream()
+                        .map(e -> e.getGpa() != null ? e.getGpa() : "-")
+                        .collect(Collectors.joining(" | "))
+        );
+        archive.setEducationCandidateMajor(
+                cvEntity.getEducationCandidates().stream()
+                        .map(e -> e.getMajor() != null ? e.getMajor() : "Unknown Major")
+                        .collect(Collectors.joining(" | "))
+        );
+        // Lưu ý: Đảm bảo tên trường này khớp với Entity của CandidateCVArchive
+        archive.setEductaionCandidateInfo(
+                cvEntity.getEducationCandidates().stream()
+                        .map(e -> e.getInfo() != null ? e.getInfo() : "None")
+                        .collect(Collectors.joining(" | "))
+        );
 
+        // --- 3. EXPERIENCE (Lưu ID và các trường tóm tắt) ---
         archive.setExperienceCandidateIds(
                 cvEntity.getExperienceCandidates().stream()
                         .map(e -> String.valueOf(e.getId()))
                         .collect(Collectors.joining(","))
         );
+        archive.setExperienceCandidatePosition(
+                cvEntity.getExperienceCandidates().stream()
+                        .map(e -> e.getPosition() != null ? e.getPosition() : "Unknown Position")
+                        .collect(Collectors.joining(" | "))
+        );
+        archive.setExperienceCandidateCompany(
+                cvEntity.getExperienceCandidates().stream()
+                        .map(e -> e.getCompany() != null ? e.getCompany() : "Unknown Company")
+                        .collect(Collectors.joining(" | "))
+        );
+        archive.setExperienceCandidateNames( // Tên tổng hợp
+                cvEntity.getExperienceCandidates().stream()
+                        .map(e -> (e.getPosition() != null ? e.getPosition() : "Pos") + " @ " + (e.getCompany() != null ? e.getCompany() : "Comp"))
+                        .collect(Collectors.joining(" | "))
+        );
+        archive.setExperienceCandidateInfo(
+                cvEntity.getExperienceCandidates().stream()
+                        .map(e -> e.getInfo() != null ? e.getInfo() : "None")
+                        .collect(Collectors.joining(" | "))
+        );
 
+        // --- 4. CERTIFICATE (Lưu ID và các trường tóm tắt) ---
         archive.setCertificateCandidateIds(
                 cvEntity.getCertificateCandidates().stream()
                         .map(c -> String.valueOf(c.getId()))
                         .collect(Collectors.joining(","))
         );
+        archive.setCertificateCandidateNames(
+                cvEntity.getCertificateCandidates().stream()
+                        .map(c -> c.getName() != null ? c.getName() : "Untitled Certificate")
+                        .collect(Collectors.joining(" | "))
+        );
+        archive.setCertificateCandidateOrganization(
+                cvEntity.getCertificateCandidates().stream()
+                        .map(c -> c.getOrganization() != null ? c.getOrganization() : "Unknown Org")
+                        .collect(Collectors.joining(" | "))
+        );
+        archive.setCertificateCandidateInfo(
+                cvEntity.getCertificateCandidates().stream()
+                        .map(c -> c.getInfo() != null ? c.getInfo() : "None")
+                        .collect(Collectors.joining(" | "))
+        );
 
+        // --- 5. PROJECT (Lưu ID và các trường tóm tắt) ---
         archive.setProjectCandidateIds(
                 cvEntity.getProjectCandidates().stream()
                         .map(p -> String.valueOf(p.getId()))
                         .collect(Collectors.joining(","))
+        );
+        archive.setProjectCandidateNames(
+                cvEntity.getProjectCandidates().stream()
+                        .map(p -> p.getName() != null ? p.getName() : "Untitled Project")
+                        .collect(Collectors.joining(" | "))
+        );
+        archive.setProjectCandidateLink(
+                cvEntity.getProjectCandidates().stream()
+                        .map(p -> p.getLink() != null ? p.getLink() : "No Link")
+                        .collect(Collectors.joining(" | "))
+        );
+        archive.setProjectCandidateInfo(
+                cvEntity.getProjectCandidates().stream()
+                        .map(p -> p.getInfo() != null ? p.getInfo() : "None")
+                        .collect(Collectors.joining(" | "))
         );
 
         archive.setTitle(cvEntity.getTitle());
@@ -406,7 +488,6 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
 
         candidateCVArchiveRepository.save(archive);
     }
-
 
     @Override
     @Transactional

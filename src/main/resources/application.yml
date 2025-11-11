@@ -22,3 +22,9 @@ jwt:
     key: 3b6f9c1d8a7e4f2b5c9d7a8e6f3b1c4d7e9f2a1b4c6d8e7f9a2c5b7d9f1e3a6b
   expired:
     access: 3600000
+
+vnpay:
+  tmnCode: QZJTN6FY
+  hashSecret: YCW3BR34B99659A1WJE0GSDNYJSFELJO
+  returnUrl: https://hector-indecisive-nonmelodramatically.ngrok-free.dev/api/payment/vnpay_return
+  url: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html

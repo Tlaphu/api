@@ -62,8 +62,10 @@ public class Candidate {
     private String Description;
     private String Experience;
     private String Development;
-
-
+    @Builder.Default
+    private boolean isPremium = false;
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date premiumUntil;
     @Temporal(TemporalType.TIMESTAMP)
     private Date created_at;
 

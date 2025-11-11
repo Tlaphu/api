@@ -123,6 +123,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/auth/candidate/reset-password").permitAll()
                         .requestMatchers("/api/v1/auth/candidate/verify").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/location/**").permitAll()
+                        .requestMatchers("/api/payment/create", "/api/payment/vnpay_return").permitAll()
+                        .requestMatchers("/api/payment/**").permitAll()
                         .requestMatchers(candidateAuthPattern).permitAll()
                         .requestMatchers(companyAuthPattern).permitAll()
 
