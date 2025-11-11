@@ -183,4 +183,48 @@ public class CandidateAuthController {
                         .build()
         );
     }
+    /**
+     * @apiNote
+     */
+    @GetMapping("/favorites")
+    public ResponseEntity<?> getFavoriteCompanies() {
+        return ResponseEntity.ok(
+                ResponseWrapper.builder()
+                        .status(HttpStatus.OK)
+                        .code(200)
+                        .data(authService.getFavoriteCompanies())
+                        .build()
+        );
+    }
+
+    /**
+     * @apiNote
+     */
+    @PostMapping("/favorites/{companyId}")
+    public ResponseEntity<?> addFavoriteCompany(@PathVariable Long companyId) {
+        authService.addFavoriteCompany(companyId);
+        return ResponseEntity.ok(
+                ResponseWrapper.builder()
+                        .status(HttpStatus.OK)
+                        .code(200)
+                        .data("Company added to favorites successfully")
+                        .build()
+        );
+    }
+
+    /**
+     * @apiNote
+     */
+    @DeleteMapping("/favorites/{companyId}")
+    public ResponseEntity<?> removeFavoriteCompany(@PathVariable Long companyId) {
+        authService.removeFavoriteCompany(companyId);
+        return ResponseEntity.ok(
+                ResponseWrapper.builder()
+                        .status(HttpStatus.OK)
+                        .code(200)
+                        .data("Company removed from favorites successfully")
+                        .build()
+        );
+    }
+
 }

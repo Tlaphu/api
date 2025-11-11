@@ -3,10 +3,13 @@ package com.ra.base_spring_boot.services.impl;
 import com.ra.base_spring_boot.dto.req.*;
 import com.ra.base_spring_boot.dto.resp.*;
 import com.ra.base_spring_boot.exception.HttpBadRequest;
+import com.ra.base_spring_boot.model.AccountCompany;
 import com.ra.base_spring_boot.model.Candidate;
+import com.ra.base_spring_boot.model.Company;
 import com.ra.base_spring_boot.model.Role;
 import com.ra.base_spring_boot.model.constants.RoleName;
 import com.ra.base_spring_boot.repository.ICandidateRepository;
+import com.ra.base_spring_boot.repository.ICompanyRepository;
 import com.ra.base_spring_boot.security.jwt.JwtProvider;
 import com.ra.base_spring_boot.security.principle.MyUserDetails;
 import com.ra.base_spring_boot.services.ICandidateAuthService;
@@ -28,7 +31,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class CandidateAuthServiceImpl implements ICandidateAuthService {
-
+    private final ICompanyRepository companyRepository;
     private final IRoleService roleService;
     private final ICandidateRepository candidateRepository;
     private final PasswordEncoder passwordEncoder;
@@ -242,6 +245,58 @@ public class CandidateAuthServiceImpl implements ICandidateAuthService {
         candidate.setUpdated_at(new Date());
         candidateRepository.save(candidate);
     }
+    @Transactional
+    @Override
+    public void addFavoriteCompany(Long companyId) {
+        Candidate candidate = jwtProvider.getCurrentCandidate();
+
+
+        Company company = companyRepository.findById(companyId)
+                .orElseThrow(() -> new HttpBadRequest("Company not found with id: " + companyId));
+
+        if (candidate.getFavoriteCompanies().contains(company)) {
+            throw new HttpBadRequest("Company is already in favorites.");
+        }
+
+        candidate.getFavoriteCompanies().add(company);
+        candidateRepository.save(candidate);
+    }
+
+    @Transactional
+    @Override
+    public void removeFavoriteCompany(Long companyId) {
+        Candidate candidate = jwtProvider.getCurrentCandidate();
+
+
+        Company company = companyRepository.findById(companyId)
+                .orElseThrow(() -> new HttpBadRequest("Company not found with id: " + companyId));
+
+        if (!candidate.getFavoriteCompanies().contains(company)) {
+            throw new HttpBadRequest("Company is not in favorites.");
+        }
+
+        candidate.getFavoriteCompanies().remove(company);
+        candidateRepository.save(candidate);
+    }
+
+    @Override
+    public Set<CompanyResponse> getFavoriteCompanies() {
+        Candidate currentCandidate = jwtProvider.getCurrentCandidate();
+
+        Candidate candidate = candidateRepository.findByIdWithFavoriteCompanies(currentCandidate.getId())
+                .orElseThrow(() -> new HttpBadRequest("Candidate not found for current user."));
+
+        return candidate.getFavoriteCompanies().stream()
+                .map(company -> CompanyResponse.builder()
+                        .id(company.getId())
+                        .name(company.getName())
+                        .email(company.getEmail())
+                        .description(company.getDescription())
+                        .build())
+                .collect(Collectors.toSet());
+    }
+
+
 
 
     private CandidateResponse mapCandidateToResponse(Candidate candidate) {

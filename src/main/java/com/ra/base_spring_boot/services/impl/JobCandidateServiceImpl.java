@@ -102,11 +102,19 @@ public class JobCandidateServiceImpl implements JobCandidateService {
 
     @Override
     public JobCandidateResponse create(FormJobCandidate form) {
+        if (form.getCvid() != null) {
+            boolean alreadyApplied = jobCandidateRepository.existsByJob_IdAndCandidateCV_Id(form.getJobId(), form.getCvid());
+            if (alreadyApplied) {
+                throw new IllegalArgumentException("You have already applied to this job using this CV!");
+            }
+        }
+
         JobCandidate jobCandidateToCreate = toEntity(form);
         JobCandidate savedJobCandidate = jobCandidateRepository.save(jobCandidateToCreate);
 
         return toResponse(savedJobCandidate);
     }
+
 
     @Override
     public JobCandidateResponse update(Long id, FormJobCandidate form) {

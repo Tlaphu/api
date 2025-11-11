@@ -2,9 +2,11 @@ package com.ra.base_spring_boot.services;
 
 import com.ra.base_spring_boot.dto.req.*;
 import com.ra.base_spring_boot.dto.resp.CandidateResponse;
+import com.ra.base_spring_boot.dto.resp.CompanyResponse;
 import com.ra.base_spring_boot.dto.resp.JwtResponse;
-import com.ra.base_spring_boot.model.Candidate;
-import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Set;
 
 public interface ICandidateAuthService {
 
@@ -46,4 +48,11 @@ public interface ICandidateAuthService {
     void resetPassword(FormResetPassword form);
     CandidateResponse getCurrentCandidateProfile();
 
+    @Transactional
+    void addFavoriteCompany(Long companyId);
+
+    @Transactional
+    void removeFavoriteCompany(Long companyId);
+
+    Set<CompanyResponse> getFavoriteCompanies();
 }
