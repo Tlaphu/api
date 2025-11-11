@@ -239,7 +239,6 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
                 .info(dto.getInfo())
                 .link(dto.getLink())
                 .candidateCV(candidateCV)
-                .candidate(candidateCV.getCandidate())
                 .created_at(new Date())
                 .updated_at(new Date())
                 .build();
@@ -268,7 +267,6 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
         return SkillsCandidate.builder()
                 .skill(skill)
                 .candidateCV(candidateCV)
-                .candidate(candidateCV.getCandidate())
                 .createdAt(new Date())
                 .updatedAt(new Date())
                 .build();
@@ -295,7 +293,6 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
                 .info(dto.getInfo())
                 .gpa(dto.getGpa())
                 .candidateCV(candidateCV)
-                .candidate(candidateCV.getCandidate())
                 .createdAt(new Date())
                 .updatedAt(new Date())
                 .build();
@@ -322,7 +319,6 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
                 .end_at(dto.getEnd_at())
                 .info(dto.getInfo())
                 .candidateCV(candidateCV)
-                .candidate(candidateCV.getCandidate())
                 .created_at(new Date())
                 .updated_at(new Date())
                 .build();
@@ -349,17 +345,14 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
                 .end_at(dto.getEnd_at())
                 .info(dto.getInfo())
                 .candidateCV(candidateCV)
-                .candidate(candidateCV.getCandidate())
                 .created_at(new Date())
                 .updated_at(new Date())
                 .build();
     }
 
     private void syncCVToArchive(CandidateCV cvEntity) {
-
-        Optional<CandidateCVArchive> existingArchive = candidateCVArchiveRepository.findByCandidateCVIdAndCandidateId(
-                cvEntity.getId(), cvEntity.getCandidate().getId()
-        );
+        Optional<CandidateCVArchive> existingArchive = candidateCVArchiveRepository
+                .findByCandidateCVIdAndCandidateId(cvEntity.getId(), cvEntity.getCandidate().getId());
 
         CandidateCVArchive archive = existingArchive.orElse(CandidateCVArchive.builder()
                 .candidateId(cvEntity.getCandidate().getId())
@@ -367,7 +360,7 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
                 .createdAt(new Date())
                 .build());
 
-
+        // Thông tin cá nhân tổng hợp
         archive.setCandidateName(cvEntity.getName());
         archive.setDob(cvEntity.getDob());
         archive.setEmail(cvEntity.getEmail());
@@ -376,7 +369,7 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
         archive.setLink(cvEntity.getLink());
         archive.setDevelopment(cvEntity.getDevelopment());
 
-
+        // Kỹ năng tổng hợp
         archive.setSkillCandidateIds(
                 cvEntity.getSkillCandidates().stream()
                         .map(s -> String.valueOf(s.getId()))
@@ -388,7 +381,7 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
                         .collect(Collectors.joining(" | "))
         );
 
-
+        // Học vấn tổng hợp
         archive.setEducationCandidateIds(
                 cvEntity.getEducationCandidates().stream()
                         .map(e -> String.valueOf(e.getId()))
@@ -410,62 +403,20 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
                         .collect(Collectors.joining(" | "))
         );
 
-        archive.setEductaionCandidateInfo(
-                cvEntity.getEducationCandidates().stream()
-                        .map(e -> e.getInfo() != null ? e.getInfo() : "None")
-                        .collect(Collectors.joining(" | "))
-        );
-
-
+        // Kinh nghiệm tổng hợp
         archive.setExperienceCandidateIds(
                 cvEntity.getExperienceCandidates().stream()
                         .map(e -> String.valueOf(e.getId()))
                         .collect(Collectors.joining(","))
         );
-        archive.setExperienceCandidatePosition(
+        archive.setExperienceCandidateNames(
                 cvEntity.getExperienceCandidates().stream()
-                        .map(e -> e.getPosition() != null ? e.getPosition() : "Unknown Position")
-                        .collect(Collectors.joining(" | "))
-        );
-        archive.setExperienceCandidateCompany(
-                cvEntity.getExperienceCandidates().stream()
-                        .map(e -> e.getCompany() != null ? e.getCompany() : "Unknown Company")
-                        .collect(Collectors.joining(" | "))
-        );
-        archive.setExperienceCandidateNames( // Tên tổng hợp
-                cvEntity.getExperienceCandidates().stream()
-                        .map(e -> (e.getPosition() != null ? e.getPosition() : "Pos") + " @ " + (e.getCompany() != null ? e.getCompany() : "Comp"))
-                        .collect(Collectors.joining(" | "))
-        );
-        archive.setExperienceCandidateInfo(
-                cvEntity.getExperienceCandidates().stream()
-                        .map(e -> e.getInfo() != null ? e.getInfo() : "None")
+                        .map(e -> (e.getPosition() != null ? e.getPosition() : "Pos") + " @ " +
+                                (e.getCompany() != null ? e.getCompany() : "Comp"))
                         .collect(Collectors.joining(" | "))
         );
 
-
-        archive.setCertificateCandidateIds(
-                cvEntity.getCertificateCandidates().stream()
-                        .map(c -> String.valueOf(c.getId()))
-                        .collect(Collectors.joining(","))
-        );
-        archive.setCertificateCandidateNames(
-                cvEntity.getCertificateCandidates().stream()
-                        .map(c -> c.getName() != null ? c.getName() : "Untitled Certificate")
-                        .collect(Collectors.joining(" | "))
-        );
-        archive.setCertificateCandidateOrganization(
-                cvEntity.getCertificateCandidates().stream()
-                        .map(c -> c.getOrganization() != null ? c.getOrganization() : "Unknown Org")
-                        .collect(Collectors.joining(" | "))
-        );
-        archive.setCertificateCandidateInfo(
-                cvEntity.getCertificateCandidates().stream()
-                        .map(c -> c.getInfo() != null ? c.getInfo() : "None")
-                        .collect(Collectors.joining(" | "))
-        );
-
-
+        // Dự án tổng hợp
         archive.setProjectCandidateIds(
                 cvEntity.getProjectCandidates().stream()
                         .map(p -> String.valueOf(p.getId()))
@@ -476,14 +427,16 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
                         .map(p -> p.getName() != null ? p.getName() : "Untitled Project")
                         .collect(Collectors.joining(" | "))
         );
-        archive.setProjectCandidateLink(
-                cvEntity.getProjectCandidates().stream()
-                        .map(p -> p.getLink() != null ? p.getLink() : "No Link")
-                        .collect(Collectors.joining(" | "))
+
+        // Chứng chỉ tổng hợp
+        archive.setCertificateCandidateIds(
+                cvEntity.getCertificateCandidates().stream()
+                        .map(c -> String.valueOf(c.getId()))
+                        .collect(Collectors.joining(","))
         );
-        archive.setProjectCandidateInfo(
-                cvEntity.getProjectCandidates().stream()
-                        .map(p -> p.getInfo() != null ? p.getInfo() : "None")
+        archive.setCertificateCandidateNames(
+                cvEntity.getCertificateCandidates().stream()
+                        .map(c -> c.getName() != null ? c.getName() : "Untitled Certificate")
                         .collect(Collectors.joining(" | "))
         );
 
@@ -492,6 +445,7 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
 
         candidateCVArchiveRepository.save(archive);
     }
+
 
     @Override
     @Transactional
