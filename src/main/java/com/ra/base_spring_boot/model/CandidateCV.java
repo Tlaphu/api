@@ -42,7 +42,7 @@ public class CandidateCV {
     private String email;
     private String phone;
     private String address;
-    private String link; // Link LinkedIn/CV/etc.
+    private String link;
     private String description; // Tóm tắt/Giới thiệu bản thân
     private String development; // Mục tiêu nghề nghiệp
 

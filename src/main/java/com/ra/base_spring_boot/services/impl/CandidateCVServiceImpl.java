@@ -9,7 +9,7 @@ import com.ra.base_spring_boot.services.ICandidateCVService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import java.util.Calendar;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -32,7 +32,7 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
     private final ICertificateCandidateRepository certificateCandidateRepository;
 
     private final ICandidateCVArchiveRepository candidateCVArchiveRepository;
-
+    private final ICVCreationCountRepository cvCreationCountRepository;
     private final IJobCandidateRepository jobCandidateRepository;
 
     public CandidateCVResponse mapToResponse(CandidateCV candidateCV) {
@@ -75,7 +75,32 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
                 .certificates(certificateNames)
                 .build();
     }
+    private Date getStartOfDay(Date date) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(date);
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+        return calendar.getTime();
+    }
+    private Date getStartOfMonth(Date date) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(date);
+        calendar.set(Calendar.DAY_OF_MONTH, 1);
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+        return calendar.getTime();
+    }
 
+    private Date addDaysToDate(Date date, int days) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(date);
+        calendar.add(Calendar.DAY_OF_MONTH, days);
+        return calendar.getTime();
+    }
     private void mapPersonalInfo(CandidateCV cvEntity, FormCandidateCV cvForm, Candidate candidate) {
 
         cvEntity.setName(cvForm.getName() != null ? cvForm.getName() : candidate.getName());
@@ -95,6 +120,70 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
         Candidate candidate = candidateRepository.findById(candidateId)
                 .orElseThrow(() -> new HttpBadRequest("Candidate not found with ID: " + candidateId));
 
+        final int MAX_CVS_COUNT = 5;
+        final int LOCK_PERIOD_DAYS = 30; // Thời gian khóa cố định: 30 ngày
+
+        // --- LOGIC KIỂM TRA KHÓA LĂN (ROLLING LOCK) ---
+        // Kiểm tra giới hạn chỉ áp dụng cho tài khoản thường
+        if (!candidate.isPremium()) {
+
+            // 1. Kiểm tra ngày hết hạn khóa (SỬ DỤNG premiumUntil)
+            Date today = new Date();
+            Date lockUntilDate = candidate.getPremiumUntil(); // Dùng premiumUntil làm ngày khóa
+
+            if (lockUntilDate != null && lockUntilDate.after(today)) {
+                SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+                String resetDateStr = sdf.format(lockUntilDate);
+
+                throw new HttpBadRequest("Regular accounts have reached their limit. You will be able to create a new CV again on" + resetDateStr + ".");
+            }
+
+            // 2. Tính toán số lượng CV đã tạo trong tháng lịch
+            Date startOfMonth = getStartOfDay(today);
+
+            Calendar endCal = Calendar.getInstance();
+            endCal.setTime(today);
+            endCal.add(Calendar.DAY_OF_MONTH, 1);
+            Date endDateForQuery = endCal.getTime();
+
+            Integer totalMonthlyCount = cvCreationCountRepository.countCVCreatedInMonth(
+                    candidate.getId(),
+                    startOfMonth,
+                    endDateForQuery
+            );
+
+            if (totalMonthlyCount == null) {
+                totalMonthlyCount = 0;
+            }
+
+            if (totalMonthlyCount >= MAX_CVS_COUNT) {
+                // 3. Nếu đạt giới hạn, thiết lập ngày khóa mới (30 ngày sau) vào premiumUntil
+                Date newLockDate = addDaysToDate(today, LOCK_PERIOD_DAYS);
+
+                candidate.setPremiumUntil(newLockDate); // ✨ DÙNG setPremiumUntil ✨
+                candidateRepository.save(candidate); // Lưu lại trạng thái mới vào DB
+
+                SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+                String lockDateStr = sdf.format(newLockDate);
+
+                throw new HttpBadRequest("Regular account has reached limit" + MAX_CVS_COUNT + " CV. You will be locked from creating a new CV until the end of the day. " + lockDateStr + ".");
+            }
+
+            // 4. Nếu chưa đạt giới hạn, tăng bộ đếm ngày (tiếp tục đếm)
+            Date startOfToday = getStartOfDay(today);
+            CVCreationCount countEntity = cvCreationCountRepository.findByCandidateAndDate(candidate, startOfToday)
+                    .orElse(CVCreationCount.builder()
+                            .candidate(candidate)
+                            .date(startOfToday)
+                            .count(0)
+                            .build());
+
+            countEntity.setCount(countEntity.getCount() + 1);
+            cvCreationCountRepository.save(countEntity);
+        }
+        // --- KẾT THÚC LOGIC KHÓA LĂN ---
+
+        // ... (Phần còn lại của logic tạo CV)
         CandidateCV newCV = CandidateCV.builder()
                 .title(cvForm.getTitle())
                 .template(cvForm.getTemplate())

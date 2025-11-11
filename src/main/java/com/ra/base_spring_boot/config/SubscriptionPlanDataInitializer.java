@@ -18,10 +18,10 @@ public class SubscriptionPlanDataInitializer implements CommandLineRunner {
     @Override
     public void run(String... args) {
 
-        // --- Gói 1: VIP 1 Tháng ---
+
         ensurePlanExists("VIP_M", "Gói VIP 1 Tháng", new BigDecimal("36000.00"), 30);
 
-        // --- Gói 2: VIP 1 Năm ---
+
         ensurePlanExists("VIP_Y", "Gói VIP 1 Năm", new BigDecimal("360000.00"), 365);
 
         System.out.println("SubscriptionPlan default data ensured: VIP_M and VIP_Y");
