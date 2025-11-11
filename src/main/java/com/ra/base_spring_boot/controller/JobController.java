@@ -559,4 +559,18 @@ public class JobController {
                         .build()
         );
     }
+    @PreAuthorize("hasAuthority('ROLE_COMPANY') or hasAuthority('ROLE_ADMIN')")
+    @GetMapping("/candidates/top-skill")
+    public ResponseEntity<?> getAllCandidatesBySkillScore() {
+        List<CandidateResponse> candidates = companyAuthService.getAllCandidatesBySkillScore();
+
+        return ResponseEntity.ok(
+                ResponseWrapper.builder()
+                        .status(HttpStatus.OK)
+                        .code(HttpStatus.OK.value())
+                        .data(candidates)
+                        .build()
+        );
+    }
+
 }

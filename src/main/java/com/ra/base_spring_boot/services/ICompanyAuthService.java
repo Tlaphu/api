@@ -57,5 +57,7 @@ public interface ICompanyAuthService {
     CandidateResponse findCandidateById(Long id);
 
     List<CandidateResponse> getSuitableCandidatesForCompanyJob(Long jobId);
+
+    List<CandidateResponse> getAllCandidatesBySkillScore();
 }
 

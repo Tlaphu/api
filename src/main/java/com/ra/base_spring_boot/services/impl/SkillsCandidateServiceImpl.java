@@ -48,6 +48,10 @@ public class SkillsCandidateServiceImpl implements ISkillsCandidateService {
             levelJob = levelJobRepository.findById(req.getLevelJobId())
                     .orElseThrow(() -> new HttpBadRequest("LevelJob not found with ID: " + req.getLevelJobId()));
         }
+        boolean exists = skillsRepo.existsByCandidate_IdAndSkill_Id(current.getId(), req.getSkillId());
+        if (exists) {
+            throw new HttpBadRequest("You already added this skill");
+        }
 
         SkillsCandidate newSkill = SkillsCandidate.builder()
                 .candidate(current)

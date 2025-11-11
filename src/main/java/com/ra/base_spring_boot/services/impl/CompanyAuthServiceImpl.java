@@ -352,77 +352,7 @@ public class CompanyAuthServiceImpl implements ICompanyAuthService {
         Candidate candidate = candidateRepository.findById(id)
                 .orElseThrow(() -> new HttpBadRequest("Candidate not found with id: " + id));
 
-        return CandidateResponse.builder()
-                .id(candidate.getId())
-                .name(candidate.getName())
-                .email(candidate.getEmail())
-                .phone(candidate.getPhone())
-                .address(candidate.getAddress())
-                .gender(candidate.getGender())
-                .dob(candidate.getDob())
-                .link(candidate.getLink())
-                .status(candidate.isStatus())
-                .isOpen(candidate.getIsOpen())
-                .Title(candidate.getTitle())
-                .description(candidate.getDescription())
-                .experience(candidate.getExperience())
-                .development(candidate.getDevelopment())
-                .skills(candidate.getSkillCandidates() == null ? null :
-                        candidate.getSkillCandidates().stream()
-                                .map(s -> SkillsCandidateResponse.builder()
-                                        .id(s.getId())
-                                        .skillName(s.getSkill() != null ? s.getSkill().getName() : null)
-                                        .levelJobName(s.getLevelJob() != null ? s.getLevelJob().getName() : null)
-                                        .createdAt(s.getCreatedAt())
-                                        .updatedAt(s.getUpdatedAt())
-                                        .build())
-                                .collect(Collectors.toList()))
-                .educations(candidate.getEducationCandidates() == null ? null :
-                        candidate.getEducationCandidates().stream()
-                                .map(e -> EducationCandidateResponse.builder()
-                                        .id(e.getId())
-                                        .nameEducation(e.getNameEducation())
-                                        .major(e.getMajor())
-                                        .gpa(e.getGpa())
-                                        .startedAt(e.getStartedAt())
-                                        .endAt(e.getEndAt())
-                                        .info(e.getInfo())
-                                        .build())
-                                .collect(Collectors.toList()))
-                .experiences(candidate.getExperienceCandidates() == null ? null :
-                        candidate.getExperienceCandidates().stream()
-                                .map(ex -> ExperienceCandidateResponse.builder()
-                                        .id(ex.getId())
-                                        .company(ex.getCompany())
-                                        .position(ex.getPosition())
-                                        .started_at(ex.getStarted_at())
-                                        .end_at(ex.getEnd_at())
-                                        .info(ex.getInfo())
-                                        .build())
-                                .collect(Collectors.toList()))
-                .certificates(candidate.getCertificateCandidates() == null ? null :
-                        candidate.getCertificateCandidates().stream()
-                                .map(c -> CertificateCandidateResponse.builder()
-                                        .id(c.getId())
-                                        .name(c.getName())
-                                        .organization(c.getOrganization())
-                                        .started_at(c.getStarted_at())
-                                        .end_at(c.getEnd_at())
-                                        .info(c.getInfo())
-                                        .build())
-                                .collect(Collectors.toList()))
-                .project(candidate.getProjectCandidates() == null ? null :
-                        candidate.getProjectCandidates().stream()
-                                .map(p -> ProjectCandidateResponse.builder()
-                                        .id(p.getId())
-                                        .name(p.getName())
-                                        .link(p.getLink())
-                                        .started_at(p.getStarted_at())
-                                        .end_at(p.getEnd_at())
-                                        .info(p.getInfo())
-                                        .build())
-                                .collect(Collectors.toList()))
-                .build();
+        return mapCandidateToResponse(candidate);
     }
     @Override
     public List<CandidateResponse> getSuitableCandidatesForCompanyJob(Long jobId) {
@@ -445,50 +375,165 @@ public class CompanyAuthServiceImpl implements ICompanyAuthService {
             throw new NoSuchElementException("Job does not have any required skills");
         }
 
+        Set<String> requiredSkillNames = requiredSkills.stream()
+                .map(skill -> skill.getName().toLowerCase())
+                .collect(Collectors.toSet());
+
         List<Candidate> candidates = candidateRepository.findAll()
                 .stream()
                 .filter(Candidate::isStatus)
                 .toList();
 
         List<Candidate> suitable = candidates.stream()
-                .filter(c -> c.getSkillCandidates() != null && c.getSkillCandidates().stream()
-                        .anyMatch(sc -> requiredSkills.stream()
-                                .anyMatch(rs -> rs.getName().equalsIgnoreCase(sc.getSkill().getName()))))
+                .filter(c -> c.getSkillCandidates() != null && !c.getSkillCandidates().isEmpty())
+                .filter(c -> c.getSkillCandidates().stream()
+                        .anyMatch(sc -> requiredSkillNames.contains(sc.getSkill().getName().toLowerCase())))
                 .collect(Collectors.toList());
 
-        suitable.sort(Comparator.comparingInt(c -> {
-            Optional<SkillsCandidate> topLevel = c.getSkillCandidates().stream()
-                    .max(Comparator.comparingInt(sc -> levelRank(sc.getLevelJob())));
-            return -topLevel.map(sc -> levelRank(sc.getLevelJob())).orElse(0);
-        }));
+        Map<Candidate, Integer> candidateScores = new HashMap<>();
 
-        return suitable.stream()
-                .map(c -> CandidateResponse.builder()
-                        .id(c.getId())
-                        .name(c.getName())
-                        .email(c.getEmail())
-                        .phone(c.getPhone())
-                        .Title(c.getTitle())
-                        .description(c.getDescription())
-                        .skills(c.getSkillCandidates().stream()
-                                .map(s -> SkillsCandidateResponse.builder()
-                                        .id(s.getId())
-                                        .skillName(s.getSkill().getName())
-                                        .levelJobName(s.getLevelJob().getName())
-                                        .build())
-                                .collect(Collectors.toList()))
-                        .build())
+        for (Candidate candidate : suitable) {
+            int score = 0;
+
+            for (var sc : candidate.getSkillCandidates()) {
+                String skillName = sc.getSkill().getName().toLowerCase();
+                if (requiredSkillNames.contains(skillName)) {
+                    score += levelRank(sc.getLevelJob());
+                }
+            }
+
+            candidateScores.put(candidate, score);
+        }
+
+
+        List<Candidate> sorted = candidateScores.entrySet().stream()
+                .sorted(Map.Entry.<Candidate, Integer>comparingByValue().reversed())
+                .map(Map.Entry::getKey)
                 .collect(Collectors.toList());
+
+        return sorted.stream()
+                .map(this::mapCandidateToResponse)
+                .collect(Collectors.toList());
+
+
     }
 
     private int levelRank(LevelJob levelJob) {
         if (levelJob == null || levelJob.getName() == null) return 0;
         return switch (levelJob.getName().toUpperCase()) {
-            case "JUNIOR" -> 1;
-            case "MIDDLE" -> 2;
-            case "SENIOR" -> 3;
-            case "INTERN" -> 4;
+            case "INTERN" -> 1;
+            case "JUNIOR" -> 2;
+            case "MIDDLE" -> 3;
+            case "SENIOR" -> 4;
             default -> 0;
         };
+    }
+    @Override
+    public List<CandidateResponse> getAllCandidatesBySkillScore() {
+        List<Candidate> candidates = candidateRepository.findAll()
+                .stream()
+                .filter(Candidate::isStatus)
+                .collect(Collectors.toList());
+
+        Map<Candidate, Integer> candidateScores = new HashMap<>();
+
+        for (Candidate candidate : candidates) {
+            int totalScore = 0;
+
+            if (candidate.getSkillCandidates() != null) {
+                for (var sc : candidate.getSkillCandidates()) {
+                    totalScore += levelRank(sc.getLevelJob());
+                }
+            }
+
+            candidateScores.put(candidate, totalScore);
+        }
+
+        List<Candidate> sorted = candidateScores.entrySet().stream()
+                .sorted(Map.Entry.<Candidate, Integer>comparingByValue().reversed())
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toList());
+
+        return sorted.stream()
+                .map(candidate -> {
+                    CandidateResponse response = mapCandidateToResponse(candidate);
+                    return response;
+                })
+                .collect(Collectors.toList());
+    }
+
+
+    private CandidateResponse mapCandidateToResponse(Candidate candidate) {
+        return CandidateResponse.builder()
+                .id(candidate.getId())
+                .name(candidate.getName())
+                .email(candidate.getEmail())
+                .phone(candidate.getPhone())
+                .address(candidate.getAddress())
+                .gender(candidate.getGender())
+                .dob(candidate.getDob())
+                .link(candidate.getLink())
+                .status(candidate.isStatus())
+                .isOpen(candidate.getIsOpen())
+                .Title(candidate.getTitle())
+                .description(candidate.getDescription())
+                .experience(candidate.getExperience())
+                .development(candidate.getDevelopment())
+                .skills(candidate.getSkillCandidates() == null ? null
+                        : candidate.getSkillCandidates().stream()
+                        .map(s -> SkillsCandidateResponse.builder()
+                                .id(s.getId())
+                                .skillName(s.getSkill() != null ? s.getSkill().getName() : null)
+                                .levelJobName(s.getLevelJob() != null ? s.getLevelJob().getName() : null)
+                                .createdAt(s.getCreatedAt())
+                                .updatedAt(s.getUpdatedAt())
+                                .build())
+                        .collect(Collectors.toList()))
+                .educations(candidate.getEducationCandidates() == null ? null
+                        : candidate.getEducationCandidates().stream()
+                        .<EducationCandidateResponse>map(e -> EducationCandidateResponse.builder()
+                                .id(e.getId())
+                                .nameEducation(e.getNameEducation())
+                                .major(e.getMajor())
+                                .gpa(e.getGpa())
+                                .startedAt((e.getStartedAt()))
+                                .endAt((e.getEndAt()))
+                                .info(e.getInfo())
+                                .build())
+                        .collect(Collectors.toList()))
+                .experiences(candidate.getExperienceCandidates() == null ? null
+                        : candidate.getExperienceCandidates().stream()
+                        .map(ex -> ExperienceCandidateResponse.builder()
+                                .id(ex.getId())
+                                .company(ex.getCompany())
+                                .position(ex.getPosition())
+                                .started_at((ex.getStarted_at()))
+                                .end_at((ex.getEnd_at()))
+                                .info(ex.getInfo())
+                                .build())
+                        .collect(Collectors.toList()))
+                .certificates(candidate.getCertificateCandidates() == null ? null
+                        : candidate.getCertificateCandidates().stream()
+                        .map(c -> CertificateCandidateResponse.builder()
+                                .id(c.getId())
+                                .name(c.getName())
+                                .organization(c.getOrganization())
+                                .started_at((c.getStarted_at()))
+                                .end_at((c.getEnd_at()))
+                                .info(c.getInfo())
+                                .build())
+                        .collect(Collectors.toList()))
+                .project(candidate.getProjectCandidates() == null ? null :
+                        candidate.getProjectCandidates().stream()
+                                .map(p -> ProjectCandidateResponse.builder()
+                                        .id(p.getId())
+                                        .name(p.getName())
+                                        .link(p.getLink())
+                                        .started_at(p.getStarted_at())
+                                        .end_at(p.getEnd_at())
+                                        .info(p.getInfo())
+                                        .build())
+                                .collect(Collectors.toList()))
+                .build();
     }
 }
