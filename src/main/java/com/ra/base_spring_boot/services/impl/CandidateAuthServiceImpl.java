@@ -248,8 +248,9 @@ public class CandidateAuthServiceImpl implements ICandidateAuthService {
     @Transactional
     @Override
     public void addFavoriteCompany(Long companyId) {
-        Candidate candidate = jwtProvider.getCurrentCandidate();
-
+        Candidate current = jwtProvider.getCurrentCandidate();
+        Candidate candidate = candidateRepository.findByIdWithFavoriteCompanies(current.getId())
+                .orElseThrow(() -> new HttpBadRequest("Candidate not found"));
 
         Company company = companyRepository.findById(companyId)
                 .orElseThrow(() -> new HttpBadRequest("Company not found with id: " + companyId));
@@ -265,7 +266,9 @@ public class CandidateAuthServiceImpl implements ICandidateAuthService {
     @Transactional
     @Override
     public void removeFavoriteCompany(Long companyId) {
-        Candidate candidate = jwtProvider.getCurrentCandidate();
+        Candidate current = jwtProvider.getCurrentCandidate();
+        Candidate candidate = candidateRepository.findByIdWithFavoriteCompanies(current.getId())
+                .orElseThrow(() -> new HttpBadRequest("Candidate not found"));
 
 
         Company company = companyRepository.findById(companyId)
@@ -280,11 +283,12 @@ public class CandidateAuthServiceImpl implements ICandidateAuthService {
     }
 
     @Override
+    @Transactional
     public Set<CompanyResponse> getFavoriteCompanies() {
-        Candidate currentCandidate = jwtProvider.getCurrentCandidate();
+        Candidate current = jwtProvider.getCurrentCandidate();
+        Candidate candidate = candidateRepository.findByIdWithFavoriteCompanies(current.getId())
+                .orElseThrow(() -> new HttpBadRequest("Candidate not found"));
 
-        Candidate candidate = candidateRepository.findByIdWithFavoriteCompanies(currentCandidate.getId())
-                .orElseThrow(() -> new HttpBadRequest("Candidate not found for current user."));
 
         return candidate.getFavoriteCompanies().stream()
                 .map(company -> CompanyResponse.builder()

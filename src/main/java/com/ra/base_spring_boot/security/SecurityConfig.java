@@ -125,7 +125,15 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/location/**").permitAll()
                         .requestMatchers("/api/payment/create", "/api/payment/vnpay_return").permitAll()
                         .requestMatchers("/api/payment/**").permitAll()
-                        .requestMatchers(candidateAuthPattern).permitAll()
+                        .requestMatchers(
+                                "/api/v1/auth/candidate/login",
+                                "/api/v1/auth/candidate/register",
+                                "/api/v1/auth/candidate/forgot-password",
+                                "/api/v1/auth/candidate/reset-password",
+                                "/api/v1/auth/candidate/verify"
+                        ).permitAll()
+                        .requestMatchers("/api/v1/auth/candidate/**").hasAuthority("ROLE_CANDIDATE")
+
                         .requestMatchers(companyAuthPattern).permitAll()
 
                         .requestMatchers("/api/v1/admin/login").permitAll()

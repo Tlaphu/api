@@ -27,5 +27,5 @@ public interface ICandidateRepository extends JpaRepository<Candidate, Long> {
     Optional<Candidate> findByEmailWithFavoriteJobs(String email);
     @Query("SELECT c FROM Candidate c LEFT JOIN FETCH c.favoriteCompanies WHERE c.id = :id")
     Optional<Candidate> findByIdWithFavoriteCompanies(@Param("id") Long id);
-    Optional<Object> findByEmailWithFavoriteCompanies(String candidateEmail);
+
 }
