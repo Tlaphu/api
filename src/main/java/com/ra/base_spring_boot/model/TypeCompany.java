@@ -1,5 +1,6 @@
 package com.ra.base_spring_boot.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import java.util.Date;
@@ -22,7 +23,7 @@ public class TypeCompany {
     private Date created_at;
     @Temporal(TemporalType.DATE)
     private Date updated_at;
-
+    @JsonIgnore
     @OneToMany(mappedBy = "typeCompany")
     private List<Company> companies;
 }
