@@ -18,8 +18,9 @@ public class CandidateCVResponse {
     private String description;
 
     private String development;
-    
-   
+    private String template;
+    private String title;
+
     private List<String> projects;
     private List<String> skills;
     private List<String> educations;

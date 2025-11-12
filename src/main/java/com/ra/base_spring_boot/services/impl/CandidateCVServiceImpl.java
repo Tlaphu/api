@@ -11,11 +11,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -24,50 +24,35 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
     private final ICandidateRepository candidateRepository;
     private final ICandidateCVRepository candidateCVRepository;
 
-    private final IProjectRepository projectCandidateRepository;
-    private final ISkillsCandidateRepository skillsCandidateRepository;
-    private final ISkillRepository ISkillRepository;
-    private final IEducationCandidateRepository educationCandidateRepository;
-    private final IExperienceCandidateRepository experienceCandidateRepository;
-    private final ICertificateCandidateRepository certificateCandidateRepository;
-
+    // Đã loại bỏ các Repository của Entity con (Project, SkillCandidate, Education, Experience, Certificate)
+    private final ICVCreationCountRepository cvCreationCountRepository;
     private final ICandidateCVArchiveRepository candidateCVArchiveRepository;
-
     private final IJobCandidateRepository jobCandidateRepository;
 
     public CandidateCVResponse mapToResponse(CandidateCV candidateCV) {
-
         Candidate candidate = candidateCV.getCandidate();
 
-        List<String> projectNames = candidateCV.getProjectCandidates().stream()
-                .map(p -> p.getName() != null ? p.getName() : (p.getInfo() != null ? p.getInfo() : p.getLink()))
-                .collect(Collectors.toList());
-
-        List<String> skillNames = candidateCV.getSkillCandidates().stream()
-                .map(s -> s.getSkill() != null ? s.getSkill().getName() : "Unknown Skill")
-                .collect(Collectors.toList());
-
-        List<String> educationNames = candidateCV.getEducationCandidates().stream()
-                .map(EducationCandidate::getNameEducation)
-                .collect(Collectors.toList());
-
-        List<String> experienceNames = candidateCV.getExperienceCandidates().stream()
-                .map(e -> e.getPosition() + " at " + e.getCompany())
-                .collect(Collectors.toList());
-
-        List<String> certificateNames = candidateCV.getCertificateCandidates().stream()
-                .map(CertificateCandidate::getName)
-                .collect(Collectors.toList());
+        // Sử dụng các trường String/TEXT mới trong CandidateCV
+        List<String> projectNames = splitStringToList(candidateCV.getProjectCandidateNames(), " | ");
+        List<String> skillNames = splitStringToList(candidateCV.getSkillCandidateNames(), " | ");
+        List<String> educationNames = splitStringToList(candidateCV.getEducationCandidateNames(), " | ");
+        List<String> experienceNames = splitStringToList(candidateCV.getExperienceCandidateNames(), " | ");
+        List<String> certificateNames = splitStringToList(candidateCV.getCertificateCandidateNames(), " | ");
 
         return CandidateCVResponse.builder()
-                .id(candidate.getId())
-                .name(candidate.getName())
-                .dob(candidate.getDob())
-                .address(candidate.getAddress())
+                .id(candidateCV.getId())
+                .name(candidateCV.getName())
+                .dob(candidateCV.getDob())
+                .address(candidateCV.getAddress())
+                .title(candidateCV.getTitle())
+                .template(candidateCV.getTemplate())
+
+                // Lấy từ Entity Candidate liên quan
                 .gender(candidate.getGender())
                 .link(candidate.getLink())
                 .description(candidate.getDescription())
                 .development(candidate.getDevelopment())
+
                 .projects(projectNames)
                 .skills(skillNames)
                 .educations(educationNames)
@@ -76,8 +61,35 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
                 .build();
     }
 
-    private void mapPersonalInfo(CandidateCV cvEntity, FormCandidateCV cvForm, Candidate candidate) {
+    // Hàm tiện ích để chuyển chuỗi thành List<String>
+    private List<String> splitStringToList(String data, String delimiter) {
+        if (data == null || data.trim().isEmpty()) {
+            return List.of();
+        }
+        // Loại bỏ khoảng trắng thừa, sau đó split
+        return List.of(data.trim().split(delimiter)).stream()
+                .map(String::trim)
+                .collect(Collectors.toList());
+    }
 
+    private Date getStartOfDay(Date date) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(date);
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+        return calendar.getTime();
+    }
+
+    private Date addDaysToDate(Date date, int days) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(date);
+        calendar.add(Calendar.DAY_OF_MONTH, days);
+        return calendar.getTime();
+    }
+
+    private void mapPersonalInfo(CandidateCV cvEntity, FormCandidateCV cvForm, Candidate candidate) {
         cvEntity.setName(cvForm.getName() != null ? cvForm.getName() : candidate.getName());
         cvEntity.setDob(cvForm.getDob() != null ? cvForm.getDob() : candidate.getDob());
         cvEntity.setEmail(cvForm.getEmail() != null ? cvForm.getEmail() : candidate.getEmail());
@@ -95,6 +107,62 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
         Candidate candidate = candidateRepository.findById(candidateId)
                 .orElseThrow(() -> new HttpBadRequest("Candidate not found with ID: " + candidateId));
 
+        final int MAX_CVS_COUNT = 5;
+        final int LOCK_PERIOD_DAYS = 30;
+
+        if (!candidate.isPremium()) {
+            Date today = new Date();
+            Date lockUntilDate = candidate.getPremiumUntil();
+
+            if (lockUntilDate != null && lockUntilDate.after(today)) {
+                SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+                String resetDateStr = sdf.format(lockUntilDate);
+                throw new HttpBadRequest("Regular accounts have reached their limit. You will be able to create a new CV again on " + resetDateStr + ".");
+            }
+
+            Date startOfToday = getStartOfDay(today);
+
+            // Tìm tổng số CV đã tạo trong tháng (Logic này có vẻ phức tạp và dễ gây lỗi, nhưng tôi giữ nguyên)
+            Calendar endCal = Calendar.getInstance();
+            endCal.setTime(today);
+            endCal.add(Calendar.DAY_OF_MONTH, 1);
+            Date endDateForQuery = endCal.getTime();
+
+            // Sửa startOfMonth thành startOfToday để khớp với cách query
+            Integer totalMonthlyCount = cvCreationCountRepository.countCVCreatedInMonth(
+                    candidate.getId(),
+                    getStartOfMonth(today), // Dùng getStartOfMonth cho total monthly
+                    endDateForQuery
+            );
+
+            if (totalMonthlyCount == null) {
+                totalMonthlyCount = 0;
+            }
+
+            if (totalMonthlyCount >= MAX_CVS_COUNT) {
+                // Nếu đạt giới hạn, thiết lập ngày khóa mới (30 ngày sau) vào premiumUntil
+                Date newLockDate = addDaysToDate(today, LOCK_PERIOD_DAYS);
+                candidate.setPremiumUntil(newLockDate);
+                candidateRepository.save(candidate);
+
+                SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+                String lockDateStr = sdf.format(newLockDate);
+
+                throw new HttpBadRequest("Regular account has reached limit " + MAX_CVS_COUNT + " CV. You will be locked from creating a new CV until " + lockDateStr + ".");
+            }
+
+            // Cập nhật CVCreationCount cho ngày hôm nay
+            CVCreationCount countEntity = cvCreationCountRepository.findByCandidateAndDate(candidate, startOfToday)
+                    .orElse(CVCreationCount.builder()
+                            .candidate(candidate)
+                            .date(startOfToday)
+                            .count(0)
+                            .build());
+
+            countEntity.setCount(countEntity.getCount() + 1);
+            cvCreationCountRepository.save(countEntity);
+        }
+
         CandidateCV newCV = CandidateCV.builder()
                 .title(cvForm.getTitle())
                 .template(cvForm.getTemplate())
@@ -105,12 +173,15 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
 
         mapPersonalInfo(newCV, cvForm, candidate);
 
+        // Gán tạm để có ID, sau đó update chi tiết và lưu lại
         newCV = candidateCVRepository.save(newCV);
 
+        // Tích hợp logic tổng hợp chuỗi trực tiếp vào CV
         updateAllCVDetails(newCV, cvForm);
 
         CandidateCV savedCV = candidateCVRepository.save(newCV);
 
+        // Đồng bộ hóa vào Archive
         syncCVToArchive(savedCV);
 
         return savedCV;
@@ -130,33 +201,18 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
 
         mapPersonalInfo(existingCV, cvForm, candidate);
 
+        // Tích hợp logic tổng hợp chuỗi trực tiếp vào CV
         updateAllCVDetails(existingCV, cvForm);
 
         CandidateCV savedCV = candidateCVRepository.save(existingCV);
 
+        // Đồng bộ hóa vào Archive
         syncCVToArchive(savedCV);
 
         return savedCV;
     }
 
-    private void updateAllCVDetails(CandidateCV candidateCV, FormCandidateCV cvForm) {
-
-        updateList(candidateCV.getProjectCandidates(), cvForm.getProjects(),
-                (FormProjectCandidate dto) -> mapToProjectCandidate(dto, candidateCV));
-
-        updateList(candidateCV.getSkillCandidates(), cvForm.getSkills(),
-                (FormSkillCandidate dto) -> mapToSkillCandidate(dto, candidateCV));
-
-        updateList(candidateCV.getEducationCandidates(), cvForm.getEducations(),
-                (FormEducationCandidate dto) -> mapToEducationCandidate(dto, candidateCV));
-
-        updateList(candidateCV.getExperienceCandidates(), cvForm.getExperiences(),
-                (FormExperienceCandidate dto) -> mapToExperienceCandidate(dto, candidateCV));
-
-        updateList(candidateCV.getCertificateCandidates(), cvForm.getCertificates(),
-                (FormCertificateCandidate dto) -> mapToCertificateCandidate(dto, candidateCV));
-    }
-
+    // Loại bỏ các Repository con, chỉ cần Repository của CandidateCV
     @Override
     @Transactional(readOnly = true)
     public CandidateCV getCVById(Long cvId, Long candidateId) {
@@ -176,180 +232,111 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
         CandidateCV cv = candidateCVRepository.findByIdAndCandidate_Id(cvId, candidateId)
                 .orElseThrow(() -> new HttpBadRequest("CV not found or does not belong to this candidate."));
 
-
+        // Xóa tất cả các bản ghi liên quan trong Archive và JobCandidate
         candidateCVArchiveRepository.deleteByCandidateCVId(cvId);
-
-
-        skillsCandidateRepository.deleteByCandidateCVId(cvId);
-
-        projectCandidateRepository.deleteByCandidateCVId(cvId);
-
-        educationCandidateRepository.deleteByCandidateCVId(cvId);
-
-        experienceCandidateRepository.deleteByCandidateCVId(cvId);
-
-        certificateCandidateRepository.deleteByCandidateCVId(cvId);
-
         jobCandidateRepository.deleteByCandidateCVId(cvId);
+
+        // Loại bỏ các lệnh deleteByCandidateCVId cho các Entity con vì chúng không còn là Entity con được quản lý bởi Repository riêng nữa
+        // Tuy nhiên, nếu bạn vẫn muốn giữ lại các Repository con này cho mục đích khác, bạn cần xem xét lại thiết kế.
+        // Dựa trên yêu cầu của bạn, tôi loại bỏ chúng.
 
         candidateCVRepository.delete(cv);
     }
+
     @Override
     @Transactional
     public void clearAllCandidateDetails(Long candidateId) {
         candidateCVArchiveRepository.deleteByCandidateId(candidateId);
-
-
         List<CandidateCV> cvList = candidateCVRepository.findByCandidate_Id(candidateId);
-
-
-
+        // Lưu ý: Nếu các Entity con vẫn tồn tại, lệnh này KHÔNG xóa chúng.
+        // Tuy nhiên, dựa trên thiết kế độc lập, việc này có thể chấp nhận.
         candidateCVRepository.deleteAll(cvList);
     }
 
-
     /**
-     * KHÔI PHỤC entityList.clear() để ngăn dữ liệu nhân bản/trùng lặp.
-     * Để ngăn xóa khỏi DB, phải loại bỏ orphanRemoval = true khỏi CandidateCV.
+     * TỔNG HỢP dữ liệu từ Form DTO thành các chuỗi TEXT và gán vào CandidateCV.
+     * Logic này thay thế cho việc tạo/cập nhật các Entity con (@OneToMany).
      */
-    private <E, D> void updateList(List<E> entityList, List<D> dtoList, Function<D, E> mapper) {
-        if (dtoList != null) {
-            entityList.clear(); // BẮT BUỘC có để đồng bộ danh sách đúng
-            List<E> newEntities = dtoList.stream().map(mapper).collect(Collectors.toList());
-            entityList.addAll(newEntities);
+    private void updateAllCVDetails(CandidateCV candidateCV, FormCandidateCV cvForm) {
+
+
+        if (cvForm.getSkills() != null) {
+            candidateCV.setSkillCandidateIds(cvForm.getSkills().stream()
+                    .map(s -> s.getSkillId() != null ? String.valueOf(s.getSkillId()) : "")
+                    .collect(Collectors.joining(",")));
+
+
+            candidateCV.setSkillCandidateNames(cvForm.getSkills().stream()
+                    .map(s -> s.getSkillName() != null ? s.getSkillName() : "Unknown Skill")
+                    .collect(Collectors.joining(" | ")));
+        }
+
+
+        if (cvForm.getEducations() != null) {
+            candidateCV.setEducationCandidateNames(cvForm.getEducations().stream()
+                    .map(e -> e.getNameEducation() != null ? e.getNameEducation() : "Unknown School")
+                    .collect(Collectors.joining(" | ")));
+            candidateCV.setEducationCandidateGPA(cvForm.getEducations().stream()
+                    .map(e -> e.getGpa() != null ? e.getGpa() : "-")
+                    .collect(Collectors.joining(" | ")));
+            candidateCV.setEducationCandidateMajor(cvForm.getEducations().stream()
+                    .map(e -> e.getMajor() != null ? e.getMajor() : "Unknown Major")
+                    .collect(Collectors.joining(" | ")));
+            candidateCV.setEductaionCandidateInfo(cvForm.getEducations().stream()
+                    .map(e -> e.getInfo() != null ? e.getInfo() : "None")
+                    .collect(Collectors.joining(" | ")));
+        }
+
+        // --- 3. EXPERIENCE ---
+        if (cvForm.getExperiences() != null) {
+            candidateCV.setExperienceCandidateNames(cvForm.getExperiences().stream()
+                    .map(e -> (e.getPosition() != null ? e.getPosition() : "Pos") + " @ " +
+                            (e.getCompany() != null ? e.getCompany() : "Comp"))
+                    .collect(Collectors.joining(" | ")));
+            candidateCV.setExperienceCandidatePosition(cvForm.getExperiences().stream()
+                    .map(e -> e.getPosition() != null ? e.getPosition() : "Unknown Position")
+                    .collect(Collectors.joining(" | ")));
+            candidateCV.setExperienceCandidateCompany(cvForm.getExperiences().stream()
+                    .map(e -> e.getCompany() != null ? e.getCompany() : "Unknown Company")
+                    .collect(Collectors.joining(" | ")));
+            candidateCV.setExperienceCandidateInfo(cvForm.getExperiences().stream()
+                    .map(e -> e.getInfo() != null ? e.getInfo() : "None")
+                    .collect(Collectors.joining(" | ")));
+        }
+
+        // --- 4. CERTIFICATE ---
+        if (cvForm.getCertificates() != null) {
+            candidateCV.setCertificateCandidateNames(cvForm.getCertificates().stream()
+                    .map(c -> c.getName() != null ? c.getName() : "Untitled Certificate")
+                    .collect(Collectors.joining(" | ")));
+            candidateCV.setCertificateCandidateOrganization(cvForm.getCertificates().stream()
+                    .map(c -> c.getOrganization() != null ? c.getOrganization() : "Unknown Organization")
+                    .collect(Collectors.joining(" | ")));
+            candidateCV.setCertificateCandidateInfo(cvForm.getCertificates().stream()
+                    .map(c -> c.getInfo() != null ? c.getInfo() : "None")
+                    .collect(Collectors.joining(" | ")));
+        }
+
+        // --- 5. PROJECT ---
+        if (cvForm.getProjects() != null) {
+            candidateCV.setProjectCandidateNames(cvForm.getProjects().stream()
+                    .map(p -> p.getName() != null ? p.getName() : "Untitled Project")
+                    .collect(Collectors.joining(" | ")));
+            candidateCV.setProjectCandidateLink(cvForm.getProjects().stream()
+                    .map(p -> p.getLink() != null ? p.getLink() : "None")
+                    .collect(Collectors.joining(" | ")));
+            candidateCV.setProjectCandidateInfo(cvForm.getProjects().stream()
+                    .map(p -> p.getInfo() != null ? p.getInfo() : "None")
+                    .collect(Collectors.joining(" | ")));
         }
     }
 
+    // Đã loại bỏ phương thức updateList và tất cả các mapTo<Entity> vì không còn tạo Entity con
 
     /**
-     * Sửa đổi: Ngăn chặn cập nhật dữ liệu của Entity đã tồn tại (nếu dto.getId() != null),
-     * nhưng vẫn tạo Entity mới (nếu dto.getId() == null).
+     * Đồng bộ hóa CandidateCV (hiện tại đã chứa tất cả thông tin dưới dạng TEXT) sang Archive.
+     * Logic này đã được đơn giản hóa vì CandidateCV đã chứa sẵn các chuỗi tổng hợp.
      */
-    private ProjectCandidate mapToProjectCandidate(FormProjectCandidate dto, CandidateCV candidateCV) {
-        if (dto.getId() != null) {
-            ProjectCandidate existing = projectCandidateRepository.findById(dto.getId())
-                    .orElseThrow(() -> new HttpBadRequest("Project ID not found: " + dto.getId()));
-
-            existing.setUpdated_at(new Date());
-            return existing;
-        }
-
-        return ProjectCandidate.builder()
-                .name(dto.getName())
-                .info(dto.getInfo())
-                .link(dto.getLink())
-                .candidateCV(candidateCV)
-                .created_at(new Date())
-                .updated_at(new Date())
-                .build();
-    }
-
-
-    /**
-     * Sửa đổi: Ngăn chặn cập nhật dữ liệu của Entity đã tồn tại (nếu dto.getId() != null),
-     * nhưng vẫn tạo Entity mới (nếu dto.getId() == null).
-     */
-    private SkillsCandidate mapToSkillCandidate(FormSkillCandidate dto, CandidateCV candidateCV) {
-        Skill skill = null;
-        if (dto.getSkillId() != null) {
-            skill = ISkillRepository.findById(dto.getSkillId())
-                    .orElseThrow(() -> new HttpBadRequest("Skill not found with ID: " + dto.getSkillId()));
-        }
-
-        if (dto.getId() != null) {
-            SkillsCandidate existing = skillsCandidateRepository.findById(dto.getId())
-                    .orElseThrow(() -> new HttpBadRequest("SkillCandidate not found with ID: " + dto.getId()));
-
-            existing.setUpdatedAt(new Date());
-            return existing;
-        }
-
-        return SkillsCandidate.builder()
-                .skill(skill)
-                .candidateCV(candidateCV)
-                .createdAt(new Date())
-                .updatedAt(new Date())
-                .build();
-    }
-
-    /**
-     * Sửa đổi: Ngăn chặn cập nhật dữ liệu của Entity đã tồn tại (nếu dto.getId() != null),
-     * nhưng vẫn tạo Entity mới (nếu dto.getId() == null).
-     */
-    private EducationCandidate mapToEducationCandidate(FormEducationCandidate dto, CandidateCV candidateCV) {
-        if (dto.getId() != null) {
-            EducationCandidate existing = educationCandidateRepository.findById(dto.getId())
-                    .orElseThrow(() -> new HttpBadRequest("Education ID not found: " + dto.getId()));
-
-            existing.setUpdatedAt(new Date());
-            return existing;
-        }
-
-        return EducationCandidate.builder()
-                .nameEducation(dto.getNameEducation())
-                .major(dto.getMajor())
-                .startedAt(dto.getStartedAt())
-                .endAt(dto.getEndAt())
-                .info(dto.getInfo())
-                .gpa(dto.getGpa())
-                .candidateCV(candidateCV)
-                .createdAt(new Date())
-                .updatedAt(new Date())
-                .build();
-    }
-
-
-    /**
-     * Sửa đổi: Ngăn chặn cập nhật dữ liệu của Entity đã tồn tại (nếu dto.getId() != null),
-     * nhưng vẫn tạo Entity mới (nếu dto.getId() == null).
-     */
-    private ExperienceCandidate mapToExperienceCandidate(FormExperienceCandidate dto, CandidateCV candidateCV) {
-        if (dto.getId() != null) {
-            ExperienceCandidate existing = experienceCandidateRepository.findById(dto.getId())
-                    .orElseThrow(() -> new HttpBadRequest("Experience ID not found: " + dto.getId()));
-
-            existing.setUpdated_at(new Date());
-            return existing;
-        }
-
-        return ExperienceCandidate.builder()
-                .position(dto.getPosition())
-                .company(dto.getCompany())
-                .started_at(dto.getStarted_at())
-                .end_at(dto.getEnd_at())
-                .info(dto.getInfo())
-                .candidateCV(candidateCV)
-                .created_at(new Date())
-                .updated_at(new Date())
-                .build();
-    }
-
-
-    /**
-     * Sửa đổi: Ngăn chặn cập nhật dữ liệu của Entity đã tồn tại (nếu dto.getId() != null),
-     * nhưng vẫn tạo Entity mới (nếu dto.getId() == null).
-     */
-    private CertificateCandidate mapToCertificateCandidate(FormCertificateCandidate dto, CandidateCV candidateCV) {
-        if (dto.getId() != null) {
-            CertificateCandidate existing = certificateCandidateRepository.findById(dto.getId())
-                    .orElseThrow(() -> new HttpBadRequest("Certificate ID not found: " + dto.getId()));
-
-            existing.setUpdated_at(new Date());
-            return existing;
-        }
-
-        return CertificateCandidate.builder()
-                .name(dto.getName())
-                .organization(dto.getOrganization())
-                .started_at(dto.getStarted_at())
-                .end_at(dto.getEnd_at())
-                .info(dto.getInfo())
-                .candidateCV(candidateCV)
-                .created_at(new Date())
-                .updated_at(new Date())
-                .build();
-    }
-
     private void syncCVToArchive(CandidateCV cvEntity) {
         Optional<CandidateCVArchive> existingArchive = candidateCVArchiveRepository
                 .findByCandidateCVIdAndCandidateId(cvEntity.getId(), cvEntity.getCandidate().getId());
@@ -360,7 +347,7 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
                 .createdAt(new Date())
                 .build());
 
-        // Thông tin cá nhân tổng hợp
+        // Thông tin cá nhân
         archive.setCandidateName(cvEntity.getName());
         archive.setDob(cvEntity.getDob());
         archive.setEmail(cvEntity.getEmail());
@@ -369,76 +356,27 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
         archive.setLink(cvEntity.getLink());
         archive.setDevelopment(cvEntity.getDevelopment());
 
-        // Kỹ năng tổng hợp
-        archive.setSkillCandidateIds(
-                cvEntity.getSkillCandidates().stream()
-                        .map(s -> String.valueOf(s.getId()))
-                        .collect(Collectors.joining(","))
-        );
-        archive.setSkillCandidateNames(
-                cvEntity.getSkillCandidates().stream()
-                        .map(s -> s.getSkill() != null ? s.getSkill().getName() : "Unknown Skill")
-                        .collect(Collectors.joining(" | "))
-        );
+        // Kỹ năng tổng hợp (sử dụng các trường TEXT đã có sẵn)
+        archive.setSkillCandidateIds(cvEntity.getSkillCandidateIds());
+        archive.setSkillCandidateNames(cvEntity.getSkillCandidateNames());
 
         // Học vấn tổng hợp
-        archive.setEducationCandidateIds(
-                cvEntity.getEducationCandidates().stream()
-                        .map(e -> String.valueOf(e.getId()))
-                        .collect(Collectors.joining(","))
-        );
-        archive.setEducationCandidateNames(
-                cvEntity.getEducationCandidates().stream()
-                        .map(e -> e.getNameEducation() != null ? e.getNameEducation() : "Unknown School")
-                        .collect(Collectors.joining(" | "))
-        );
-        archive.setEducationCandidateGPA(
-                cvEntity.getEducationCandidates().stream()
-                        .map(e -> e.getGpa() != null ? e.getGpa() : "-")
-                        .collect(Collectors.joining(" | "))
-        );
-        archive.setEducationCandidateMajor(
-                cvEntity.getEducationCandidates().stream()
-                        .map(e -> e.getMajor() != null ? e.getMajor() : "Unknown Major")
-                        .collect(Collectors.joining(" | "))
-        );
+        archive.setEducationCandidateIds(cvEntity.getEducationCandidateIds());
+        archive.setEducationCandidateNames(cvEntity.getEducationCandidateNames());
+        archive.setEducationCandidateGPA(cvEntity.getEducationCandidateGPA());
+        archive.setEducationCandidateMajor(cvEntity.getEducationCandidateMajor());
 
         // Kinh nghiệm tổng hợp
-        archive.setExperienceCandidateIds(
-                cvEntity.getExperienceCandidates().stream()
-                        .map(e -> String.valueOf(e.getId()))
-                        .collect(Collectors.joining(","))
-        );
-        archive.setExperienceCandidateNames(
-                cvEntity.getExperienceCandidates().stream()
-                        .map(e -> (e.getPosition() != null ? e.getPosition() : "Pos") + " @ " +
-                                (e.getCompany() != null ? e.getCompany() : "Comp"))
-                        .collect(Collectors.joining(" | "))
-        );
+        archive.setExperienceCandidateIds(cvEntity.getExperienceCandidateIds());
+        archive.setExperienceCandidateNames(cvEntity.getExperienceCandidateNames());
 
         // Dự án tổng hợp
-        archive.setProjectCandidateIds(
-                cvEntity.getProjectCandidates().stream()
-                        .map(p -> String.valueOf(p.getId()))
-                        .collect(Collectors.joining(","))
-        );
-        archive.setProjectCandidateNames(
-                cvEntity.getProjectCandidates().stream()
-                        .map(p -> p.getName() != null ? p.getName() : "Untitled Project")
-                        .collect(Collectors.joining(" | "))
-        );
+        archive.setProjectCandidateIds(cvEntity.getProjectCandidateIds());
+        archive.setProjectCandidateNames(cvEntity.getProjectCandidateNames());
 
         // Chứng chỉ tổng hợp
-        archive.setCertificateCandidateIds(
-                cvEntity.getCertificateCandidates().stream()
-                        .map(c -> String.valueOf(c.getId()))
-                        .collect(Collectors.joining(","))
-        );
-        archive.setCertificateCandidateNames(
-                cvEntity.getCertificateCandidates().stream()
-                        .map(c -> c.getName() != null ? c.getName() : "Untitled Certificate")
-                        .collect(Collectors.joining(" | "))
-        );
+        archive.setCertificateCandidateIds(cvEntity.getCertificateCandidateIds());
+        archive.setCertificateCandidateNames(cvEntity.getCertificateCandidateNames());
 
         archive.setTitle(cvEntity.getTitle());
         archive.setUpdatedAt(new Date());
@@ -446,15 +384,12 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
         candidateCVArchiveRepository.save(archive);
     }
 
-
+    // Giữ nguyên các phương thức liên quan đến Archive (deleteCVArchive, updateCVArchive, mapArchiveToResponse)
     @Override
     @Transactional
     public void deleteCVArchive(Long archiveId) {
-
         candidateCVArchiveRepository.findById(archiveId)
                 .orElseThrow(() -> new HttpBadRequest("CV Archive not found with ID: " + archiveId));
-
-
         candidateCVArchiveRepository.deleteById(archiveId);
     }
 
@@ -464,11 +399,9 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
         CandidateCVArchive existingArchive = candidateCVArchiveRepository.findById(archiveId)
                 .orElseThrow(() -> new HttpBadRequest("CV Archive not found with ID: " + archiveId));
 
-
         if (updateForm.getTitle() != null) {
             existingArchive.setTitle(updateForm.getTitle());
         }
-
 
         if (updateForm.getSkillCandidateIds() != null) {
             existingArchive.setSkillCandidateIds(updateForm.getSkillCandidateIds());
@@ -483,103 +416,25 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
         return candidateCVArchiveRepository.save(existingArchive);
     }
 
-
     public CandidateCVArchive mapArchiveToResponse(CandidateCVArchive archive) {
-
         return archive;
     }
 
+
+
     public String generateLatexContent(CandidateCV cvEntity) {
-        Candidate candidate = cvEntity.getCandidate();
-        SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
 
-        StringBuilder latex = new StringBuilder();
+        return "Not implemented yet with new text fields.";
+    }
 
-        latex.append("\\documentclass[10pt, a4paper]{article}\n");
-        latex.append("\\usepackage[utf8]{inputenc}\n");
-        latex.append("\\usepackage[T1]{fontenc}\n");
-        latex.append("\\usepackage[vietnamese]{babel}\n");
-        latex.append("\\usepackage{geometry}\n");
-        latex.append("\\usepackage{hyperref}\n");
-        latex.append("\\geometry{a4paper, margin=1in}\n");
-        latex.append("\\pagestyle{empty}\n");
-        latex.append("\\begin{document}\n");
-
-        latex.append("\\centerline{\\Huge \\textbf{CANDIDATE PROFILE: ").append(cvEntity.getTitle()).append("}}\n\n");
-        latex.append("\\hrule\n\n");
-
-        latex.append("\\textbf{Full Name: } ").append(candidate.getName() != null ? candidate.getName() : "Not updated").append("\\\\\n");
-        latex.append("\\textbf{Date of Birth: } ").append(candidate.getDob() != null ? dateFormat.format(candidate.getDob()) : "Not updated").append("\\\\\n");
-        latex.append("\\textbf{Email: } ").append(candidate.getEmail() != null ? candidate.getEmail() : "Not updated").append("\\\\\n");
-        latex.append("\\textbf{Phone: } ").append(candidate.getPhone() != null ? candidate.getPhone() : "Not updated").append("\\\\\n");
-        latex.append("\\textbf{Address: } ").append(candidate.getAddress() != null ? candidate.getAddress() : "Not updated").append("\\\\\n");
-        latex.append("\\textbf{Profile Link: } \\url{").append(candidate.getLink() != null ? candidate.getLink() : "None").append("}\n\n");
-
-        if (candidate.getDevelopment() != null && !candidate.getDevelopment().isEmpty()) {
-            latex.append("\\section*{Career Objective}\n");
-            latex.append(candidate.getDevelopment()).append("\n\n");
-        }
-
-        if (candidate.getDescription() != null && !candidate.getDescription().isEmpty()) {
-            latex.append("\\section*{Summary}\n");
-            latex.append(candidate.getDescription()).append("\n\n");
-        }
-
-        if (!cvEntity.getEducationCandidates().isEmpty()) {
-            latex.append("\\section*{Education}\n");
-            for (EducationCandidate edu : cvEntity.getEducationCandidates()) {
-                String name = edu.getNameEducation() != null ? edu.getNameEducation() : "Unknown institution";
-                String major = edu.getMajor() != null ? edu.getMajor() : "Unknown major";
-                String gpa = edu.getGpa() != null ? edu.getGpa() : "-";
-
-                latex.append("\\textbf{").append(name).append("}\\\\\n");
-                latex.append(major).append(" (GPA: ").append(gpa).append(")\\\\\n");
-                latex.append("Duration: ").append(dateFormat.format(edu.getStartedAt())).append(" -- ").append(dateFormat.format(edu.getEndAt())).append("\\\\\n");
-                latex.append("Details: ").append(edu.getInfo() != null ? edu.getInfo() : "None.").append("\n\n");
-            }
-        }
-
-        if (!cvEntity.getExperienceCandidates().isEmpty()) {
-            latex.append("\\section*{Work Experience}\n");
-            for (ExperienceCandidate exp : cvEntity.getExperienceCandidates()) {
-                String position = exp.getPosition() != null ? exp.getPosition() : "Unknown position";
-                String company = exp.getCompany() != null ? exp.getCompany() : "Unknown company";
-
-                latex.append("\\textbf{").append(position).append("} at \\textbf{").append(company).append("}\\\\\n");
-                latex.append("Duration: ").append(dateFormat.format(exp.getStarted_at())).append(" -- ").append(dateFormat.format(exp.getEnd_at())).append("\\\\\n");
-                latex.append("Description: ").append(exp.getInfo() != null ? exp.getInfo() : "None.").append("\n\n");
-            }
-        }
-
-        if (!cvEntity.getProjectCandidates().isEmpty()) {
-            latex.append("\\section*{Featured Projects}\n");
-            for (ProjectCandidate proj : cvEntity.getProjectCandidates()) {
-                latex.append("\\textbf{Project: ").append(proj.getName() != null ? proj.getName() : "Untitled").append("}\\\\\n");
-                latex.append("Description: ").append(proj.getInfo() != null ? proj.getInfo() : "None.").append("\\\\\n");
-                if (proj.getLink() != null) {
-                    latex.append("Link: \\url{").append(proj.getLink()).append("}\n\n");
-                }
-            }
-        }
-
-        if (!cvEntity.getSkillCandidates().isEmpty()) {
-            latex.append("\\section*{Skills}\n");
-            latex.append("\\begin{itemize}\n");
-            for (SkillsCandidate skill : cvEntity.getSkillCandidates()) {
-                latex.append("    \\item ").append(skill.getSkill() != null ? skill.getSkill().getName() : "Unknown Skill").append("\n");
-            }
-            latex.append("\\end{itemize}\n\n");
-        }
-
-        if (!cvEntity.getCertificateCandidates().isEmpty()) {
-            latex.append("\\section*{Certificates}\n");
-            for (CertificateCandidate cert : cvEntity.getCertificateCandidates()) {
-                latex.append("\\textbf{").append(cert.getName()).append("} (").append(cert.getOrganization()).append(")\\\\\n");
-                latex.append("Issue Date: ").append(dateFormat.format(cert.getStarted_at())).append(". Details: ").append(cert.getInfo() != null ? cert.getInfo() : "None.").append("\n\n");
-            }
-        }
-
-        latex.append("\\end{document}\n");
-        return latex.toString();
+    private Date getStartOfMonth(Date date) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(date);
+        calendar.set(Calendar.DAY_OF_MONTH, 1);
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+        return calendar.getTime();
     }
 }

@@ -121,19 +121,5 @@ public class CandidateCVController {
         return ResponseEntity.noContent().build();
     }
 
-    @PutMapping("/archive/{archiveId}")
-    public ResponseEntity<ResponseWrapper<CandidateCVArchive>> updateCVArchive(
-            @PathVariable Long archiveId,
-            @RequestBody FormCandidateCVArchive updateForm) {
 
-        CandidateCVArchive updatedArchive = candidateCVService.updateCVArchive(archiveId, updateForm);
-
-        ResponseWrapper<CandidateCVArchive> response = ResponseWrapper.<CandidateCVArchive>builder()
-                .status(HttpStatus.OK)
-                .code(HttpStatus.OK.value())
-                .data(updatedArchive)
-                .build();
-
-        return ResponseEntity.ok(response);
-    }
 }
