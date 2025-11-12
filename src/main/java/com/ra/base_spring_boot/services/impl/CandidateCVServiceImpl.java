@@ -169,7 +169,7 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
                 throw new HttpBadRequest("Regular account has reached limit" + MAX_CVS_COUNT + " CV. You will be locked from creating a new CV until the end of the day. " + lockDateStr + ".");
             }
 
-            // 4. Nếu chưa đạt giới hạn, tăng bộ đếm ngày (tiếp tục đếm)
+
             Date startOfToday = getStartOfDay(today);
             CVCreationCount countEntity = cvCreationCountRepository.findByCandidateAndDate(candidate, startOfToday)
                     .orElse(CVCreationCount.builder()
@@ -181,9 +181,7 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
             countEntity.setCount(countEntity.getCount() + 1);
             cvCreationCountRepository.save(countEntity);
         }
-        // --- KẾT THÚC LOGIC KHÓA LĂN ---
 
-        // ... (Phần còn lại của logic tạo CV)
         CandidateCV newCV = CandidateCV.builder()
                 .title(cvForm.getTitle())
                 .template(cvForm.getTemplate())
@@ -322,9 +320,10 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
             existing.setUpdated_at(new Date());
             return existing;
         }
-
+        Candidate candidate = candidateCV.getCandidate();
         return ProjectCandidate.builder()
                 .name(dto.getName())
+                .candidate(candidate)
                 .info(dto.getInfo())
                 .link(dto.getLink())
                 .candidateCV(candidateCV)
@@ -352,9 +351,10 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
             existing.setUpdatedAt(new Date());
             return existing;
         }
-
+        Candidate candidate = candidateCV.getCandidate();
         return SkillsCandidate.builder()
                 .skill(skill)
+                .candidate(candidate)
                 .candidateCV(candidateCV)
                 .createdAt(new Date())
                 .updatedAt(new Date())
@@ -373,9 +373,11 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
             existing.setUpdatedAt(new Date());
             return existing;
         }
+        Candidate candidate = candidateCV.getCandidate();
 
         return EducationCandidate.builder()
                 .nameEducation(dto.getNameEducation())
+                .candidate(candidate)
                 .major(dto.getMajor())
                 .startedAt(dto.getStartedAt())
                 .endAt(dto.getEndAt())
@@ -400,8 +402,9 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
             existing.setUpdated_at(new Date());
             return existing;
         }
-
+        Candidate candidate = candidateCV.getCandidate();
         return ExperienceCandidate.builder()
+                .candidate(candidate)
                 .position(dto.getPosition())
                 .company(dto.getCompany())
                 .started_at(dto.getStarted_at())
@@ -426,9 +429,10 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
             existing.setUpdated_at(new Date());
             return existing;
         }
-
+        Candidate candidate = candidateCV.getCandidate();
         return CertificateCandidate.builder()
                 .name(dto.getName())
+                .candidate(candidate)
                 .organization(dto.getOrganization())
                 .started_at(dto.getStarted_at())
                 .end_at(dto.getEnd_at())
