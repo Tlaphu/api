@@ -8,8 +8,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-public interface ICandidateRepository extends JpaRepository<Candidate, Long> {
 
+public interface ICandidateRepository extends JpaRepository<Candidate, Long> {
 
     boolean existsByEmail(String email);
 
@@ -21,11 +21,18 @@ public interface ICandidateRepository extends JpaRepository<Candidate, Long> {
     Optional<Candidate> findByVerificationToken(String verificationToken);
 
     Optional<Candidate> findByResetToken(String resetToken);
+
     @Query("SELECT CASE WHEN COUNT(c) > 0 THEN TRUE ELSE FALSE END FROM Candidate c JOIN c.favoriteJobs j WHERE c.id = :candidateId AND j.id = :jobId")
     boolean isJobFavorite(@Param("candidateId") Long candidateId, @Param("jobId") Long jobId);
+
     @Query("SELECT c FROM Candidate c LEFT JOIN FETCH c.favoriteJobs WHERE c.email = ?1")
     Optional<Candidate> findByEmailWithFavoriteJobs(String email);
+
     @Query("SELECT c FROM Candidate c LEFT JOIN FETCH c.favoriteCompanies WHERE c.id = :id")
     Optional<Candidate> findByIdWithFavoriteCompanies(@Param("id") Long id);
-    Optional<Object> findByEmailWithFavoriteCompanies(String candidateEmail);
+
+
+    @Query("SELECT c FROM Candidate c LEFT JOIN FETCH c.favoriteCompanies WHERE c.email = :candidateEmail")
+    Optional<Candidate> findByEmailWithFavoriteCompanies(@Param("candidateEmail") String candidateEmail);
+
 }
