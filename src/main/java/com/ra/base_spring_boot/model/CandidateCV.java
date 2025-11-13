@@ -25,7 +25,8 @@ public class CandidateCV {
     private String template;
     private String title;
 
-
+    @Column(name = "candidate_title")
+    private String candidateTitle;
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "candidate_id", nullable = false)
     @JsonIgnore

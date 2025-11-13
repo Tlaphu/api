@@ -21,6 +21,7 @@ public class Company {
     private Long id;
     private String name;
     private String email;
+    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "typeCompany_id")
     private TypeCompany typeCompany;

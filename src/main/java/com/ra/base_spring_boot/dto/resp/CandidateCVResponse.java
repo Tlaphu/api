@@ -20,7 +20,7 @@ public class CandidateCVResponse {
     private String development;
     private String template;
     private String title;
-
+    private String candidateTitle;
     private List<String> projects;
     private List<String> skills;
     private List<String> educations;

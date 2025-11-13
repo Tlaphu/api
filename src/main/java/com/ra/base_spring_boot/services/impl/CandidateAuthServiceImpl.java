@@ -200,7 +200,7 @@ public class CandidateAuthServiceImpl implements ICandidateAuthService {
         candidate.setTitle(form.getTitle());
         candidate.setAddress(form.getAddress());
         candidate.setDob(form.getDob());
-        candidate.setTitle(form.getTitle());
+
         candidate.setGender(form.getGender());
         candidate.setLink(form.getLink());
         candidate.setUpdated_at(new Date());

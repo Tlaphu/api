@@ -21,7 +21,8 @@ public class CandidateCVArchive {
     // --- THÔNG TIN CÁ NHÂN (Giữ nguyên) ---
     @Column(name = "candidate_name", nullable = false)
     private String candidateName;
-
+    @Column(name = "candidate_title")
+    private String candidateTitle;
     @Temporal(TemporalType.DATE)
     @Column(name = "dob")
     private Date dob;

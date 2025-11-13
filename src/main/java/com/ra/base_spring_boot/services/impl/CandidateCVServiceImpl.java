@@ -52,7 +52,7 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
                 .link(candidate.getLink())
                 .description(candidate.getDescription())
                 .development(candidate.getDevelopment())
-
+                .candidateTitle(candidate.getTitle())
                 .projects(projectNames)
                 .skills(skillNames)
                 .educations(educationNames)
@@ -98,6 +98,7 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
         cvEntity.setLink(cvForm.getLink() != null ? cvForm.getLink() : candidate.getLink());
         cvEntity.setDescription(cvForm.getDescription() != null ? cvForm.getDescription() : candidate.getDescription());
         cvEntity.setDevelopment(cvForm.getDevelopment() != null ? cvForm.getDevelopment() : candidate.getDevelopment());
+        cvEntity.setCandidateTitle(candidate.getTitle());
     }
 
 
@@ -355,7 +356,7 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
         archive.setAddress(cvEntity.getAddress());
         archive.setLink(cvEntity.getLink());
         archive.setDevelopment(cvEntity.getDevelopment());
-
+        archive.setCandidateTitle(cvEntity.getCandidateTitle());
         // Kỹ năng tổng hợp (sử dụng các trường TEXT đã có sẵn)
         archive.setSkillCandidateIds(cvEntity.getSkillCandidateIds());
         archive.setSkillCandidateNames(cvEntity.getSkillCandidateNames());
