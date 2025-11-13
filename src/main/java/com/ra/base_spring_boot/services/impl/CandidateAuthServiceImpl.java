@@ -13,8 +13,10 @@ import com.ra.base_spring_boot.repository.ICompanyRepository;
 import com.ra.base_spring_boot.security.jwt.JwtProvider;
 import com.ra.base_spring_boot.security.principle.MyUserDetails;
 import com.ra.base_spring_boot.services.ICandidateAuthService;
+import com.ra.base_spring_boot.event.NotificationEvent;
 import com.ra.base_spring_boot.services.IRoleService;
 import com.ra.base_spring_boot.services.EmailService;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -24,6 +26,7 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -38,6 +41,7 @@ public class CandidateAuthServiceImpl implements ICandidateAuthService {
     private final AuthenticationManager candidateAuthManager;
     private final JwtProvider jwtProvider;
     private final EmailService emailService;
+    private final ApplicationEventPublisher eventPublisher;
     private static final String BASE_URL = "http://localhost:8080/api/v1/auth/candidate";
 
     @Override
@@ -266,7 +270,15 @@ public class CandidateAuthServiceImpl implements ICandidateAuthService {
 
         candidateRepository.save(candidate);
         companyRepository.save(company);
-
+        eventPublisher.publishEvent(new NotificationEvent(
+                this,
+                "Theo dõi công ty",
+                "Bạn vừa theo dõi công ty " + company.getName(),
+                "FAVORITE_ADD",
+                candidate.getId(),
+                "CANDIDATE",
+                "/company/" + company.getId()
+        ));
     }
 
     @Transactional

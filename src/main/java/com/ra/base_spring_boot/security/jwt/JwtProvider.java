@@ -166,4 +166,30 @@
             Admin admin = getCurrentAdmin();
             return admin != null ? admin.getEmail() : null;
         }
+        public Long getCurrentUserId() {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication != null && authentication.isAuthenticated()) {
+                Object principal = authentication.getPrincipal();
+                if (principal instanceof MyUserDetails userDetails) {
+                    return userDetails.getCandidate().getId();
+                } else if (principal instanceof MyCompanyDetails companyDetails) {
+                    return companyDetails.getAccountCompany().getId();
+                } else if (principal instanceof MyAdminDetails adminDetails) {
+                    return adminDetails.getAdmin().getId();
+                }
+            }
+            return null;
+        }
+
+        public String getCurrentUserType() {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication != null && authentication.isAuthenticated()) {
+                Object principal = authentication.getPrincipal();
+                if (principal instanceof MyUserDetails) return "CANDIDATE";
+                if (principal instanceof MyCompanyDetails) return "COMPANY";
+                if (principal instanceof MyAdminDetails) return "ADMIN";
+            }
+            return null;
+        }
+
     }
