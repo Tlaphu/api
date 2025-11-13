@@ -162,6 +162,16 @@ public class CompanyAuthServiceImpl implements ICompanyAuthService {
         accountCompany.setResetToken(null);
         accountCompanyRepository.save(accountCompany);
     }
+    @Override
+    public AccountCompanyResponse getCurrentCompanyInfo() {
+        AccountCompany accountCompany = jwtProvider.getCurrentAccountCompany();
+        if (accountCompany == null) {
+            throw new HttpBadRequest("Unauthorized: No company account found in token");
+        }
+
+        return toAccountResponse(accountCompany);
+    }
+
 
     @Override
     public String forgotPassword(FormForgotPassword form) {

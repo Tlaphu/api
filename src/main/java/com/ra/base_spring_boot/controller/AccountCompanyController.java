@@ -2,6 +2,7 @@ package com.ra.base_spring_boot.controller;
 
 import com.ra.base_spring_boot.dto.ResponseWrapper;
 import com.ra.base_spring_boot.dto.req.*;
+import com.ra.base_spring_boot.dto.resp.AccountCompanyResponse;
 import com.ra.base_spring_boot.dto.resp.CandidateResponse;
 import com.ra.base_spring_boot.dto.resp.JwtResponse;
 import com.ra.base_spring_boot.services.ICompanyAuthService;
@@ -131,4 +132,21 @@ public class    AccountCompanyController {
                         .build()
         );
     }
+    /**
+     * @apiNote Lấy thông tin tài khoản công ty hiện tại đang đăng nhập
+     */
+    @GetMapping("/me")
+    public ResponseEntity<?> getCurrentCompanyInfo() {
+        AccountCompanyResponse companyInfo = companyAuthService.getCurrentCompanyInfo();
+
+        return ResponseEntity.ok(
+                ResponseWrapper.<AccountCompanyResponse>builder()
+                        .status(HttpStatus.OK)
+                        .code(200)
+                        .data(companyInfo)
+                        .build()
+        );
+    }
+
+
 }

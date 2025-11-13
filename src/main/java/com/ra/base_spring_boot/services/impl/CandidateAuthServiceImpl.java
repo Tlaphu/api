@@ -310,6 +310,7 @@ public class CandidateAuthServiceImpl implements ICandidateAuthService {
                         .addresses(company.getAddresses().stream()
                                 .map(address -> AddressCompanyResponse.builder()
                                         .address(address.getAddress())
+                                        .locationName(String.valueOf(address.getLocation()))
                                         .build()
                                 ).toList()
                         )
