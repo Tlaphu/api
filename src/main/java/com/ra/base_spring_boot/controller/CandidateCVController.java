@@ -12,7 +12,10 @@ import com.ra.base_spring_boot.security.principle.MyUserDetails;
 import com.ra.base_spring_boot.services.ICandidateCVService;
 import com.ra.base_spring_boot.services.impl.CandidateCVServiceImpl;
 import lombok.RequiredArgsConstructor;
+// ⭐ Import cần thiết cho PDF
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -40,7 +43,6 @@ public class CandidateCVController {
         }
         return candidate.getId();
     }
-
 
 
     @PostMapping
@@ -100,18 +102,36 @@ public class CandidateCVController {
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping("/{cvId}/export/latex")
-    public ResponseEntity<String> exportCVToLatex(@PathVariable Long cvId) {
+
+    @GetMapping("/{cvId}/export/pdf")
+    public ResponseEntity<byte[]> exportCVToPdf(@PathVariable Long cvId) {
         Long candidateId = getCurrentCandidateId();
 
+
+        byte[] pdfBytes = candidateCVService.generatePdfFromCV(cvId, candidateId);
+
+
+        if (pdfBytes == null || pdfBytes.length == 0) {
+
+            throw new HttpBadRequest("Failed to generate PDF content.");
+        }
+
         CandidateCV cvEntity = candidateCVService.getCVById(cvId, candidateId);
+        String filename = cvEntity.getTitle().replaceAll("[^a-zA-Z0-9_-]", "") + "_CV.pdf";
 
-        String latexContent = candidateCVServiceImpl.generateLatexContent(cvEntity);
+        HttpHeaders headers = new HttpHeaders();
 
-        return ResponseEntity.ok(latexContent);
+
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("attachment", filename);
+        headers.setContentLength(pdfBytes.length);
+
+        return new ResponseEntity<>(
+                pdfBytes,
+                headers,
+                HttpStatus.OK
+        );
     }
-
-
 
     @DeleteMapping("/archive/{archiveId}")
     public ResponseEntity<?> deleteCVArchive(@PathVariable Long archiveId) {
