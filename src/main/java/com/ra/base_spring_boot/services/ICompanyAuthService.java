@@ -1,6 +1,7 @@
 package com.ra.base_spring_boot.services;
 
 import com.ra.base_spring_boot.dto.req.*;
+import com.ra.base_spring_boot.dto.resp.AccountCompanyResponse;
 import com.ra.base_spring_boot.dto.resp.CandidateResponse;
 import com.ra.base_spring_boot.dto.resp.CompanyResponse;
 import com.ra.base_spring_boot.dto.resp.JwtResponse;
@@ -25,6 +26,8 @@ public interface ICompanyAuthService {
      * Logout company (invalidate JWT token or session)
      */
     void logout(String token);
+
+    AccountCompanyResponse getCurrentCompanyInfo();
 
     /**
      * Handle forgot password via email & role

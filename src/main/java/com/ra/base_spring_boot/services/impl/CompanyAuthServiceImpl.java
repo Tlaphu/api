@@ -23,6 +23,8 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import com.ra.base_spring_boot.model.AccountCompany;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -162,6 +164,16 @@ public class CompanyAuthServiceImpl implements ICompanyAuthService {
         accountCompany.setResetToken(null);
         accountCompanyRepository.save(accountCompany);
     }
+    @Override
+    public AccountCompanyResponse getCurrentCompanyInfo() {
+        AccountCompany accountCompany = jwtProvider.getCurrentAccountCompany();
+        if (accountCompany == null) {
+            throw new HttpBadRequest("Unauthorized: No company account found in token");
+        }
+
+        return toAccountResponse(accountCompany);
+    }
+
 
     @Override
     public String forgotPassword(FormForgotPassword form) {
@@ -240,14 +252,31 @@ public class CompanyAuthServiceImpl implements ICompanyAuthService {
     }
 
     @Override
+    @Transactional
     public List<CompanyResponse> findTop20ByFollower() {
         Pageable topTwenty = PageRequest.of(0, 20);
         List<Company> companies = companyRepository.findAllByOrderByFollowerDesc(topTwenty);
 
         return companies.stream()
-                .map(this::toCompanyResponse)
+                .map(company -> CompanyResponse.builder()
+                        .id(company.getId())
+                        .name(company.getName())
+                        .email(company.getEmail())
+                        .description(company.getDescription())
+                        .logo(company.getLogo())
+                        .follower(company.getFollower())
+                        .totalJobs(companyRepository.countJobsByCompanyId(company.getId()))
+                        .addresses(company.getAddresses().stream()
+                                .map(address -> AddressCompanyResponse.builder()
+                                        .address(address.getAddress())
+                                        .locationName(address.getLocation() != null ? address.getLocation().getName() : null)
+                                        .build())
+                                .collect(Collectors.toList())
+                        )
+                        .build())
                 .collect(Collectors.toList());
     }
+
 
     @Override
     public List<CompanyResponse> findAll() {
