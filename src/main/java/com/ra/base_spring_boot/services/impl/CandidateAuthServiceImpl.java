@@ -260,7 +260,13 @@ public class CandidateAuthServiceImpl implements ICandidateAuthService {
         }
 
         candidate.getFavoriteCompanies().add(company);
+        company.setFollower(
+                (company.getFollower() == null ? 0 : company.getFollower()) + 1
+        );
+
         candidateRepository.save(candidate);
+        companyRepository.save(company);
+
     }
 
     @Transactional
@@ -279,7 +285,11 @@ public class CandidateAuthServiceImpl implements ICandidateAuthService {
         }
 
         candidate.getFavoriteCompanies().remove(company);
+        int currentFollower = company.getFollower() == null ? 0 : company.getFollower();
+        company.setFollower(Math.max(currentFollower - 1, 0));
+
         candidateRepository.save(candidate);
+        companyRepository.save(company);
     }
 
     @Override
@@ -296,6 +306,7 @@ public class CandidateAuthServiceImpl implements ICandidateAuthService {
                         .name(company.getName())
                         .email(company.getEmail())
                         .description(company.getDescription())
+                        .logo(company.getLogo())
                         .addresses(company.getAddresses().stream()
                                 .map(address -> AddressCompanyResponse.builder()
                                         .address(address.getAddress())
