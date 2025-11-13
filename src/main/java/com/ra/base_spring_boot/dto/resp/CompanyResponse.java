@@ -32,4 +32,5 @@ public class CompanyResponse {
     private List<AddressCompanyResponse> addresses;
 
     private String typeCompanyName;
+    private Long totalJobs;
 }

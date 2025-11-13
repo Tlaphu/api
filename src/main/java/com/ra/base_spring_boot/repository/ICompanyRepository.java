@@ -15,5 +15,7 @@ public interface ICompanyRepository extends JpaRepository<Company, Long> {
 
     @Query("SELECT c FROM Company c JOIN c.accounts a WHERE a.id = :accountId")
     Optional<Company> findByAccountId(@Param("accountId") Long accountId);
+    @Query("SELECT COUNT(j) FROM Job j WHERE j.company.id = :companyId")
+    Long countJobsByCompanyId(@Param("companyId") Long companyId);
 
 }

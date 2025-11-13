@@ -296,6 +296,14 @@ public class CandidateAuthServiceImpl implements ICandidateAuthService {
                         .name(company.getName())
                         .email(company.getEmail())
                         .description(company.getDescription())
+                        .addresses(company.getAddresses().stream()
+                                .map(address -> AddressCompanyResponse.builder()
+                                        .address(address.getAddress())
+                                        .build()
+                                ).toList()
+                        )
+                        .totalJobs(companyRepository.countJobsByCompanyId(company.getId()))
+                        .follower(company.getFollower())
                         .build())
                 .collect(Collectors.toSet());
     }
