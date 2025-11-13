@@ -12,4 +12,5 @@ public class FormSkillCandidate {
     private Long skillId;
     private Long levelJobId;
     private String skillName;
+    private String content;
 }

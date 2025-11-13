@@ -2,6 +2,7 @@ package com.ra.base_spring_boot.repository;
 
 import com.ra.base_spring_boot.model.Job;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import java.util.List;
@@ -25,4 +26,7 @@ public interface JobRepository extends JpaRepository<Job, Long> {
     Long countNewActiveJobs(@Param("status") String status, @Param("startDate") Date startDate);
 
     List<Job> findByStatus(String status);
+    @Modifying
+    @Query(value = "DELETE FROM candidate_favorite_jobs WHERE job_id = :jobId", nativeQuery = true)
+    int deleteFavoriteJobsByJobId(@Param("jobId") Long jobId);
 }

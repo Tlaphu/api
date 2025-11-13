@@ -24,4 +24,5 @@ public interface ICandidateCVService {
 
     void deleteCVArchive(Long archiveId);
     CandidateCVArchive updateCVArchive(Long archiveId, FormCandidateCVArchive updateForm);
+    byte[] generatePdfFromCV(Long cvId, Long candidateId);
 }

@@ -46,6 +46,8 @@ public class CandidateCV {
     private String link;
     private String description;
     private String development;
+    private String avatar;
+    private String hobbies;
 
 
     @Column(name = "skill_candidate_ids", columnDefinition = "TEXT")

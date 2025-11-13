@@ -457,6 +457,7 @@ public class JobController {
 
     @PreAuthorize("hasAuthority('ROLE_COMPANY') or hasAuthority('ROLE_ADMIN')")
     @DeleteMapping("/{id}")
+    @Transactional
     public ResponseEntity<?> delete(@PathVariable Long id) {
         Optional<Job> jobOpt = jobRepository.findById(id);
         if (jobOpt.isEmpty()) {
@@ -465,12 +466,13 @@ public class JobController {
 
         Job job = jobOpt.get();
 
+
         AccountCompany currentAccountCompany = companyAuthService.getCurrentAccountCompany();
         if (currentAccountCompany == null) {
             return ResponseEntity.status(403).body("Access denied. Company must be logged in.");
         }
 
-        // Đã sửa: Sử dụng findByAccountId
+
         Optional<Company> currentCompanyOpt = companyRepository.findByAccountId(currentAccountCompany.getId());
 
         if (currentCompanyOpt.isEmpty()) {
@@ -479,6 +481,7 @@ public class JobController {
 
         Company currentCompany = currentCompanyOpt.get();
 
+
         boolean isAdmin = SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
 
@@ -486,7 +489,19 @@ public class JobController {
             return ResponseEntity.status(403).body("Access denied. You can only delete your own job listings.");
         }
 
+
+        if (job.getLevelJobRelations() != null && !job.getLevelJobRelations().isEmpty()) {
+            levelJobRelationRepository.deleteAll(job.getLevelJobRelations());
+        }
+
+
+        jobRepository.deleteFavoriteJobsByJobId(id);
+
+
+
+
         jobRepository.deleteById(id);
+
         return ResponseEntity.ok("Deleted Job successfully with id: " + id);
     }
 

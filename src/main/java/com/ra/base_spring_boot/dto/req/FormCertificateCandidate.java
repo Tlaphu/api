@@ -12,6 +12,7 @@ import java.util.Date;
 @Data
 public class FormCertificateCandidate {
     private Long id;
+    private String year;
     String name;
     String organization;
     private Date started_at;
