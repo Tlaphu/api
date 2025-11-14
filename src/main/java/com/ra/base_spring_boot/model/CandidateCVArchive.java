@@ -26,10 +26,10 @@ public class CandidateCVArchive {
     @Temporal(TemporalType.DATE)
     @Column(name = "dob")
     private Date dob;
-
+    private String hobbies;
     @Column(name = "email")
     private String email;
-
+    private Integer gender;
     @Column(name = "phone")
     private String phone;
 
