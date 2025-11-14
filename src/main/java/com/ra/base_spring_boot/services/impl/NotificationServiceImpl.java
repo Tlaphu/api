@@ -68,6 +68,24 @@ public class NotificationServiceImpl implements INotificationService {
     public void deleteNotification(Long id) {
         notificationRepository.deleteById(id);
     }
+    @Override
+    public Notification createScheduleNotification(Long candidateId, Long companyId, String message, String companyName, String email, String address) {
+
+        String finalMessage = companyName + email + address +
+                               message ;
+
+        Notification notification = Notification.builder()
+                .title("Lịch hẹn phỏng vấn")
+                .message(finalMessage)
+                .receiverId(candidateId)
+                .receiverType("CANDIDATE")
+                .type("SCHEDULE_INTERVIEW")
+                .redirectUrl("/candidate/interview-schedule")
+                .isRead(false)
+                .build();
+
+        return notificationRepository.save(notification);
+    }
 
 
 }

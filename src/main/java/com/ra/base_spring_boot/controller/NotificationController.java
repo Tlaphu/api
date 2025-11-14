@@ -1,6 +1,7 @@
 package com.ra.base_spring_boot.controller;
 
 import com.ra.base_spring_boot.dto.ResponseWrapper;
+import com.ra.base_spring_boot.dto.req.ScheduleNotificationRequest;
 import com.ra.base_spring_boot.model.Notification;
 import com.ra.base_spring_boot.security.jwt.JwtProvider;
 import com.ra.base_spring_boot.services.INotificationService;
@@ -143,6 +144,28 @@ public class NotificationController {
                         .build()
         );
     }
+    /**
+     * @apiNote Tạo thông báo đặt lịch hẹn phỏng vấn cho candidate
+     */
+    @PostMapping("/schedule")
+    public ResponseEntity<?> createScheduleNotification(@RequestBody ScheduleNotificationRequest request) {
 
+        Notification notification = notificationService.createScheduleNotification(
+                request.getCandidateId(),
+                request.getCompanyId(),
+                request.getCompanyName(),
+                request.getAddress(),
+                request.getEmail(),
+                request.getMessage()
+        );
+
+        return ResponseEntity.ok(
+                ResponseWrapper.builder()
+                        .status(HttpStatus.OK)
+                        .code(200)
+                        .data(notification)
+                        .build()
+        );
+    }
 
 }
