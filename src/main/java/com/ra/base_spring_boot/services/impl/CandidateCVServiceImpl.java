@@ -66,7 +66,7 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
                 .title(candidateCV.getTitle())
                 .template(candidateCV.getTemplate())
 
-                .gender(candidateCV.getGender()) // FIX: Lấy gender từ CandidateCV
+                .gender(candidateCV.getGender())
                 .link(candidate.getLink())
                 .description(candidate.getDescription())
                 .development(candidate.getDevelopment())
@@ -130,7 +130,7 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
     }
 
     private void mapPersonalInfo(CandidateCV cvEntity, FormCandidateCV cvForm, Candidate candidate) {
-        // Ánh xạ vào CandidateCV entity
+        // Ánh xạ vào CandidateCV entity (Lấy từ form, nếu null thì lấy từ candidate gốc)
         cvEntity.setName(cvForm.getName() != null ? cvForm.getName() : candidate.getName());
         cvEntity.setGender(cvForm.getGender() != null ? cvForm.getGender() : candidate.getGender());
         cvEntity.setDob(cvForm.getDob() != null ? cvForm.getDob() : candidate.getDob());
@@ -144,14 +144,8 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
         cvEntity.setHobbies(cvForm.getHobbies()!= null ? cvForm.getHobbies() : cvEntity.getHobbies());
         cvEntity.setAvatar(cvForm.getAvatar() != null ? cvForm.getAvatar() : cvEntity.getAvatar());
 
-        // Cập nhật các thông tin cá nhân quan trọng vào Candidate GỐC (để đồng bộ)
-        if (cvForm.getName() != null) candidate.setName(cvForm.getName());
-        if (cvForm.getDob() != null) candidate.setDob(cvForm.getDob());
-        if (cvForm.getEmail() != null) candidate.setEmail(cvForm.getEmail());
-        if (cvForm.getPhone() != null) candidate.setPhone(cvForm.getPhone());
-        if (cvForm.getAddress() != null) candidate.setAddress(cvForm.getAddress());
-        if (cvForm.getLink() != null) candidate.setLink(cvForm.getLink());
-        if (cvForm.getGender() != null) candidate.setGender(cvForm.getGender());
+        // Loại bỏ việc cập nhật các trường cá nhân (như email, name, dob, phone) vào Candidate GỐC.
+        // Điều này đảm bảo email đăng nhập không bị ghi đè.
     }
 
 
@@ -194,7 +188,7 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
             if (totalMonthlyCount >= MAX_CVS_COUNT) {
                 Date newLockDate = addDaysToDate(today, LOCK_PERIOD_DAYS);
                 candidate.setPremiumUntil(newLockDate);
-                candidateRepository.save(candidate);
+                candidateRepository.save(candidate); // Vẫn cần lưu để lưu lock period
 
                 SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
                 String lockDateStr = sdf.format(newLockDate);
@@ -223,8 +217,7 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
 
         mapPersonalInfo(newCV, cvForm, candidate);
 
-        // FIX: LƯU CANDIDATE GỐC SAU KHI CẬP NHẬT THÔNG TIN CÁ NHÂN
-        candidateRepository.save(candidate);
+        // Đã xóa: candidateRepository.save(candidate); ở đây
 
         newCV = candidateCVRepository.save(newCV);
 
@@ -251,8 +244,7 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
 
         mapPersonalInfo(existingCV, cvForm, candidate);
 
-        // Lưu Candidate entity nếu thông tin cá nhân đã được cập nhật trong mapPersonalInfo
-        candidateRepository.save(candidate);
+        // Đã xóa: candidateRepository.save(candidate);
 
         updateAllCVDetails(existingCV, cvForm);
 
