@@ -1,7 +1,9 @@
 package com.ra.base_spring_boot.event;
 
+import lombok.Getter;
 import org.springframework.context.ApplicationEvent;
 
+@Getter
 public class NotificationEvent extends ApplicationEvent {
 
     private final String title;
@@ -21,10 +23,4 @@ public class NotificationEvent extends ApplicationEvent {
         this.redirectUrl = redirectUrl;
     }
 
-    public String getTitle() { return title; }
-    public String getMessage() { return message; }
-    public String getType() { return type; }
-    public Long getReceiverId() { return receiverId; }
-    public String getReceiverType() { return receiverType; }
-    public String getRedirectUrl() { return redirectUrl; }
 }

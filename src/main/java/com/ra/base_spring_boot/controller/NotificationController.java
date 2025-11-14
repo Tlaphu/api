@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 
 @RestController
@@ -86,4 +87,62 @@ public class NotificationController {
                         .build()
         );
     }
+
+    /**
+     * @apiNote Xem chi tiết 1 thông báo và tự động đánh dấu đã đọc
+     */
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getNotificationById(@PathVariable Long id) {
+        Notification notification = notificationService.readNotification(id);
+
+        return ResponseEntity.ok(
+                ResponseWrapper.builder()
+                        .status(HttpStatus.OK)
+                        .code(200)
+                        .data(notification)
+                        .build()
+        );
+    }
+
+    /**
+     * @apiNote Xóa một thông báo
+     */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteNotification(@PathVariable Long id) {
+        notificationService.deleteNotification(id);
+
+        return ResponseEntity.ok(
+                ResponseWrapper.builder()
+                        .status(HttpStatus.OK)
+                        .code(200)
+                        .data("Notification deleted")
+                        .build()
+        );
+    }
+
+    /**
+     * @apiNote Tạo một thông báo mới
+     */
+    @PostMapping
+    public ResponseEntity<?> createNotification(@RequestBody Notification request) {
+
+        Notification notification = notificationService.createNotification(
+                request.getTitle(),
+                request.getMessage(),
+                request.getReceiverId(),
+                request.getReceiverType(),
+                request.getType(),
+                request.getRedirectUrl()
+        );
+
+        return ResponseEntity.ok(
+                ResponseWrapper.builder()
+                        .status(HttpStatus.OK)
+                        .code(200)
+                        .data(notification)
+                        .build()
+        );
+    }
+
+
 }

@@ -12,4 +12,8 @@ public interface INotificationService {
     long countUnreadForCurrentUser(Long userId, String userType);
     void markAsRead(Long notificationId);
     void markAllAsReadForCurrentUser(Long userId, String userType);
+
+    Notification readNotification(Long notificationId);
+
+    void deleteNotification(Long id);
 }
