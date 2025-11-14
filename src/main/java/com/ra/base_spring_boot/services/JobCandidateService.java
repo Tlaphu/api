@@ -19,4 +19,5 @@ public interface JobCandidateService {
     List<JobCandidateResponse> findByCandidateId(Long candidateId);
 
     List<CandidateResponse> getSuitableCandidatesForCompanyJob(Long jobId);
+    void deleteByJobId(Long jobId);
 }

@@ -144,8 +144,7 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
         cvEntity.setHobbies(cvForm.getHobbies()!= null ? cvForm.getHobbies() : cvEntity.getHobbies());
         cvEntity.setAvatar(cvForm.getAvatar() != null ? cvForm.getAvatar() : cvEntity.getAvatar());
 
-        // Loại bỏ việc cập nhật các trường cá nhân (như email, name, dob, phone) vào Candidate GỐC.
-        // Điều này đảm bảo email đăng nhập không bị ghi đè.
+
     }
 
 

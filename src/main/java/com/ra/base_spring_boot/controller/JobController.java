@@ -495,10 +495,10 @@ public class JobController {
         }
 
 
+        jobCandidateService.deleteByJobId(id);
+        // ------------------------------------------------------------------
+
         jobRepository.deleteFavoriteJobsByJobId(id);
-
-
-
 
         jobRepository.deleteById(id);
 
