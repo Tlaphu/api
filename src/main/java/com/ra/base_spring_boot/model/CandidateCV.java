@@ -48,7 +48,7 @@ public class CandidateCV {
     private String development;
     private String avatar;
     private String hobbies;
-
+    private Integer gender;
 
     @Column(name = "skill_candidate_ids", columnDefinition = "TEXT")
     private String skillCandidateIds;
@@ -75,7 +75,7 @@ public class CandidateCV {
 
 
     @Column(name = "eductaion_candidate_info", columnDefinition = "TEXT")
-    private String eductaionCandidateInfo;
+    private String educationCandidateInfo;
 
 
     @Column(name = "experience_candidate_ids", columnDefinition = "TEXT")

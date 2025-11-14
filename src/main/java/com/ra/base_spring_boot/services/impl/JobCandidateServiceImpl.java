@@ -13,7 +13,9 @@ import com.ra.base_spring_boot.dto.resp.CandidateResponse;
 import com.ra.base_spring_boot.dto.resp.SkillsCandidateResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional; // Cần import này
 
+import java.text.SimpleDateFormat; // Cần import này
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -25,18 +27,52 @@ public class JobCandidateServiceImpl implements JobCandidateService {
     private final ICandidateRepository candidateRepository;
     private final ICandidateCVRepository cvRepository;
     private final JwtProvider jwtProvider;
+    // Không cần ICVCreationCountRepository, ta dùng IJobCandidateRepository để đếm
 
     @Autowired
     public JobCandidateServiceImpl(IJobCandidateRepository jobCandidateRepository,
                                    JobRepository jobRepository,
                                    ICandidateRepository candidateRepository,
-                                   ICandidateCVRepository cvRepository, JwtProvider jwtProvider) {
+                                   ICandidateCVRepository cvRepository,
+                                   JwtProvider jwtProvider) {
         this.jobCandidateRepository = jobCandidateRepository;
         this.jobRepository = jobRepository;
         this.candidateRepository = candidateRepository;
         this.cvRepository = cvRepository;
         this.jwtProvider = jwtProvider;
     }
+
+    // --- HÀM TIỆN ÍCH CHO LOGIC GIỚI HẠN (CẦN THIẾT) ---
+
+    private Date getStartOfDay(Date date) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(date);
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+        return calendar.getTime();
+    }
+
+    private Date getStartOfMonth(Date date) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(date);
+        calendar.set(Calendar.DAY_OF_MONTH, 1);
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+        return calendar.getTime();
+    }
+
+    private Date addDaysToDate(Date date, int days) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(date);
+        calendar.add(Calendar.DAY_OF_MONTH, days);
+        return calendar.getTime();
+    }
+
+    // ----------------------------------------------------
 
     private JobCandidate toEntity(FormJobCandidate form) {
         Job job = jobRepository.findById(form.getJobId())
@@ -101,7 +137,64 @@ public class JobCandidateServiceImpl implements JobCandidateService {
     }
 
     @Override
+    @Transactional
     public JobCandidateResponse create(FormJobCandidate form) {
+
+
+        Candidate candidate = candidateRepository.findById(form.getCandidateId())
+                .orElseThrow(() -> new NoSuchElementException(String.format("Candidate not found with id: %d", form.getCandidateId())));
+
+
+
+        final int MAX_MONTHLY_APPLICATIONS = 5;
+        final int LOCK_PERIOD_DAYS = 30;
+
+        if (!candidate.isPremium()) {
+            Date today = new Date();
+            Date lockUntilDate = candidate.getPremiumUntil();
+
+            // 1. KIỂM TRA KHÓA LĂN (COOLDOWN)
+            if (lockUntilDate != null && lockUntilDate.after(today)) {
+                SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+                String resetDateStr = sdf.format(lockUntilDate);
+                throw new IllegalArgumentException("Tài khoản thường đã bị khóa nộp đơn. Bạn sẽ có thể nộp đơn lại vào ngày " + resetDateStr + ".");
+            }
+
+            // 2. TÍNH TỔNG SỐ LẦN ĐÃ APPLY TRONG THÁNG LỊCH
+            Date startOfMonth = getStartOfMonth(today);
+
+            Calendar endCal = Calendar.getInstance();
+            endCal.setTime(today);
+            endCal.add(Calendar.DAY_OF_MONTH, 1);
+            Date endDateForQuery = endCal.getTime();
+
+            // SỬ DỤNG HÀM REPOSITORY MỚI ĐỂ ĐẾM
+            Integer totalMonthlyApplications = jobCandidateRepository.countApplicationsInMonth(
+                    candidate.getId(),
+                    startOfMonth,
+                    endDateForQuery
+            );
+
+            if (totalMonthlyApplications == null) {
+                totalMonthlyApplications = 0;
+            }
+
+            if (totalMonthlyApplications >= MAX_MONTHLY_APPLICATIONS) {
+                // 3. THIẾT LẬP KHÓA LĂN NẾU ĐẠT GIỚI HẠN
+                Date newLockDate = addDaysToDate(today, LOCK_PERIOD_DAYS);
+
+                candidate.setPremiumUntil(newLockDate);
+                candidateRepository.save(candidate);
+
+                SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+                String lockDateStr = sdf.format(newLockDate);
+
+                throw new IllegalArgumentException("Tài khoản thường đã đạt giới hạn " + MAX_MONTHLY_APPLICATIONS + " đơn nộp trong tháng. Bạn sẽ bị khóa nộp đơn cho đến hết ngày " + lockDateStr + ".");
+            }
+        }
+
+        // --- END: LOGIC GIỚI HẠN APPLY JOB HÀNG THÁNG ---
+
         if (form.getCvid() != null) {
             boolean alreadyApplied = jobCandidateRepository.existsByJob_IdAndCandidateCV_Id(form.getJobId(), form.getCvid());
             if (alreadyApplied) {
@@ -110,7 +203,7 @@ public class JobCandidateServiceImpl implements JobCandidateService {
         }
 
         JobCandidate jobCandidateToCreate = toEntity(form);
-        JobCandidate savedJobCandidate = jobCandidateRepository.save(jobCandidateToCreate);
+        JobCandidate savedJobCandidate = jobCandidateRepository.save(jobCandidateToCreate); // Thao tác này đếm là 1 đơn nộp
 
         return toResponse(savedJobCandidate);
     }
@@ -240,5 +333,11 @@ public class JobCandidateServiceImpl implements JobCandidateService {
             case "INTERN" -> 4;
             default -> 0;
         };
+    }
+    @Override
+    @Transactional
+    public void deleteByJobId(Long jobId) {
+        // Gọi phương thức xóa từ Repository
+        jobCandidateRepository.deleteByJobId(jobId);
     }
 }

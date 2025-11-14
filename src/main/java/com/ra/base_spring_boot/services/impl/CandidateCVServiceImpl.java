@@ -9,11 +9,10 @@ import com.ra.base_spring_boot.services.ICandidateCVService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import java.io.File;
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -28,7 +27,6 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
 
     private final ICandidateRepository candidateRepository;
     private final ICandidateCVRepository candidateCVRepository;
-
     private final ICVCreationCountRepository cvCreationCountRepository;
     private final ICandidateCVArchiveRepository candidateCVArchiveRepository;
     private final IJobCandidateRepository jobCandidateRepository;
@@ -40,30 +38,25 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
         Candidate candidate = candidateCV.getCandidate();
         final String DELIMITER = " | ";
 
-        // --- PROJECTS ---
         List<String> projectNames = splitStringToList(candidateCV.getProjectCandidateNames(), DELIMITER);
         List<String> projectLinks = splitStringToList(candidateCV.getProjectCandidateLink(), DELIMITER);
         List<String> projectInfos = splitStringToList(candidateCV.getProjectCandidateInfo(), DELIMITER);
 
-        // --- SKILLS ---
         List<String> skillNames = splitStringToList(candidateCV.getSkillCandidateNames(), DELIMITER);
 
-        // --- EDUCATIONS ---
         List<String> educationNames = splitStringToList(candidateCV.getEducationCandidateNames(), DELIMITER);
         List<String> educationMajors = splitStringToList(candidateCV.getEducationCandidateMajor(), DELIMITER);
         List<String> educationGPAs = splitStringToList(candidateCV.getEducationCandidateGPA(), DELIMITER);
-        List<String> educationInfos = splitStringToList(candidateCV.getEductaionCandidateInfo(), DELIMITER);
+        List<String> educationInfos = splitStringToList(candidateCV.getEducationCandidateInfo(), DELIMITER);
 
-        // --- EXPERIENCES ---
-        List<String> experienceNames = splitStringToList(candidateCV.getExperienceCandidateNames(), DELIMITER); // Role @ Company
-        List<String> experiencePositions = splitStringToList(candidateCV.getExperienceCandidatePosition(), DELIMITER); // Role/Position
-        List<String> experienceCompanies = splitStringToList(candidateCV.getExperienceCandidateCompany(), DELIMITER); // Company
-        List<String> experienceInfos = splitStringToList(candidateCV.getExperienceCandidateInfo(), DELIMITER); // Description + Time
+        List<String> experienceNames = splitStringToList(candidateCV.getExperienceCandidateNames(), DELIMITER);
+        List<String> experiencePositions = splitStringToList(candidateCV.getExperienceCandidatePosition(), DELIMITER);
+        List<String> experienceCompanies = splitStringToList(candidateCV.getExperienceCandidateCompany(), DELIMITER);
+        List<String> experienceInfos = splitStringToList(candidateCV.getExperienceCandidateInfo(), DELIMITER);
 
-        // --- CERTIFICATES ---
         List<String> certificateNames = splitStringToList(candidateCV.getCertificateCandidateNames(), DELIMITER);
         List<String> certificateOrganizations = splitStringToList(candidateCV.getCertificateCandidateOrganization(), DELIMITER);
-        List<String> certificateInfos = splitStringToList(candidateCV.getCertificateCandidateInfo(), DELIMITER); // Year + Info
+        List<String> certificateInfos = splitStringToList(candidateCV.getCertificateCandidateInfo(), DELIMITER);
 
         return CandidateCVResponse.builder()
                 .id(candidateCV.getId())
@@ -73,20 +66,17 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
                 .title(candidateCV.getTitle())
                 .template(candidateCV.getTemplate())
 
-                .gender(candidate.getGender())
+                .gender(candidateCV.getGender())
                 .link(candidate.getLink())
                 .description(candidate.getDescription())
                 .development(candidate.getDevelopment())
                 .candidateTitle(candidateCV.getCandidateTitle())
 
-                // --- CÁC TRƯỜNG CÁ NHÂN KHÁC ---
                 .email(candidateCV.getEmail())
                 .phone(candidateCV.getPhone())
-                // Giả định các trường này có trong entity CandidateCV
                 .avatar(candidateCV.getAvatar())
                 .hobbies(candidateCV.getHobbies())
 
-                // --- GÁN DỮ LIỆU CHI TIẾT ĐÃ TÁCH ---
                 .projects(projectNames)
                 .projectLinks(projectLinks)
                 .projectInfos(projectInfos)
@@ -98,7 +88,7 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
                 .educationGPAs(educationGPAs)
                 .educationInfos(educationInfos)
 
-                .experiences(experienceNames) // Role @ Company
+                .experiences(experienceNames)
                 .experiencePositions(experiencePositions)
                 .experienceCompanies(experienceCompanies)
                 .experienceInfos(experienceInfos)
@@ -115,7 +105,6 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
             return List.of();
         }
 
-        // SỬA LỖI: Escape ký tự gạch đứng (|) vì String.split() sử dụng Regex.
         String regexDelimiter = delimiter.replace("|", "\\|");
 
         return List.of(data.trim().split(regexDelimiter)).stream()
@@ -141,7 +130,9 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
     }
 
     private void mapPersonalInfo(CandidateCV cvEntity, FormCandidateCV cvForm, Candidate candidate) {
+        // Ánh xạ vào CandidateCV entity (Lấy từ form, nếu null thì lấy từ candidate gốc)
         cvEntity.setName(cvForm.getName() != null ? cvForm.getName() : candidate.getName());
+        cvEntity.setGender(cvForm.getGender() != null ? cvForm.getGender() : candidate.getGender());
         cvEntity.setDob(cvForm.getDob() != null ? cvForm.getDob() : candidate.getDob());
         cvEntity.setEmail(cvForm.getEmail() != null ? cvForm.getEmail() : candidate.getEmail());
         cvEntity.setPhone(cvForm.getPhone() != null ? cvForm.getPhone() : candidate.getPhone());
@@ -152,6 +143,8 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
         cvEntity.setCandidateTitle(cvForm.getCandidateTitle() != null ? cvForm.getCandidateTitle() : candidate.getTitle());
         cvEntity.setHobbies(cvForm.getHobbies()!= null ? cvForm.getHobbies() : cvEntity.getHobbies());
         cvEntity.setAvatar(cvForm.getAvatar() != null ? cvForm.getAvatar() : cvEntity.getAvatar());
+
+
     }
 
 
@@ -194,7 +187,7 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
             if (totalMonthlyCount >= MAX_CVS_COUNT) {
                 Date newLockDate = addDaysToDate(today, LOCK_PERIOD_DAYS);
                 candidate.setPremiumUntil(newLockDate);
-                candidateRepository.save(candidate);
+                candidateRepository.save(candidate); // Vẫn cần lưu để lưu lock period
 
                 SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
                 String lockDateStr = sdf.format(newLockDate);
@@ -223,6 +216,8 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
 
         mapPersonalInfo(newCV, cvForm, candidate);
 
+        // Đã xóa: candidateRepository.save(candidate); ở đây
+
         newCV = candidateCVRepository.save(newCV);
 
         updateAllCVDetails(newCV, cvForm);
@@ -247,6 +242,8 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
         existingCV.setUpdated_at(new Date());
 
         mapPersonalInfo(existingCV, cvForm, candidate);
+
+        // Đã xóa: candidateRepository.save(candidate);
 
         updateAllCVDetails(existingCV, cvForm);
 
@@ -292,12 +289,10 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
 
     private void updateAllCVDetails(CandidateCV candidateCV, FormCandidateCV cvForm) {
 
-
         // --- 1. SKILLS ---
         if (cvForm.getSkills() != null) {
-            candidateCV.setSkillCandidateIds(null); // Giả định không dùng ID từ Form mới
+            candidateCV.setSkillCandidateIds(null);
 
-            // SỬ DỤNG getContent()
             candidateCV.setSkillCandidateNames(cvForm.getSkills().stream()
                     .map(s -> s.getContent() != null ? s.getContent() : "Unknown Skill")
                     .collect(Collectors.joining(" | ")));
@@ -309,23 +304,20 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
 
         // --- 2. EDUCATION ---
         if (cvForm.getEducations() != null) {
-            // SỬ DỤNG getNameEducation()
+
             candidateCV.setEducationCandidateNames(cvForm.getEducations().stream()
                     .map(e -> e.getNameEducation() != null ? e.getNameEducation() : "Unknown School")
                     .collect(Collectors.joining(" | ")));
 
-            // GPA giữ nguyên
             candidateCV.setEducationCandidateGPA(cvForm.getEducations().stream()
                     .map(e -> e.getGpa() != null ? e.getGpa() : "-")
                     .collect(Collectors.joining(" | ")));
 
-            // Major giữ nguyên
             candidateCV.setEducationCandidateMajor(cvForm.getEducations().stream()
                     .map(e -> e.getMajor() != null ? e.getMajor() : "Unknown Major")
                     .collect(Collectors.joining(" | ")));
 
-            // SỬ DỤNG getInfo()
-            candidateCV.setEductaionCandidateInfo(cvForm.getEducations().stream()
+            candidateCV.setEducationCandidateInfo(cvForm.getEducations().stream()
                     .map(e -> (e.getInfo() != null ? e.getInfo() : "None") +
                             " (" + (e.getStartedAt() != null ? YEAR_FORMAT.format(e.getStartedAt()) : "?") +
                             " - " + (e.getEndAt() != null ? YEAR_FORMAT.format(e.getEndAt()) : "Current") + ")")
@@ -334,27 +326,31 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
             candidateCV.setEducationCandidateNames(null);
             candidateCV.setEducationCandidateGPA(null);
             candidateCV.setEducationCandidateMajor(null);
-            candidateCV.setEductaionCandidateInfo(null);
+            candidateCV.setEducationCandidateInfo(null);
         }
 
         // --- 3. EXPERIENCE ---
         if (cvForm.getExperiences() != null) {
-            // Experience Combined Name (Role @ Company)
 
+            candidateCV.setExperienceCandidateNames(cvForm.getExperiences().stream()
+                    .map(e -> (e.getPosition() != null ? e.getPosition() : "Unknown Position") +
+                            " @ " + (e.getCompany() != null ? e.getCompany() : "Unknown Company"))
+                    .collect(Collectors.joining(" | ")));
 
-            // Company giữ nguyên
+            candidateCV.setExperienceCandidatePosition(cvForm.getExperiences().stream()
+                    .map(e -> e.getPosition() != null ? e.getPosition() : "Unknown Position")
+                    .collect(Collectors.joining(" | ")));
+
             candidateCV.setExperienceCandidateCompany(cvForm.getExperiences().stream()
                     .map(e -> e.getCompany() != null ? e.getCompany() : "Unknown Company")
                     .collect(Collectors.joining(" | ")));
 
-            // Experience Info (Nối List<String> description thành chuỗi lớn + Thời gian)
             candidateCV.setExperienceCandidateInfo(cvForm.getExperiences().stream()
                     .map(e -> {
-                        // Nối List<String> description thành một chuỗi với dấu gạch ngang đầu dòng
                         String description = e.getDescription() != null && !e.getDescription().isEmpty()
                                 ? String.join("\n- ", e.getDescription())
                                 : "None";
-                        // Thêm dấu gạch ngang đầu tiên nếu có mô tả chi tiết
+
                         description = description.equals("None") ? description : "- " + description;
 
                         return description +
@@ -379,7 +375,6 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
                     .map(c -> c.getOrganization() != null ? c.getOrganization() : "Unknown Organization")
                     .collect(Collectors.joining(" | ")));
 
-            // Kết hợp Year và Info
             candidateCV.setCertificateCandidateInfo(cvForm.getCertificates().stream()
                     .map(c -> (c.getYear() != null ? "Năm cấp: " + c.getYear() : "N/A") +
                             (c.getInfo() != null && !c.getInfo().isEmpty() ? " - " + c.getInfo() : ""))
@@ -400,7 +395,6 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
                     .map(p -> p.getLink() != null ? p.getLink() : "None")
                     .collect(Collectors.joining(" | ")));
 
-            // Info (Mô tả) + Thời gian hoạt động
             candidateCV.setProjectCandidateInfo(cvForm.getProjects().stream()
                     .map(p -> (p.getInfo() != null ? p.getInfo() : "None") +
                             " (" + (p.getStarted_at() != null ? YEAR_FORMAT.format(p.getStarted_at()) : "?") +
@@ -423,7 +417,6 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
                 .createdAt(new Date())
                 .build());
 
-        // Thông tin cá nhân
         archive.setCandidateName(cvEntity.getName());
         archive.setDob(cvEntity.getDob());
         archive.setEmail(cvEntity.getEmail());
@@ -432,26 +425,22 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
         archive.setLink(cvEntity.getLink());
         archive.setDevelopment(cvEntity.getDevelopment());
         archive.setCandidateTitle(cvEntity.getCandidateTitle());
+        archive.setHobbies(cvEntity.getHobbies());
 
-        // Kỹ năng tổng hợp
         archive.setSkillCandidateIds(cvEntity.getSkillCandidateIds());
         archive.setSkillCandidateNames(cvEntity.getSkillCandidateNames());
 
-        // Học vấn tổng hợp
         archive.setEducationCandidateIds(cvEntity.getEducationCandidateIds());
         archive.setEducationCandidateNames(cvEntity.getEducationCandidateNames());
         archive.setEducationCandidateGPA(cvEntity.getEducationCandidateGPA());
         archive.setEducationCandidateMajor(cvEntity.getEducationCandidateMajor());
 
-        // Kinh nghiệm tổng hợp
         archive.setExperienceCandidateIds(cvEntity.getExperienceCandidateIds());
         archive.setExperienceCandidateNames(cvEntity.getExperienceCandidateNames());
 
-        // Dự án tổng hợp
         archive.setProjectCandidateIds(cvEntity.getProjectCandidateIds());
         archive.setProjectCandidateNames(cvEntity.getProjectCandidateNames());
 
-        // Chứng chỉ tổng hợp
         archive.setCertificateCandidateIds(cvEntity.getCertificateCandidateIds());
         archive.setCertificateCandidateNames(cvEntity.getCertificateCandidateNames());
 
@@ -497,25 +486,41 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
     }
 
 
-    // ⭐ Phương thức generatePdfFromCV (Đã tích hợp OpenHTMLToPDF)
+    private String escapeHtml(String text) {
+        if (text == null) {
+            return "";
+        }
+
+        String cleanText = text.replace('#', ' ');
+
+        return cleanText.replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;");
+    }
+
     @Override
     public byte[] generatePdfFromCV(Long cvId, Long candidateId) {
         CandidateCV cvEntity = getCVById(cvId, candidateId);
 
-        // Bước 1: Tạo nội dung HTML (thay vì LaTeX)
         String htmlContent = generateHtmlContent(cvEntity);
 
-        // Bước 2: Biên dịch HTML sang PDF sử dụng OpenHTMLToPDF
         try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
 
             PdfRendererBuilder builder = new PdfRendererBuilder();
 
+            File fontFile = new File("src/main/resources/fonts/arial.ttf");
+            String fontName = "ArialUnicode";
+
+            if (fontFile.exists()) {
+
+                builder.useFont(fontFile, fontName);
+
+                htmlContent = htmlContent.replace("font-family: Arial, sans-serif;", "font-family: " + fontName + ", sans-serif;");
+            }
 
             builder.withHtmlContent(htmlContent, "file:///base/");
 
-
             builder.toStream(os);
-
 
             builder.run();
 
@@ -528,66 +533,99 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
     }
 
 
-
     public String generateHtmlContent(CandidateCV cvEntity) {
 
-        String candidateName = cvEntity.getName() != null ? cvEntity.getName() : "Unknown Candidate";
-        String candidateAddress = cvEntity.getAddress() != null ? cvEntity.getAddress() : "";
-        String candidateEmail = cvEntity.getEmail() != null ? cvEntity.getEmail() : "";
-        String candidatePhone = cvEntity.getPhone() != null ? cvEntity.getPhone() : "";
-        String candidateDevelopment = cvEntity.getDevelopment() != null ? cvEntity.getDevelopment() : "N/A";
-        String candidateTitle = cvEntity.getCandidateTitle() != null ? cvEntity.getCandidateTitle() : "";
+        String candidateName = escapeHtml(cvEntity.getName() != null ? cvEntity.getName() : "Unknown Candidate");
+        String candidateAddress = escapeHtml(cvEntity.getAddress() != null ? cvEntity.getAddress() : "");
+        String candidateEmail = escapeHtml(cvEntity.getEmail() != null ? cvEntity.getEmail() : "");
+        String candidatePhone = escapeHtml(cvEntity.getPhone() != null ? cvEntity.getPhone() : "");
+        String candidateTitle = escapeHtml(cvEntity.getCandidateTitle() != null ? cvEntity.getCandidateTitle() : "");
 
-        // Lấy các List dữ liệu
-        List<String> skills = splitStringToList(cvEntity.getSkillCandidateNames(), " | ");
-        List<String> educationNames = splitStringToList(cvEntity.getEducationCandidateNames(), " | ");
-        List<String> educationMajors = splitStringToList(cvEntity.getEducationCandidateMajor(), " | ");
-        List<String> educationInfos = splitStringToList(cvEntity.getEductaionCandidateInfo(), " | ");
+        // --- LẤY THÊM THÔNG TIN DOB VÀ GENDER ---
+        String candidateDob = "";
+        if (cvEntity.getDob() != null) {
+            SimpleDateFormat dobFormat = new SimpleDateFormat("dd/MM/yyyy");
+            candidateDob = dobFormat.format(cvEntity.getDob());
+        }
 
-        // Cần các list khác cho Experience, Project, Certificate
-        List<String> experienceNames = splitStringToList(cvEntity.getExperienceCandidateNames(), " | ");
-        List<String> experienceInfos = splitStringToList(cvEntity.getExperienceCandidateInfo(), " | ");
-        List<String> projectNames = splitStringToList(cvEntity.getProjectCandidateNames(), " | ");
-        List<String> projectLinks = splitStringToList(cvEntity.getProjectCandidateLink(), " | ");
-        List<String> projectInfos = splitStringToList(cvEntity.getProjectCandidateInfo(), " | ");
-        List<String> certificateNames = splitStringToList(cvEntity.getCertificateCandidateNames(), " | ");
-        List<String> certificateOrgs = splitStringToList(cvEntity.getCertificateCandidateOrganization(), " | ");
+        String candidateGender = "N/A";
+        if (cvEntity.getGender() != null) {
+            switch (cvEntity.getGender()) {
+                case 0:
+                    candidateGender = "Male";
+                    break;
+                case 1:
+                    candidateGender = "Female";
+                    break;
+                default:
+                    candidateGender = "N/A";
+                    break;
+            }
+        }
+        // ----------------------------------------
+
+        String hobbies = escapeHtml(cvEntity.getHobbies() != null ? cvEntity.getHobbies() : "");
+
+        String candidateDevelopment = escapeHtml(cvEntity.getDevelopment() != null ? cvEntity.getDevelopment() : "N/A");
+
+        List<String> skills = splitStringToList(cvEntity.getSkillCandidateNames(), " | ").stream().map(this::escapeHtml).collect(Collectors.toList());
+        List<String> educationNames = splitStringToList(cvEntity.getEducationCandidateNames(), " | ").stream().map(this::escapeHtml).collect(Collectors.toList());
+        List<String> educationMajors = splitStringToList(cvEntity.getEducationCandidateMajor(), " | ").stream().map(this::escapeHtml).collect(Collectors.toList());
+        List<String> educationInfos = splitStringToList(cvEntity.getEducationCandidateInfo(), " | ").stream().map(this::escapeHtml).collect(Collectors.toList());
+
+        List<String> experienceNames = splitStringToList(cvEntity.getExperienceCandidateNames(), " | ").stream().map(this::escapeHtml).collect(Collectors.toList());
+        List<String> experienceInfos = splitStringToList(cvEntity.getExperienceCandidateInfo(), " | ").stream().map(this::escapeHtml).collect(Collectors.toList());
+        List<String> projectNames = splitStringToList(cvEntity.getProjectCandidateNames(), " | ").stream().map(this::escapeHtml).collect(Collectors.toList());
+        List<String> projectLinks = splitStringToList(cvEntity.getProjectCandidateLink(), " | ").stream().map(this::escapeHtml).collect(Collectors.toList());
+        List<String> projectInfos = splitStringToList(cvEntity.getProjectCandidateInfo(), " | ").stream().map(this::escapeHtml).collect(Collectors.toList());
+        List<String> certificateNames = splitStringToList(cvEntity.getCertificateCandidateNames(), " | ").stream().map(this::escapeHtml).collect(Collectors.toList());
+        List<String> certificateOrgs = splitStringToList(cvEntity.getCertificateCandidateOrganization(), " | ").stream().map(this::escapeHtml).collect(Collectors.toList());
 
 
-        // --- Bắt đầu xây dựng HTML ---
         StringBuilder html = new StringBuilder();
-        html.append("<html><head><style>")
+        html.append("<html><head>")
+
+
+                .append("<meta charset=\"UTF-8\"/>")
+
+                .append("<style>")
+
                 .append("body{font-family: Arial, sans-serif; margin: 0; padding: 20px;} h1{text-align: center; margin-bottom: 5px;}")
                 .append(".contact{text-align: center; font-size: 0.9em; color: #555;} .title{text-align: center; font-size: 1.1em; font-weight: bold; color: #333;}")
                 .append(".section{margin-top: 15px; border-bottom: 2px solid #ccc; padding-bottom: 3px; font-size: 1.2em; color: #000;}")
                 .append(".item-title{font-weight: bold; margin-bottom: 2px;} .item-detail{margin-left: 20px; font-size: 0.95em;}")
+
                 .append("</style></head><body>");
 
-        // --- 1. Header & Personal Info ---
+
         html.append("<h1>").append(candidateName).append("</h1>")
                 .append("<p class='contact'>")
-                .append(candidatePhone).append(" | ").append(candidateEmail).append(" | ").append(candidateAddress)
+                .append(candidateDob).append(" | ")
+                .append(candidateGender).append(" | ")
+                .append(candidatePhone).append(" | ")
+                .append(candidateEmail).append(" | ")
+                .append(candidateAddress)
                 .append("</p>")
                 .append("<div class='title'>").append(candidateTitle).append("</div>");
 
-        // --- 2. Development Summary ---
-        html.append("<h2 class='section'>Summary / Development Goal</h2>")
-                .append("<p>").append(candidateDevelopment).append("</p>");
 
-        // --- 3. Skills ---
+        html.append("<h2 class='section'>Summary / Development Goal</h2>")
+                .append("<p>").append(candidateDevelopment.replace("\n", "<br/>")).append("</p>");
+
+
         html.append("<h2 class='section'>Skills</h2>")
                 .append("<ul>");
         skills.forEach(skill -> html.append("<li>").append(skill).append("</li>"));
         html.append("</ul>");
 
-        // --- 4. Experience ---
+
         html.append("<h2 class='section'>Experience</h2>");
         for (int i = 0; i < experienceNames.size(); i++) {
             html.append("<div class='item-title'>").append(experienceNames.get(i)).append("</div>")
-                    .append("<div class='item-detail'>").append(experienceInfos.get(i)).append("</div>");
+                    .append("<div class='item-detail'>").append(experienceInfos.get(i).replace("\n", "<br/>")).append("</div>");
         }
 
-        // --- 5. Education ---
+
         html.append("<h2 class='section'>Education</h2>");
         for (int i = 0; i < educationNames.size(); i++) {
             String major = i < educationMajors.size() ? educationMajors.get(i) : "";
@@ -597,7 +635,7 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
                     .append("<div class='item-detail'>").append(major).append(" | ").append(info).append("</div>");
         }
 
-        // --- 6. Projects ---
+
         html.append("<h2 class='section'>Projects</h2>");
         for (int i = 0; i < projectNames.size(); i++) {
             String link = i < projectLinks.size() ? projectLinks.get(i) : "N/A";
@@ -607,7 +645,13 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
                     .append("<div class='item-detail'>").append(info).append(" | Link: <a href='").append(link).append("'>").append(link).append("</a></div>");
         }
 
-        // --- 7. Certificates ---
+        // --- 7. Hobbies ---
+        if (!hobbies.isEmpty()) {
+            html.append("<h2 class='section'>Hobbies</h2>")
+                    .append("<p>").append(hobbies.replace("\n", "<br/>")).append("</p>");
+        }
+
+        // --- 8. Certificates ---
         html.append("<h2 class='section'>Certificates</h2>");
         for (int i = 0; i < certificateNames.size(); i++) {
             String org = i < certificateOrgs.size() ? certificateOrgs.get(i) : "";

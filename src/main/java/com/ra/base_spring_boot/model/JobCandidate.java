@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 
 import jakarta.persistence.*;
 import lombok.*;
+import java.util.Date;
 
 @Entity
 @NoArgsConstructor
@@ -32,5 +33,7 @@ public class JobCandidate {
     
     private String cover_letter;
     private String status;
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date created_at;
 
 }
