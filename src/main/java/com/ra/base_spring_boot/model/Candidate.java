@@ -66,7 +66,7 @@ public class Candidate {
     private Set<Company> favoriteCompanies = new HashSet<>();
 
     private Integer gender;
-    
+    private String logo;
     private String link;
     private String Description;
     private String Experience;

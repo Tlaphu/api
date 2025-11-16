@@ -1,5 +1,6 @@
 package com.ra.base_spring_boot.services;
 
+import com.ra.base_spring_boot.dto.resp.NotificationResponse;
 import com.ra.base_spring_boot.model.Notification;
 
 import java.util.Date;
@@ -9,7 +10,7 @@ public interface INotificationService {
 
     Notification createNotification(String title, String message, Long receiverId, String receiverType, String type, String redirectUrl);
 
-    List<Notification> getNotificationsForCurrentUser(Long userId, String userType);
+    List<NotificationResponse> getNotificationsForCurrentUser(Long userId, String userType);
     long countUnreadForCurrentUser(Long userId, String userType);
     void markAsRead(Long notificationId);
     void markAllAsReadForCurrentUser(Long userId, String userType);
@@ -19,5 +20,5 @@ public interface INotificationService {
     void deleteNotification(Long id);
 
 
-    Notification createScheduleNotification(Long candidateId, Long companyId, String message, String companyName, String email, String address);
+    Notification createScheduleNotification(Long candidateId, Long companyId, String message);
 }

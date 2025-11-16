@@ -153,9 +153,6 @@ public class NotificationController {
         Notification notification = notificationService.createScheduleNotification(
                 request.getCandidateId(),
                 request.getCompanyId(),
-                request.getCompanyName(),
-                request.getAddress(),
-                request.getEmail(),
                 request.getMessage()
         );
 

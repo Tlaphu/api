@@ -505,6 +505,7 @@ public class CompanyAuthServiceImpl implements ICompanyAuthService {
                 .status(candidate.isStatus())
                 .isOpen(candidate.getIsOpen())
                 .Title(candidate.getTitle())
+                .logo(candidate.getLogo())
                 .description(candidate.getDescription())
                 .experience(candidate.getExperience())
                 .development(candidate.getDevelopment())

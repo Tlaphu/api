@@ -44,4 +44,8 @@ public class Notification {
     public void onCreate() {
         if (createdAt == null) createdAt = new Date();
     }
+    private String companyLogo;
+    @Column
+    private Long senderCompanyId;
+
 }

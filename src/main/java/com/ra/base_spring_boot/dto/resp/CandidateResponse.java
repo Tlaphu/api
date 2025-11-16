@@ -20,6 +20,7 @@ public class CandidateResponse {
     private String link;
     private boolean status;
     private Integer isOpen;
+    private String logo;
     private String Title;
     private String description;
     private String experience;

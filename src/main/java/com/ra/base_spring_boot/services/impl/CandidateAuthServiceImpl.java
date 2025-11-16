@@ -279,6 +279,16 @@ public class CandidateAuthServiceImpl implements ICandidateAuthService {
                 "CANDIDATE",
                 "/company/" + company.getId()
         ));
+        eventPublisher.publishEvent(new NotificationEvent(
+                this,
+                "Có người theo dõi",
+                "Ứng viên " + candidate.getName() + " vừa theo dõi công ty của bạn.",
+                "NEW_FOLLOWER",
+                company.getId(),
+                "COMPANY",
+                "/candidate/" + candidate.getId()
+        ));
+
     }
 
     @Transactional
@@ -346,6 +356,7 @@ public class CandidateAuthServiceImpl implements ICandidateAuthService {
                 .dob(candidate.getDob())
                 .link(candidate.getLink())
                 .status(candidate.isStatus())
+                .logo(candidate.getLogo())
                 .isOpen(candidate.getIsOpen())
                 .Title(candidate.getTitle())
                 .description(candidate.getDescription())
