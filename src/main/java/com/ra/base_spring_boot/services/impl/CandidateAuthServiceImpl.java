@@ -268,27 +268,29 @@ public class CandidateAuthServiceImpl implements ICandidateAuthService {
                 (company.getFollower() == null ? 0 : company.getFollower()) + 1
         );
 
-        candidateRepository.save(candidate);
-        companyRepository.save(company);
         eventPublisher.publishEvent(new NotificationEvent(
                 this,
                 "Theo dõi công ty",
                 "Bạn vừa theo dõi công ty " + company.getName(),
                 "FAVORITE_ADD",
-                candidate.getId(),
-                "CANDIDATE",
-                "/company/" + company.getId()
+                candidate.getId(),       // receiverId
+                "CANDIDATE",            // receiverType
+                "/company/" + company.getId(),
+                "COMPANY",
+                company.getId()// senderType
         ));
+
         eventPublisher.publishEvent(new NotificationEvent(
                 this,
                 "Có người theo dõi",
                 "Ứng viên " + candidate.getName() + " vừa theo dõi công ty của bạn.",
                 "NEW_FOLLOWER",
-                company.getId(),
-                "COMPANY",
-                "/candidate/" + candidate.getId()
+                company.getId(),        // receiverId
+                "COMPANY",              // receiverType
+                "/candidate/" + candidate.getId(),
+                "CANDIDATE",             // senderType
+                candidate.getId()
         ));
-
     }
 
     @Transactional
@@ -312,6 +314,17 @@ public class CandidateAuthServiceImpl implements ICandidateAuthService {
 
         candidateRepository.save(candidate);
         companyRepository.save(company);
+        eventPublisher.publishEvent(new NotificationEvent(
+                this,
+                "Hủy theo dõi công ty",
+                "Bạn đã hủy theo dõi công ty " + company.getName(),
+                "FAVORITE_REMOVE",
+                candidate.getId(),       // receiverId
+                "CANDIDATE",            // receiverType
+                "/company/" + company.getId(),
+                "COMPANY",              // senderType
+                company.getId()         // senderId
+        ));
     }
 
     @Override

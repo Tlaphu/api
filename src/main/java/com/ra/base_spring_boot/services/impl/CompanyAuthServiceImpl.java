@@ -284,6 +284,20 @@ public class CompanyAuthServiceImpl implements ICompanyAuthService {
                 .stream().map(this::toResponse)
                 .collect(Collectors.toList());
     }
+    @Override
+    public void updateAccountProfile(FormUpdateAccountCompany form) {
+        AccountCompany accountCompany = jwtProvider.getCurrentAccountCompany();
+        if (accountCompany == null) {
+            throw new HttpBadRequest("Unauthorized: Company not found in token");
+        }
+
+        if (form.getFullName() != null) accountCompany.setFullName(form.getFullName());
+        if (form.getPhone() != null) accountCompany.setPhone(form.getPhone());
+        if (form.getDob() != null) accountCompany.setDob(form.getDob());
+        if (form.getGender() != null) accountCompany.setGender(form.getGender());
+
+        accountCompanyRepository.save(accountCompany);
+    }
 
     @Override
     public CompanyResponse findById(Long id) {
@@ -331,7 +345,9 @@ public class CompanyAuthServiceImpl implements ICompanyAuthService {
                 .id(accountCompany.getId())
                 .email(accountCompany.getEmail())
                 .fullName(accountCompany.getFullName())
-                .phone(company.getPhone())
+                .phone(accountCompany.getPhone())
+                .dob(accountCompany.getDob())
+                .gender(accountCompany.getGender())
                 .status(accountCompany.isStatus())
                 .company(CompanyResponse.builder()
                         .id(company.getId())

@@ -16,6 +16,5 @@ public class NotificationResponse {
     private String redirectUrl;
     private boolean isRead;
     private Date createdAt;
-
-    private String companyLogo;
+    private String logo;
 }

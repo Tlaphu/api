@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/auth/company")
 @RequiredArgsConstructor
-public class    AccountCompanyController {
+public class AccountCompanyController {
 
     private final ICompanyAuthService companyAuthService;
 
@@ -118,6 +118,7 @@ public class    AccountCompanyController {
                         .build()
         );
     }
+
     /**
      * @apiNote L
      */
@@ -132,6 +133,7 @@ public class    AccountCompanyController {
                         .build()
         );
     }
+
     /**
      * @apiNote Lấy thông tin tài khoản công ty hiện tại đang đăng nhập
      */
@@ -144,6 +146,18 @@ public class    AccountCompanyController {
                         .status(HttpStatus.OK)
                         .code(200)
                         .data(companyInfo)
+                        .build()
+        );
+    }
+
+    @PutMapping("/account/profile")
+    public ResponseEntity<ResponseWrapper<String>> updateAccountProfile(@RequestBody FormUpdateAccountCompany form) {
+        companyAuthService.updateAccountProfile(form);
+        return ResponseEntity.ok(
+                ResponseWrapper.<String>builder()
+                        .status(HttpStatus.OK)
+                        .code(HttpStatus.OK.value())
+                        .data("Account profile updated successfully")
                         .build()
         );
     }
