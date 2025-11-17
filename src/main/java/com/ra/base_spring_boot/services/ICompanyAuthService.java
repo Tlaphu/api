@@ -50,6 +50,8 @@ public interface ICompanyAuthService {
      */
     List<CompanyResponse> findAll();
 
+    void updateAccountProfile(FormUpdateAccountCompany form);
+
     /**
      * Get company by id
      */

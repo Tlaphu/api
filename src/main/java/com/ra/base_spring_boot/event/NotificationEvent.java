@@ -12,8 +12,10 @@ public class NotificationEvent extends ApplicationEvent {
     private final Long receiverId;
     private final String receiverType;
     private final String redirectUrl;
+    private final String senderType;
+    private final Long senderId;
 
-    public NotificationEvent(Object source, String title, String message, String type, Long receiverId, String receiverType, String redirectUrl) {
+    public NotificationEvent(Object source, String title, String message, String type, Long receiverId, String receiverType, String redirectUrl, String senderType, Long senderId) {
         super(source);
         this.title = title;
         this.message = message;
@@ -21,6 +23,8 @@ public class NotificationEvent extends ApplicationEvent {
         this.receiverId = receiverId;
         this.receiverType = receiverType;
         this.redirectUrl = redirectUrl;
+        this.senderType = senderType;
+        this.senderId = senderId;
     }
 
 }

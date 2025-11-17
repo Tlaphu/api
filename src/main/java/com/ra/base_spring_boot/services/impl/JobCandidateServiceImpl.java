@@ -1,5 +1,6 @@
 package com.ra.base_spring_boot.services.impl;
 
+import com.ra.base_spring_boot.exception.HttpBadRequest;
 import com.ra.base_spring_boot.model.*;
 import com.ra.base_spring_boot.repository.IJobCandidateRepository;
 import com.ra.base_spring_boot.repository.JobRepository;
@@ -340,4 +341,5 @@ public class JobCandidateServiceImpl implements JobCandidateService {
         // Gọi phương thức xóa từ Repository
         jobCandidateRepository.deleteByJobId(jobId);
     }
+
 }

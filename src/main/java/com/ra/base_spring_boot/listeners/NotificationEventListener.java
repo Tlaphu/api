@@ -20,7 +20,9 @@ public class NotificationEventListener {
                 event.getReceiverId(),
                 event.getReceiverType(),
                 event.getType(),
-                event.getRedirectUrl()
+                event.getRedirectUrl(),
+                event.getSenderType(),
+                event.getSenderId()
         );
     }
 }

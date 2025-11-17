@@ -1,8 +1,10 @@
 package com.ra.base_spring_boot.services.impl;
 
 import com.ra.base_spring_boot.dto.resp.NotificationResponse;
+import com.ra.base_spring_boot.model.Candidate;
 import com.ra.base_spring_boot.model.Company;
 import com.ra.base_spring_boot.model.Notification;
+import com.ra.base_spring_boot.repository.ICandidateRepository;
 import com.ra.base_spring_boot.repository.ICompanyRepository;
 import com.ra.base_spring_boot.repository.NotificationRepository;
 import com.ra.base_spring_boot.security.jwt.JwtProvider;
@@ -20,12 +22,36 @@ public class NotificationServiceImpl implements INotificationService {
 
     private final NotificationRepository notificationRepository;
     private final ICompanyRepository companyRepository;
+    private final ICandidateRepository candidateRepository;
     private final JwtProvider jwtProvider;
     private final HttpServletRequest request;
 
 
     @Override
     public Notification createNotification(String title, String message, Long receiverId, String receiverType, String type, String redirectUrl) {
+
+        Long senderId = null;
+        String senderType = null;
+
+        String role = jwtProvider.getCurrentUserType(); // COMPANY, CANDIDATE hoặc ADMIN
+
+        if ("COMPANY".equals(role)) {
+            String email = jwtProvider.getCompanyUsername();
+            senderId = companyRepository.findByEmail(email).map(Company::getId).orElse(null);
+            senderType = "COMPANY";
+
+        } else if ("CANDIDATE".equals(role)) {
+            String email = jwtProvider.getCandidateUsername();
+            senderId = candidateRepository.findByEmail(email).map(Candidate::getId).orElse(null);
+            senderType = "CANDIDATE";
+
+        } else if ("ADMIN".equals(role)) {
+            // Admin không đại diện công ty hay ứng viên
+            senderId = null;
+            senderType = "SYSTEM";     // Gửi từ hệ thống
+        }
+
+
         Notification notification = Notification.builder()
                 .title(title)
                 .message(message)
@@ -34,9 +60,13 @@ public class NotificationServiceImpl implements INotificationService {
                 .receiverId(receiverId)
                 .receiverType(receiverType)
                 .isRead(false)
+                .senderId(senderId)
+                .senderType(senderType)
                 .build();
+
         return notificationRepository.save(notification);
     }
+
 
     @Override
     public List<NotificationResponse> getNotificationsForCurrentUser(Long userId, String userType) {
@@ -96,7 +126,8 @@ public class NotificationServiceImpl implements INotificationService {
                 .type("SCHEDULE_INTERVIEW")
                 .redirectUrl("/candidate/interview-schedule")
                 .isRead(false)
-                .senderCompanyId(companyId)
+                .senderId(companyId)
+                .senderType("COMPANY")
                 .build();
 
         return notificationRepository.save(notification);
@@ -104,13 +135,20 @@ public class NotificationServiceImpl implements INotificationService {
 
     private NotificationResponse toResponse(Notification n) {
 
-        String companyLogo = null;
+        String logo = null;
 
-        if (n.getSenderCompanyId() != null) {
-            Company company = companyRepository.findById(n.getSenderCompanyId()).orElse(null);
-            if (company != null) {
-                companyLogo = company.getLogo();
-            }
+        if ("COMPANY".equals(n.getSenderType())) {
+            logo = companyRepository.findById(n.getSenderId())
+                    .map(Company::getLogo)
+                    .orElse(null);
+
+        } else if ("CANDIDATE".equals(n.getSenderType())) {
+            logo = candidateRepository.findById(n.getSenderId())
+                    .map(Candidate::getLogo)
+                    .orElse(null);
+
+        } else if ("SYSTEM".equals(n.getSenderType())) {
+            logo = null; // Hoặc để null nếu không muốn logo
         }
 
         return NotificationResponse.builder()
@@ -121,7 +159,8 @@ public class NotificationServiceImpl implements INotificationService {
                 .redirectUrl(n.getRedirectUrl())
                 .isRead(n.isRead())
                 .createdAt(n.getCreatedAt())
-                .companyLogo(companyLogo)
+                .logo(logo)
                 .build();
     }
+
 }
