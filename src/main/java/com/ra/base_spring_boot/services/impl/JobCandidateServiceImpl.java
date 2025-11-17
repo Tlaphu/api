@@ -13,9 +13,10 @@ import com.ra.base_spring_boot.dto.resp.CandidateResponse;
 import com.ra.base_spring_boot.dto.resp.SkillsCandidateResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional; // Cần import này
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.security.access.AccessDeniedException; // ✨ IMPORT MỚI ✨
 
-import java.text.SimpleDateFormat; // Cần import này
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -27,7 +28,6 @@ public class JobCandidateServiceImpl implements JobCandidateService {
     private final ICandidateRepository candidateRepository;
     private final ICandidateCVRepository cvRepository;
     private final JwtProvider jwtProvider;
-    // Không cần ICVCreationCountRepository, ta dùng IJobCandidateRepository để đếm
 
     @Autowired
     public JobCandidateServiceImpl(IJobCandidateRepository jobCandidateRepository,
@@ -93,6 +93,7 @@ public class JobCandidateServiceImpl implements JobCandidateService {
                 .candidateCV(candidateCV)
                 .cover_letter(form.getCoverLetter())
                 .status(form.getStatus() != null ? form.getStatus() : "APPLIED")
+                .isAccepted(null)
                 .build();
     }
 
@@ -104,8 +105,6 @@ public class JobCandidateServiceImpl implements JobCandidateService {
             Job job = entity.getJob();
             response.setJobId(job.getId());
             response.setJobTitle(job.getTitle());
-
-
         }
 
         if (entity.getCandidate() != null) {
@@ -132,9 +131,12 @@ public class JobCandidateServiceImpl implements JobCandidateService {
 
         response.setCover_letter(entity.getCover_letter());
         response.setStatus(entity.getStatus());
+        response.setIsAccepted(entity.getIsAccepted());
 
         return response;
     }
+
+    // Trong JobCandidateServiceImpl.java
 
     @Override
     @Transactional
@@ -193,13 +195,37 @@ public class JobCandidateServiceImpl implements JobCandidateService {
         }
 
 
-        boolean alreadyApplied = jobCandidateRepository.existsByJob_IdAndCandidate_Id(form.getJobId(), form.getCandidateId());
+        // 2. KIỂM TRA TÌNH TRẠNG ĐƠN ỨNG TUYỂN TRƯỚC (NỘP LẠI HAY BỊ CHẶN)
+        Optional<JobCandidate> existingApplicationOpt = jobCandidateRepository
+                .findByJobIdAndCandidateId(form.getJobId(), form.getCandidateId());
 
-        if (alreadyApplied) {
-            throw new IllegalArgumentException("You have already applied to this job!");
+        if (existingApplicationOpt.isPresent()) {
+            JobCandidate existingApplication = existingApplicationOpt.get();
+
+            // Chặn nếu đơn trước đó ĐANG CHỜ XỬ LÝ (null) hoặc ĐÃ CHẤP NHẬN (true)
+            if (existingApplication.getIsAccepted() == null || existingApplication.getIsAccepted() == true) {
+                throw new IllegalArgumentException("You have already applied to this job, and the current application status is not rejected.");
+            }
+
+            // Nếu isAccepted = false (ĐÃ BỊ TỪ CHỐI): Cập nhật lại đơn cũ thành đơn mới
+            if (existingApplication.getIsAccepted() != null && existingApplication.getIsAccepted() == false) {
+
+                // Cập nhật lại thông tin mới
+                existingApplication.setCandidateCV(form.getCvid() != null ?
+                        cvRepository.findById(form.getCvid()).orElse(null) : null);
+                existingApplication.setCover_letter(form.getCoverLetter());
+
+                // Đặt lại trạng thái chờ xử lý
+                existingApplication.setStatus(form.getStatus() != null ? form.getStatus() : "REAPPLIED");
+                existingApplication.setIsAccepted(null);
+
+                JobCandidate reAppliedJobCandidate = jobCandidateRepository.save(existingApplication);
+                return toResponse(reAppliedJobCandidate);
+            }
         }
 
 
+        // 3. NỘP ĐƠN LẦN ĐẦU (Hoặc tạo đơn mới nếu logic nộp lại ở trên không chạy)
         JobCandidate jobCandidateToCreate = toEntity(form);
 
         JobCandidate savedJobCandidate = jobCandidateRepository.save(jobCandidateToCreate);
@@ -223,12 +249,49 @@ public class JobCandidateServiceImpl implements JobCandidateService {
         }
 
         existingCandidate.setCover_letter(form.getCoverLetter());
-        existingCandidate.setStatus(form.getStatus());
+
+        if (form.getStatus() != null) {
+            existingCandidate.setStatus(form.getStatus());
+        }
+
+        // Cập nhật trạng thái chấp nhận/từ chối
+        if (form.getIsAccepted() != null) {
+            existingCandidate.setIsAccepted(form.getIsAccepted());
+        }
 
         JobCandidate updatedJobCandidate = jobCandidateRepository.save(existingCandidate);
 
         return toResponse(updatedJobCandidate);
     }
+
+    @Override
+    @Transactional
+    public JobCandidateResponse setAcceptanceStatus(Long id, Boolean isAccepted) {
+
+        JobCandidate existingCandidate = jobCandidateRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("JobCandidate not found with id: " + id));
+
+        AccountCompany currentCompany = jwtProvider.getCurrentAccountCompany();
+
+        // 1. KIỂM TRA QUYỀN SỞ HỮU
+        if (currentCompany == null ||
+                !existingCandidate.getJob().getCompany().getId().equals(currentCompany.getId())) {
+
+            // ✨ Ném AccessDeniedException thay vì SecurityException ✨
+            throw new AccessDeniedException("You do not have permission to modify the status of this job application.");
+        }
+
+        // 2. Cập nhật trạng thái
+        existingCandidate.setIsAccepted(isAccepted);
+        // Tùy chọn: Cập nhật status dựa trên kết quả
+        existingCandidate.setStatus(isAccepted ? "ACCEPTED" : "REJECTED");
+
+        JobCandidate updatedJobCandidate = jobCandidateRepository.save(existingCandidate);
+
+        return toResponse(updatedJobCandidate);
+    }
+
+    // ... (Các phương thức khác) ...
 
     @Override
     public Optional<JobCandidateResponse> findById(Long id) {
@@ -276,8 +339,10 @@ public class JobCandidateServiceImpl implements JobCandidateService {
         Job job = jobRepository.findById(jobId)
                 .orElseThrow(() -> new NoSuchElementException("Job not found with id: " + jobId));
 
+        // Kiểm tra quyền sở hữu công việc này (giống logic ở setAcceptanceStatus)
         if (!job.getCompany().getId().equals(company.getId())) {
-            throw new SecurityException("You are not allowed to access this job");
+            // ✨ Ném AccessDeniedException thay vì SecurityException ✨
+            throw new AccessDeniedException("You are not allowed to access this job's candidates.");
         }
 
         Set<Skill> requiredSkills = job.getSkills();
@@ -332,10 +397,10 @@ public class JobCandidateServiceImpl implements JobCandidateService {
             default -> 0;
         };
     }
+
     @Override
     @Transactional
     public void deleteByJobId(Long jobId) {
-        // Gọi phương thức xóa từ Repository
         jobCandidateRepository.deleteByJobId(jobId);
     }
 }

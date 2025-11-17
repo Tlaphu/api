@@ -30,7 +30,8 @@ public class JobCandidate {
     @JoinColumn(name = "cv_id", nullable = true)
     @JsonBackReference
     private CandidateCV candidateCV;
-    
+    @Column(nullable = true)
+    private Boolean isAccepted;
     private String cover_letter;
     private String status;
     @Temporal(TemporalType.TIMESTAMP)

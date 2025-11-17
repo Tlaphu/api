@@ -20,4 +20,5 @@ public interface JobCandidateService {
 
     List<CandidateResponse> getSuitableCandidatesForCompanyJob(Long jobId);
     void deleteByJobId(Long jobId);
+    JobCandidateResponse setAcceptanceStatus(Long id, Boolean isAccepted);
 }

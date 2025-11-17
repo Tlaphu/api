@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-
+import java.util.Optional;
 
 import java.util.Date;
 import java.util.List;
@@ -39,4 +39,6 @@ public interface IJobCandidateRepository extends JpaRepository<JobCandidate, Lon
     void deleteByJobId(@Param("jobId") Long jobId);
     boolean existsByJob_IdAndCandidate_Id(Long jobId, Long candidateId);
     boolean existsByJobId(Long jobId);
+    Optional<JobCandidate> findByJobIdAndCandidateId(Long jobId, Long candidateId);
+
 }

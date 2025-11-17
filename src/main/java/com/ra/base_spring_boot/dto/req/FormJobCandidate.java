@@ -18,4 +18,5 @@ public class FormJobCandidate {
     private String coverLetter;
 
     private String status;
+    private Boolean isAccepted;
 }

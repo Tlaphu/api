@@ -4,7 +4,7 @@ import com.ra.base_spring_boot.model.*;
 import com.ra.base_spring_boot.dto.req.FormPayment;
 import com.ra.base_spring_boot.dto.resp.PaymentResponse;
 import com.ra.base_spring_boot.repository.ICandidateRepository;
-import com.ra.base_spring_boot.repository.IAccountCompanyRepository; // ✨ CẦN IMPORT REPOSITORY NÀY ✨
+import com.ra.base_spring_boot.repository.IAccountCompanyRepository;
 import com.ra.base_spring_boot.repository.PaymentTransactionRepository;
 import com.ra.base_spring_boot.repository.SubscriptionPlanRepository;
 import com.ra.base_spring_boot.services.VNPayService;
@@ -12,9 +12,11 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.view.RedirectView;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -59,7 +61,6 @@ public class PaymentController {
                     request.getAccountType(), request.getAccountId(), plan.getName());
 
 
-
             PaymentTransaction newTransaction = PaymentTransaction.builder()
                     .candidate(candidate)
                     .accountCompany(companyAccount)
@@ -72,7 +73,6 @@ public class PaymentController {
             transactionRepository.save(newTransaction);
 
 
-            // 3. TẠO URL VÀ TRẢ VỀ RESPONSE
             String paymentUrl = vnpayService.createPaymentUrl(
                     httpServletRequest,
                     plan.getPrice(),
@@ -105,11 +105,19 @@ public class PaymentController {
         boolean isSuccess = vnpayService.handleVNPayReturn(params);
 
         if (isSuccess) {
-
             return new RedirectView("http://localhost:5173/payment/success?status=00");
         } else {
-
             return new RedirectView("http://localhost:5173/payment/failure?status=" + params.getOrDefault("vnp_ResponseCode", "99"));
         }
+    }
+
+
+    @GetMapping("/transactions")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<List<PaymentTransaction>> getAllTransactions() {
+
+        List<PaymentTransaction> transactions = transactionRepository.findAll();
+
+        return ResponseEntity.ok(transactions);
     }
 }

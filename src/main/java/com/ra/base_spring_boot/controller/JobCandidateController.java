@@ -8,10 +8,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.access.AccessDeniedException; // ✨ IMPORT MỚI ✨
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.NoSuchElementException; // Cần import ngoại lệ này
+import java.util.NoSuchElementException;
 
 @RestController
 @RequestMapping("/api/v1/job-candidates")
@@ -37,11 +38,10 @@ public class JobCandidateController {
     @PreAuthorize("hasAuthority('ROLE_COMPANY') or hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<List<JobCandidateResponse>> getAllJobCandidates() {
         List<JobCandidateResponse> responses = jobCandidateService.findAll();
-
         return ResponseEntity.ok(responses);
     }
 
-    // --- READ BY ID ---
+
     @GetMapping("/{id}")
     @PreAuthorize("hasAuthority('ROLE_COMPANY') or hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<JobCandidateResponse> getJobCandidateById(@PathVariable Long id) {
@@ -50,7 +50,7 @@ public class JobCandidateController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    // --- READ BY JOB ID ---
+
     @GetMapping("/job/{jobId}")
     @PreAuthorize("hasAuthority('ROLE_COMPANY') or hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<List<JobCandidateResponse>> getCandidatesByJobId(@PathVariable Long jobId) {
@@ -58,7 +58,7 @@ public class JobCandidateController {
         return ResponseEntity.ok(responses);
     }
 
-    // --- READ BY CANDIDATE ID (Có kiểm tra bảo mật) ---
+
     @GetMapping("/candidate/{candidateId}")
     @PreAuthorize("hasAnyAuthority('ROLE_COMPANY', 'ROLE_ADMIN') or (hasAuthority('ROLE_CANDIDATE') and #candidateId == authentication.principal.id)")
     public ResponseEntity<List<JobCandidateResponse>> getApplicationsByCandidateId(@PathVariable Long candidateId) {
@@ -66,7 +66,7 @@ public class JobCandidateController {
         return ResponseEntity.ok(responses);
     }
 
-    // --- UPDATE ---
+    // --- UPDATE CHUNG ---
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('ROLE_COMPANY') or hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<JobCandidateResponse> updateJobCandidate(@PathVariable Long id,
@@ -75,12 +75,30 @@ public class JobCandidateController {
             JobCandidateResponse updatedJobCandidate = jobCandidateService.update(id, form);
             return ResponseEntity.ok(updatedJobCandidate);
         } catch (NoSuchElementException e) {
-          
             return ResponseEntity.notFound().build();
         }
     }
 
-    // --- DELETE ---
+
+    // --- CẬP NHẬT TRẠNG THÁI ACCEPT/REJECT ---
+    @PatchMapping("/accept-reject/{id}")
+    @PreAuthorize("hasAuthority('ROLE_COMPANY') or hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<JobCandidateResponse> setAcceptanceStatus(
+            @PathVariable Long id,
+            @RequestParam Boolean isAccepted) {
+        try {
+
+            JobCandidateResponse updatedJobCandidate = jobCandidateService.setAcceptanceStatus(id, isAccepted);
+            return ResponseEntity.ok(updatedJobCandidate);
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.notFound().build();
+        } catch (AccessDeniedException e) {
+
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+    }
+
+
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('ROLE_COMPANY') or hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<Void> deleteJobCandidate(@PathVariable Long id) {
@@ -88,7 +106,6 @@ public class JobCandidateController {
             jobCandidateService.delete(id);
             return ResponseEntity.noContent().build();
         } catch (NoSuchElementException e) {
-
             return ResponseEntity.notFound().build();
         }
     }
