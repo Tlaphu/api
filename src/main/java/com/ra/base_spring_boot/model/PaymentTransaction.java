@@ -31,7 +31,9 @@ public class PaymentTransaction {
     @ManyToOne
     @JoinColumn(name = "candidate_id")
     private Candidate candidate;
-
+    @ManyToOne
+    @JoinColumn(name = "account_company_id")
+    private AccountCompany accountCompany;
     @ManyToOne
     @JoinColumn(name = "plan_id")
     private SubscriptionPlan subscriptionPlan;

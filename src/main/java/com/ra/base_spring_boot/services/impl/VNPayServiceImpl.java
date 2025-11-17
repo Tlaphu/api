@@ -2,36 +2,86 @@ package com.ra.base_spring_boot.services.impl;
 
 import com.ra.base_spring_boot.config.VNPayProperties;
 import com.ra.base_spring_boot.config.VNPayUtil;
-import com.ra.base_spring_boot.model.Candidate;
-import com.ra.base_spring_boot.model.PaymentTransaction;
+import com.ra.base_spring_boot.model.*;
+import com.ra.base_spring_boot.model.constants.RoleName;
 import com.ra.base_spring_boot.repository.ICandidateRepository;
+import com.ra.base_spring_boot.repository.IAccountCompanyRepository;
 import com.ra.base_spring_boot.repository.PaymentTransactionRepository;
 import com.ra.base_spring_boot.services.VNPayService;
+import com.ra.base_spring_boot.services.IRoleService;
+import com.ra.base_spring_boot.services.EmailService;
 import jakarta.servlet.http.HttpServletRequest;
-import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
 @Service
-@RequiredArgsConstructor
+@Transactional
 public class VNPayServiceImpl implements VNPayService {
 
     private final VNPayProperties vnpayProperties;
     private final ICandidateRepository candidateRepository;
     private final PaymentTransactionRepository transactionRepository;
+    private final IAccountCompanyRepository accountCompanyRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final IRoleService roleService;
+    private final EmailService emailService;
 
+
+    public VNPayServiceImpl(VNPayProperties vnpayProperties,
+                            ICandidateRepository candidateRepository,
+                            PaymentTransactionRepository transactionRepository,
+                            IAccountCompanyRepository accountCompanyRepository,
+                            PasswordEncoder passwordEncoder,
+                            IRoleService roleService,
+                            EmailService emailService) {
+        this.vnpayProperties = vnpayProperties;
+        this.candidateRepository = candidateRepository;
+        this.transactionRepository = transactionRepository;
+        this.accountCompanyRepository = accountCompanyRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.roleService = roleService;
+        this.emailService = emailService;
+    }
+
+    @Transactional
+    public void createExtraAccounts(AccountCompany principalAccount, Company company) {
+
+        Role subRole = roleService.findByRoleName(RoleName.ROLE_COMPANY);
+        Set<Role> roles = Collections.singleton(subRole);
+
+        String basePassword = UUID.randomUUID().toString().substring(0, 8);
+        String encodedPassword = passwordEncoder.encode(basePassword);
+
+        emailService.sendNewSubAccountCredentials(principalAccount.getEmail(), basePassword);
+
+        for (int i = 1; i <= 3; i++) {
+            String subEmail = String.format("sub_%d_%s", i, principalAccount.getEmail());
+
+            AccountCompany subAccount = AccountCompany.builder()
+                    .fullName("Sub Account " + i + " - " + principalAccount.getFullName())
+                    .email(subEmail)
+                    .password(encodedPassword)
+                    .roles(roles)
+                    .company(company)
+                    .status(true)
+                    .isPremium(true)
+                    .premiumUntil(principalAccount.getPremiumUntil())
+                    .build();
+
+            accountCompanyRepository.save(subAccount);
+        }
+        System.out.println("Created 3 sub-accounts for company: " + principalAccount.getEmail());
+    }
 
 
     @Override
     public String createPaymentUrl(HttpServletRequest request, BigDecimal amount, String orderInfo, String vnpayTxnRef) throws UnsupportedEncodingException {
-
         long vnp_Amount = amount.multiply(new BigDecimal(100)).longValue();
 
         Map<String, String> vnp_Params = new HashMap<>();
@@ -40,8 +90,6 @@ public class VNPayServiceImpl implements VNPayService {
         vnp_Params.put("vnp_TmnCode", vnpayProperties.getTmnCode());
         vnp_Params.put("vnp_Amount", String.valueOf(vnp_Amount));
         vnp_Params.put("vnp_CurrCode", "VND");
-
-
         vnp_Params.put("vnp_TxnRef", vnpayTxnRef);
         vnp_Params.put("vnp_OrderInfo", orderInfo);
         vnp_Params.put("vnp_OrderType", "other");
@@ -75,9 +123,7 @@ public class VNPayServiceImpl implements VNPayService {
     }
 
 
-
     @Override
-    @Transactional
     public boolean handleVNPayReturn(Map<String, String> params) {
 
         String vnp_SecureHash = params.get("vnp_SecureHash");
@@ -86,30 +132,23 @@ public class VNPayServiceImpl implements VNPayService {
 
 
         params.remove("vnp_SecureHash");
-
-
         Map<String, String> sortedParams = VNPayUtil.sortParams(params);
         String hashData;
         try {
             hashData = VNPayUtil.buildHashData(sortedParams);
         } catch (UnsupportedEncodingException e) {
-
             return false;
         }
         String generatedHash = VNPayUtil.hmacSHA512(vnpayProperties.getHashSecret(), hashData);
 
-
         if (!generatedHash.equals(vnp_SecureHash)) {
-
             return false;
         }
-
 
         PaymentTransaction transaction = transactionRepository.findByVnpayTxnRef(vnp_TxnRef)
                 .orElse(null);
 
         if (transaction == null) {
-
             return false;
         }
 
@@ -119,17 +158,29 @@ public class VNPayServiceImpl implements VNPayService {
             transaction.setPaymentDate(new Date());
             transactionRepository.save(transaction);
 
-
-            Candidate candidate = transaction.getCandidate();
-            candidate.setPremium(true);
-
-
             Calendar c = Calendar.getInstance();
             c.setTime(new Date());
             c.add(Calendar.DATE, transaction.getSubscriptionPlan().getDurationInDays());
-            candidate.setPremiumUntil(c.getTime());
+            Date newPremiumUntil = c.getTime();
 
-            candidateRepository.save(candidate);
+            if (transaction.getCandidate() != null) {
+
+                Candidate candidate = transaction.getCandidate();
+                candidate.setPremium(true);
+                candidate.setPremiumUntil(newPremiumUntil);
+                candidateRepository.save(candidate);
+
+            } else if (transaction.getAccountCompany() != null) {
+
+                AccountCompany principalAccount = transaction.getAccountCompany();
+                principalAccount.setPremium(true);
+                principalAccount.setPremiumUntil(newPremiumUntil);
+                accountCompanyRepository.save(principalAccount);
+
+                createExtraAccounts(principalAccount, principalAccount.getCompany());
+            } else {
+                return false;
+            }
 
             return true;
         } else {

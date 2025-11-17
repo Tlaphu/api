@@ -33,7 +33,7 @@ import java.util.stream.Collectors;
 @Service
 public class AdminServiceImpl implements IAdminService {
 
-    // Mật khẩu mặc định
+
     private static final String DEFAULT_PASSWORD = "Welcome123!";
 
     private final AuthenticationManager adminAuthManager;
@@ -43,7 +43,7 @@ public class AdminServiceImpl implements IAdminService {
     private final IAddressCompanyRepository addressCompanyRepository;
     private final ICandidateRepository candidateRepository;
 
-    // Dependencies mới
+
     private final EmailService emailService;
     private final PasswordEncoder passwordEncoder;
 

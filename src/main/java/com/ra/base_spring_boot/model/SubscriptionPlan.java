@@ -23,11 +23,11 @@ public class SubscriptionPlan {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String name; // Ví dụ: "VIP Monthly", "VIP Annual"
+    private String name;
 
-    private BigDecimal price; // 36000, 360000
+    private BigDecimal price;
 
-    private Integer durationInDays; // Ví dụ: 30, 365
+    private Integer durationInDays;
 
-    private String planCode; // Mã để dễ dàng truy vấn
+    private String planCode;
 }

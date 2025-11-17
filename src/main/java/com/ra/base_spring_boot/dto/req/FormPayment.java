@@ -5,8 +5,11 @@ import jakarta.validation.constraints.NotNull;
 @Data
 public class FormPayment {
     @NotNull
-    private Long candidateId;
+    private Long accountId; // ID của Candidate HOẶC AccountCompany
 
     @NotNull
-    private Long planId;
+    private Long planId; // ID của SubscriptionPlan
+
+    @NotNull
+    private String accountType;
 }
