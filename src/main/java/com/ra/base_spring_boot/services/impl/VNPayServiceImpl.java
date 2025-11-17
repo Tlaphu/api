@@ -2,9 +2,11 @@ package com.ra.base_spring_boot.services.impl;
 
 import com.ra.base_spring_boot.config.VNPayProperties;
 import com.ra.base_spring_boot.config.VNPayUtil;
+import com.ra.base_spring_boot.model.AccountCompany;
 import com.ra.base_spring_boot.model.Candidate;
 import com.ra.base_spring_boot.model.PaymentTransaction;
 import com.ra.base_spring_boot.repository.ICandidateRepository;
+import com.ra.base_spring_boot.repository.IAccountCompanyRepository;
 import com.ra.base_spring_boot.repository.PaymentTransactionRepository;
 import com.ra.base_spring_boot.services.VNPayService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -14,10 +16,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @RequiredArgsConstructor
@@ -26,7 +27,7 @@ public class VNPayServiceImpl implements VNPayService {
     private final VNPayProperties vnpayProperties;
     private final ICandidateRepository candidateRepository;
     private final PaymentTransactionRepository transactionRepository;
-
+    private final IAccountCompanyRepository accountCompanyRepository;
 
 
     @Override
@@ -75,7 +76,6 @@ public class VNPayServiceImpl implements VNPayService {
     }
 
 
-
     @Override
     @Transactional
     public boolean handleVNPayReturn(Map<String, String> params) {
@@ -85,15 +85,14 @@ public class VNPayServiceImpl implements VNPayService {
         String vnp_TxnRef = params.get("vnp_TxnRef");
 
 
+        // Bắt đầu xác thực Hash
         params.remove("vnp_SecureHash");
-
 
         Map<String, String> sortedParams = VNPayUtil.sortParams(params);
         String hashData;
         try {
             hashData = VNPayUtil.buildHashData(sortedParams);
         } catch (UnsupportedEncodingException e) {
-
             return false;
         }
         String generatedHash = VNPayUtil.hmacSHA512(vnpayProperties.getHashSecret(), hashData);
@@ -103,6 +102,7 @@ public class VNPayServiceImpl implements VNPayService {
 
             return false;
         }
+
 
 
         PaymentTransaction transaction = transactionRepository.findByVnpayTxnRef(vnp_TxnRef)
@@ -120,16 +120,30 @@ public class VNPayServiceImpl implements VNPayService {
             transactionRepository.save(transaction);
 
 
-            Candidate candidate = transaction.getCandidate();
-            candidate.setPremium(true);
-
-
             Calendar c = Calendar.getInstance();
             c.setTime(new Date());
-            c.add(Calendar.DATE, transaction.getSubscriptionPlan().getDurationInDays());
-            candidate.setPremiumUntil(c.getTime());
 
-            candidateRepository.save(candidate);
+            c.add(Calendar.DATE, transaction.getSubscriptionPlan().getDurationInDays());
+            Date newPremiumUntil = c.getTime();
+
+
+            if (transaction.getCandidate() != null) {
+
+                Candidate candidate = transaction.getCandidate();
+                candidate.setPremium(true);
+                candidate.setPremiumUntil(newPremiumUntil);
+                candidateRepository.save(candidate);
+
+            } else if (transaction.getAccountCompany() != null) {
+
+                AccountCompany companyAccount = transaction.getAccountCompany();
+                companyAccount.setPremium(true);
+                companyAccount.setPremiumUntil(newPremiumUntil);
+                accountCompanyRepository.save(companyAccount);
+            } else {
+
+                return false;
+            }
 
             return true;
         } else {

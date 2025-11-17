@@ -9,7 +9,7 @@ import lombok.*;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
+import java.util.Date;
 @Entity
 @NoArgsConstructor
 @AllArgsConstructor
@@ -41,4 +41,10 @@ public class AccountCompany {
     )
     @Builder.Default
     private Set<Role> roles = new HashSet<>();
+    @Builder.Default
+    private boolean isPremium = false;
+
+
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date premiumUntil;
 }

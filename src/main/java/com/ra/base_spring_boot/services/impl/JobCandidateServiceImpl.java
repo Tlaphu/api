@@ -140,27 +140,26 @@ public class JobCandidateServiceImpl implements JobCandidateService {
     @Transactional
     public JobCandidateResponse create(FormJobCandidate form) {
 
-
+        // 1. KIỂM TRA TỒN TẠI ỨNG VIÊN
         Candidate candidate = candidateRepository.findById(form.getCandidateId())
                 .orElseThrow(() -> new NoSuchElementException(String.format("Candidate not found with id: %d", form.getCandidateId())));
 
-
-
         final int MAX_MONTHLY_APPLICATIONS = 5;
         final int LOCK_PERIOD_DAYS = 30;
+
 
         if (!candidate.isPremium()) {
             Date today = new Date();
             Date lockUntilDate = candidate.getPremiumUntil();
 
-            // 1. KIỂM TRA KHÓA LĂN (COOLDOWN)
+
             if (lockUntilDate != null && lockUntilDate.after(today)) {
                 SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
                 String resetDateStr = sdf.format(lockUntilDate);
-                throw new IllegalArgumentException("Tài khoản thường đã bị khóa nộp đơn. Bạn sẽ có thể nộp đơn lại vào ngày " + resetDateStr + ".");
+                throw new IllegalArgumentException("The account is usually locked for submission. You will be able to re-apply on the date" + resetDateStr + ".");
             }
 
-            // 2. TÍNH TỔNG SỐ LẦN ĐÃ APPLY TRONG THÁNG LỊCH
+
             Date startOfMonth = getStartOfMonth(today);
 
             Calendar endCal = Calendar.getInstance();
@@ -168,7 +167,6 @@ public class JobCandidateServiceImpl implements JobCandidateService {
             endCal.add(Calendar.DAY_OF_MONTH, 1);
             Date endDateForQuery = endCal.getTime();
 
-            // SỬ DỤNG HÀM REPOSITORY MỚI ĐỂ ĐẾM
             Integer totalMonthlyApplications = jobCandidateRepository.countApplicationsInMonth(
                     candidate.getId(),
                     startOfMonth,
@@ -179,8 +177,9 @@ public class JobCandidateServiceImpl implements JobCandidateService {
                 totalMonthlyApplications = 0;
             }
 
+
             if (totalMonthlyApplications >= MAX_MONTHLY_APPLICATIONS) {
-                // 3. THIẾT LẬP KHÓA LĂN NẾU ĐẠT GIỚI HẠN
+
                 Date newLockDate = addDaysToDate(today, LOCK_PERIOD_DAYS);
 
                 candidate.setPremiumUntil(newLockDate);
@@ -189,25 +188,24 @@ public class JobCandidateServiceImpl implements JobCandidateService {
                 SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
                 String lockDateStr = sdf.format(newLockDate);
 
-                throw new IllegalArgumentException("Tài khoản thường đã đạt giới hạn " + MAX_MONTHLY_APPLICATIONS + " đơn nộp trong tháng. Bạn sẽ bị khóa nộp đơn cho đến hết ngày " + lockDateStr + ".");
+                throw new IllegalArgumentException("Regular account has reached limit " + MAX_MONTHLY_APPLICATIONS + " đơn nộp trong tháng. Bạn sẽ bị khóa nộp đơn cho đến hết ngày " + lockDateStr + ".");
             }
         }
 
-        // --- END: LOGIC GIỚI HẠN APPLY JOB HÀNG THÁNG ---
 
-        if (form.getCvid() != null) {
-            boolean alreadyApplied = jobCandidateRepository.existsByJob_IdAndCandidateCV_Id(form.getJobId(), form.getCvid());
-            if (alreadyApplied) {
-                throw new IllegalArgumentException("You have already applied to this job using this CV!");
-            }
+        boolean alreadyApplied = jobCandidateRepository.existsByJob_IdAndCandidate_Id(form.getJobId(), form.getCandidateId());
+
+        if (alreadyApplied) {
+            throw new IllegalArgumentException("You have already applied to this job!");
         }
+
 
         JobCandidate jobCandidateToCreate = toEntity(form);
-        JobCandidate savedJobCandidate = jobCandidateRepository.save(jobCandidateToCreate); // Thao tác này đếm là 1 đơn nộp
+
+        JobCandidate savedJobCandidate = jobCandidateRepository.save(jobCandidateToCreate);
 
         return toResponse(savedJobCandidate);
     }
-
 
     @Override
     public JobCandidateResponse update(Long id, FormJobCandidate form) {

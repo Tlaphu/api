@@ -11,6 +11,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.NoSuchElementException; // Cần import ngoại lệ này
 
 @RestController
 @RequestMapping("/api/v1/job-candidates")
@@ -23,6 +24,7 @@ public class JobCandidateController {
         this.jobCandidateService = jobCandidateService;
     }
 
+    // --- CREATE ---
     @PostMapping
     @PreAuthorize("hasAuthority('ROLE_CANDIDATE')")
     public ResponseEntity<JobCandidateResponse> createJobCandidate(@Valid @RequestBody FormJobCandidate form) {
@@ -30,52 +32,63 @@ public class JobCandidateController {
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
+    // --- READ ALL ---
     @GetMapping
     @PreAuthorize("hasAuthority('ROLE_COMPANY') or hasAuthority('ROLE_ADMIN')")
-    public List<JobCandidateResponse> getAllJobCandidates() {
-        return jobCandidateService.findAll();
+    public ResponseEntity<List<JobCandidateResponse>> getAllJobCandidates() {
+        List<JobCandidateResponse> responses = jobCandidateService.findAll();
+
+        return ResponseEntity.ok(responses);
     }
 
+    // --- READ BY ID ---
     @GetMapping("/{id}")
-   @PreAuthorize("hasAuthority('ROLE_COMPANY') or hasAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasAuthority('ROLE_COMPANY') or hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<JobCandidateResponse> getJobCandidateById(@PathVariable Long id) {
         return jobCandidateService.findById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    // --- READ BY JOB ID ---
     @GetMapping("/job/{jobId}")
     @PreAuthorize("hasAuthority('ROLE_COMPANY') or hasAuthority('ROLE_ADMIN')")
-    public List<JobCandidateResponse> getCandidatesByJobId(@PathVariable Long jobId) {
-        return jobCandidateService.findByJobId(jobId);
+    public ResponseEntity<List<JobCandidateResponse>> getCandidatesByJobId(@PathVariable Long jobId) {
+        List<JobCandidateResponse> responses = jobCandidateService.findByJobId(jobId);
+        return ResponseEntity.ok(responses);
     }
 
+    // --- READ BY CANDIDATE ID (Có kiểm tra bảo mật) ---
     @GetMapping("/candidate/{candidateId}")
-    @PreAuthorize("hasAnyAuthority('ROLE_COMPANY', 'ROLE_ADMIN') or (hasAuthority('ROLE_CANDIDATE') and #candidateId == authentication.principal.id)") 
-    public List<JobCandidateResponse> getApplicationsByCandidateId(@PathVariable Long candidateId) {
-        return jobCandidateService.findByCandidateId(candidateId);
+    @PreAuthorize("hasAnyAuthority('ROLE_COMPANY', 'ROLE_ADMIN') or (hasAuthority('ROLE_CANDIDATE') and #candidateId == authentication.principal.id)")
+    public ResponseEntity<List<JobCandidateResponse>> getApplicationsByCandidateId(@PathVariable Long candidateId) {
+        List<JobCandidateResponse> responses = jobCandidateService.findByCandidateId(candidateId);
+        return ResponseEntity.ok(responses);
     }
 
+    // --- UPDATE ---
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('ROLE_COMPANY') or hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<JobCandidateResponse> updateJobCandidate(@PathVariable Long id,
-                                                                 @Valid @RequestBody FormJobCandidate form) {
+                                                                   @Valid @RequestBody FormJobCandidate form) {
         try {
             JobCandidateResponse updatedJobCandidate = jobCandidateService.update(id, form);
             return ResponseEntity.ok(updatedJobCandidate);
-        } catch (RuntimeException e) {
-
+        } catch (NoSuchElementException e) {
+          
             return ResponseEntity.notFound().build();
         }
     }
 
+    // --- DELETE ---
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('ROLE_COMPANY') or hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<Void> deleteJobCandidate(@PathVariable Long id) {
         try {
             jobCandidateService.delete(id);
             return ResponseEntity.noContent().build();
-        } catch (RuntimeException e) {
+        } catch (NoSuchElementException e) {
+
             return ResponseEntity.notFound().build();
         }
     }

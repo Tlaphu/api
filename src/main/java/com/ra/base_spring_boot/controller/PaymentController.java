@@ -1,13 +1,12 @@
 package com.ra.base_spring_boot.controller;
 
-import com.ra.base_spring_boot.model.Candidate;
-import com.ra.base_spring_boot.model.PaymentTransaction;
-import com.ra.base_spring_boot.model.SubscriptionPlan;
-import com.ra.base_spring_boot.dto.req.FormPayment; // SỬ DỤNG CLASS REQUEST MỚI
-import com.ra.base_spring_boot.dto.resp.PaymentResponse; // SỬ DỤNG CLASS RESPONSE MỚI
+import com.ra.base_spring_boot.model.*;
+import com.ra.base_spring_boot.dto.req.FormPayment;
+import com.ra.base_spring_boot.dto.resp.PaymentResponse;
 import com.ra.base_spring_boot.repository.ICandidateRepository;
+import com.ra.base_spring_boot.repository.IAccountCompanyRepository; // ✨ CẦN IMPORT REPOSITORY NÀY ✨
 import com.ra.base_spring_boot.repository.PaymentTransactionRepository;
-import com.ra.base_spring_boot.repository.SubscriptionPlanRepository; // Cần tạo Repository này
+import com.ra.base_spring_boot.repository.SubscriptionPlanRepository;
 import com.ra.base_spring_boot.services.VNPayService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -16,7 +15,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.view.RedirectView;
 
-import java.io.UnsupportedEncodingException;
 import java.util.Map;
 import java.util.UUID;
 
@@ -29,6 +27,7 @@ public class PaymentController {
     private final ICandidateRepository candidateRepository;
     private final SubscriptionPlanRepository planRepository;
     private final PaymentTransactionRepository transactionRepository;
+    private final IAccountCompanyRepository accountCompanyRepository;
 
 
     @PostMapping("/create")
@@ -37,35 +36,52 @@ public class PaymentController {
             HttpServletRequest httpServletRequest) {
 
         String vnpayTxnRef = UUID.randomUUID().toString();
+        Candidate candidate = null;
+        AccountCompany companyAccount = null;
 
         try {
-            Candidate candidate = candidateRepository.findById(request.getCandidateId())
-                    .orElseThrow(() -> new RuntimeException("Candidate not found"));
+
+            if ("CANDIDATE".equalsIgnoreCase(request.getAccountType())) {
+                candidate = candidateRepository.findById(request.getAccountId())
+                        .orElseThrow(() -> new RuntimeException("Candidate not found"));
+            } else if ("COMPANY".equalsIgnoreCase(request.getAccountType())) {
+                companyAccount = accountCompanyRepository.findById(request.getAccountId())
+                        .orElseThrow(() -> new RuntimeException("Company Account not found"));
+            } else {
+                throw new RuntimeException("Invalid account type: Must be CANDIDATE or COMPANY.");
+            }
+
             SubscriptionPlan plan = planRepository.findById(request.getPlanId())
                     .orElseThrow(() -> new RuntimeException("Plan not found"));
 
 
+            String orderInfo = String.format("Nâng cấp VIP cho %s ID: %d - Plan: %s",
+                    request.getAccountType(), request.getAccountId(), plan.getName());
+
+
+
             PaymentTransaction newTransaction = PaymentTransaction.builder()
                     .candidate(candidate)
+                    .accountCompany(companyAccount)
                     .subscriptionPlan(plan)
                     .amount(plan.getPrice())
                     .transactionStatus("PENDING")
                     .vnpayTxnRef(vnpayTxnRef)
-                    .vnpayOrderInfo("Nâng cấp VIP cho Candidate ID: " + candidate.getId() + " - Plan: " + plan.getName())
+                    .vnpayOrderInfo(orderInfo)
                     .build();
             transactionRepository.save(newTransaction);
 
 
+            // 3. TẠO URL VÀ TRẢ VỀ RESPONSE
             String paymentUrl = vnpayService.createPaymentUrl(
                     httpServletRequest,
                     plan.getPrice(),
-                    newTransaction.getVnpayOrderInfo(),
+                    orderInfo,
                     vnpayTxnRef
             );
 
-
             PaymentResponse response = PaymentResponse.builder()
-                    .paymentUrl(paymentUrl) // URL VNPay để redirect
+                    .paymentUrl(paymentUrl)
                     .vnpayTxnRef(vnpayTxnRef)
                     .message("Payment URL created successfully. Redirect user to this URL.")
                     .build();
@@ -85,7 +101,6 @@ public class PaymentController {
 
     @GetMapping("/vnpay_return")
     public RedirectView handleVNPayReturn(@RequestParam Map<String, String> params) {
-
 
         boolean isSuccess = vnpayService.handleVNPayReturn(params);
 
