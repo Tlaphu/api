@@ -3,6 +3,9 @@ package com.ra.base_spring_boot.dto.resp;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.*;
 
+import java.util.Date;
+import java.util.List;
+
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
@@ -13,9 +16,12 @@ public class AccountCompanyResponse {
     private String email;
     private String fullName;
     private String phone;
+    private Integer gender;
+    private Date dob;
     private boolean status;
     @JsonIgnoreProperties({
             "accounts", "jobs", "addresses"
     })
     private CompanyResponse company;
+    private List<AddressCompanyResponse> addresses;
 }
