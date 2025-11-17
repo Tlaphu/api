@@ -7,7 +7,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import java.util.List;
 import java.util.Date;
-
+import com.ra.base_spring_boot.model.JobCandidate;
+import org.springframework.data.jpa.repository.JpaRepository;
 public interface JobRepository extends JpaRepository<Job, Long> {
 
     List<Job> findTop10ByOrderBySalaryDesc();
@@ -29,4 +30,7 @@ public interface JobRepository extends JpaRepository<Job, Long> {
     @Modifying
     @Query(value = "DELETE FROM candidate_favorite_jobs WHERE job_id = :jobId", nativeQuery = true)
     int deleteFavoriteJobsByJobId(@Param("jobId") Long jobId);
+    @Query("SELECT DISTINCT j FROM Job j JOIN j.skills s WHERE s.id IN :skillIds AND j.status = 'ACTIVE'")
+    List<Job> findBySkillsInAndStatusActive(@Param("skillIds") List<Long> skillIds);
+
 }

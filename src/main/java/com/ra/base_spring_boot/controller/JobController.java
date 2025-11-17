@@ -36,7 +36,7 @@ public class JobController {
     private final ISkillRepository skillRepository;
     private final LevelJobRepository levelJobRepository;
     private final LevelJobRelationRepository levelJobRelationRepository;
-
+    private final IJobCandidateRepository jobCandidateRepository;
 
     private String buildAutoRequirements(LevelJob levelJob, Set<Skill> skills) {
         StringBuilder sb = new StringBuilder("[");
@@ -135,7 +135,7 @@ public class JobController {
             return ResponseEntity.status(403).body("Access denied. Company must be logged in.");
         }
 
-        // Đã sửa: Sử dụng findByAccountId để tìm Company qua ID của AccountCompany
+
         Optional<Company> companyOpt = companyRepository.findByAccountId(currentAccountCompany.getId());
         if (companyOpt.isEmpty()) {
             return ResponseEntity.status(404).body("Associated Company profile not found for the logged-in user.");
@@ -143,7 +143,7 @@ public class JobController {
 
         Company company = companyOpt.get();
 
-        // THÊM LOGIC KIỂM TRA TÊN CÔNG TY
+
         if (form.getCompanyName() == null || form.getCompanyName().trim().isEmpty() ||
                 !company.getName().equalsIgnoreCase(form.getCompanyName())) {
             return ResponseEntity.status(400).body("The 'companyName' in the request body must match your logged-in company name.");
@@ -472,7 +472,6 @@ public class JobController {
             return ResponseEntity.status(403).body("Access denied. Company must be logged in.");
         }
 
-
         Optional<Company> currentCompanyOpt = companyRepository.findByAccountId(currentAccountCompany.getId());
 
         if (currentCompanyOpt.isEmpty()) {
@@ -490,13 +489,16 @@ public class JobController {
         }
 
 
+        if (jobCandidateRepository.existsByJobId(id)) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Cannot delete Job with ID: " + id + ". Candidates have already applied to this job.");
+        }
+
+
         if (job.getLevelJobRelations() != null && !job.getLevelJobRelations().isEmpty()) {
             levelJobRelationRepository.deleteAll(job.getLevelJobRelations());
         }
 
-
-        jobCandidateService.deleteByJobId(id);
-        // ------------------------------------------------------------------
 
         jobRepository.deleteFavoriteJobsByJobId(id);
 
@@ -587,5 +589,40 @@ public class JobController {
                         .build()
         );
     }
+    @GetMapping("/by-skills")
+    public ResponseEntity<?> getJobsBySkills(@RequestParam("skillIds") List<Long> skillIds) {
+        if (skillIds == null || skillIds.isEmpty()) {
+            return ResponseEntity.status(400).body("Skill IDs must be provided.");
+        }
 
+
+        List<Job> jobsBySkills = jobRepository.findBySkillsInAndStatusActive(skillIds);
+
+        if (jobsBySkills.isEmpty()) {
+            return ResponseEntity.ok(Collections.emptyList());
+        }
+
+
+        List<FormJobResponseDTO> jobs = jobsBySkills.stream()
+                .map(job -> FormJobResponseDTO.builder()
+                        .id(job.getId())
+                        .title(job.getTitle())
+                        .description(job.getDescription())
+                        .salary(job.getSalary())
+                        .requirements(job.getRequirements())
+                        .desirable(job.getDesirable())
+                        .benefits(job.getBenefits())
+                        .workTime(job.getWorkTime())
+                        .companyName(job.getCompany() != null ? job.getCompany().getName() : "N/A")
+                        .companyLogo(job.getCompany() != null ? job.getCompany().getLogo() : "N/A")
+                        .locationId(job.getLocation() != null ? job.getLocation().getId() : null)
+                        .locationName(job.getLocation() != null ? job.getLocation().getName() : "N/A")
+                        .created_at(job.getCreated_at())
+                        .expire_at(job.getExpire_at())
+                        .status(job.getStatus())
+                        .build())
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(jobs);
+    }
 }

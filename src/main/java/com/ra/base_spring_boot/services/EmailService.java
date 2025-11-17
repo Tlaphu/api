@@ -5,6 +5,9 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Value;
+import java.util.Date;
+import java.text.SimpleDateFormat;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -17,10 +20,6 @@ public class EmailService {
 
     /**
      * Gửi email chứa link kích hoạt tài khoản
-     *
-     * @param toEmail Email người nhận
-     * @param recipientName Tên người nhận
-     * @param confirmationLink Đường link để người dùng click kích hoạt
      */
     public void sendVerificationEmail(String toEmail, String recipientName, String confirmationLink) {
         String userName = recipientName != null && !recipientName.isEmpty() ? recipientName : "User";
@@ -115,6 +114,69 @@ public class EmailService {
             System.out.println("Login credentials email sent to: " + toEmail);
         } catch (Exception e) {
             System.err.println("ERROR SENDING LOGIN CREDENTIALS EMAIL to " + toEmail + ": " + e.getMessage());
+        }
+    }
+
+    // --- CÁC HÀM MỚI CHO LOGIC VIP COMPANY ---
+
+    /**
+     * Gửi email thông báo cho tài khoản chính về 3 tài khoản phụ mới đã được tạo.
+     * @param principalEmail Email của tài khoản công ty chính (để nhận thông báo).
+     * @param generatedPassword Mật khẩu ngẫu nhiên được tạo ra cho các tài khoản phụ.
+     */
+    public void sendNewSubAccountCredentials(String principalEmail, String generatedPassword) {
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
+
+            message.setFrom(fromEmail);
+            message.setTo(principalEmail);
+            message.setSubject("Subscription Confirmation: Your 3 VIP Sub-Accounts Are Active");
+
+            String content = "Dear Company Admin,\n\n"
+                    + "Thank you for upgrading to the VIP plan! Your primary account is now upgraded.\n"
+                    + "We have successfully created your 3 complimentary VIP sub-accounts.\n"
+                    + "The **temporary password** for all 3 sub-accounts is:\n\n"
+                    + "  Password: " + generatedPassword + "\n\n"
+                    + "Please check the sub-account emails (sub_1_your@email.com, etc.) and instruct your team to change this password immediately.\n\n"
+                    + "Best regards,\n"
+                    + "The Recruitment Team.";
+
+            message.setText(content);
+            mailSender.send(message);
+            System.out.println("Sub-account creation email sent to: " + principalEmail);
+        } catch (Exception e) {
+            System.err.println("ERROR SENDING SUB-ACCOUNT CREDENTIALS to " + principalEmail + ": " + e.getMessage());
+        }
+    }
+
+    /**
+     * Gửi cảnh báo hết hạn Premium (thường 1 ngày trước khi hết hạn).
+     * @param toEmail Email người nhận
+     * @param recipientName Tên người nhận
+     * @param expirationDate Ngày hết hạn dịch vụ
+     */
+    public void sendPremiumExpirationWarning(String toEmail, String recipientName, Date expirationDate) {
+        String userName = recipientName != null && !recipientName.isEmpty() ? recipientName : "Admin";
+        SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
+
+            message.setFrom(fromEmail);
+            message.setTo(toEmail);
+            message.setSubject("ACTION REQUIRED: Your VIP Subscription is Expiring Soon!");
+
+            String content = "Dear " + userName + ",\n\n"
+                    + "This is a friendly reminder that your Company's VIP subscription is set to expire on **" + dateFormat.format(expirationDate) + "**.\n\n"
+                    + "To ensure continued access for your team, including your 3 sub-accounts, please renew your subscription before the expiration date.\n\n"
+                    + "Thank you for choosing our platform.\n\n"
+                    + "Best regards,\n"
+                    + "The Recruitment Team.";
+
+            message.setText(content);
+            mailSender.send(message);
+            System.out.println("Expiration warning email sent to: " + toEmail);
+        } catch (Exception e) {
+            System.err.println("ERROR SENDING EXPIRATION WARNING to " + toEmail + ": " + e.getMessage());
         }
     }
 }

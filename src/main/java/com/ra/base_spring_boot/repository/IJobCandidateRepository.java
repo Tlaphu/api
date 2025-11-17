@@ -38,4 +38,5 @@ public interface IJobCandidateRepository extends JpaRepository<JobCandidate, Lon
     @Query("DELETE FROM JobCandidate jc WHERE jc.job.id = :jobId")
     void deleteByJobId(@Param("jobId") Long jobId);
     boolean existsByJob_IdAndCandidate_Id(Long jobId, Long candidateId);
+    boolean existsByJobId(Long jobId);
 }
