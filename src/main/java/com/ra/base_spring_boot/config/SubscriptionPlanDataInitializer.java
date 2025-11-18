@@ -28,7 +28,7 @@ public class SubscriptionPlanDataInitializer implements CommandLineRunner {
         ensurePlanExists("VIP_C_M", "Company VIP 1 Tháng", new BigDecimal("500000.00"), 30);
 
 
-        ensurePlanExists("VIP_C_Y", "Company VIP 1 Năm", new BigDecimal("1000000.00"), 365);
+        ensurePlanExists("VIP_C_Y", "Company VIP 1 Năm", new BigDecimal("5000000.00"), 365);
 
         System.out.println("SubscriptionPlan default data ensured: Candidate and Company plans added.");
     }
