@@ -1,13 +1,18 @@
 package com.ra.base_spring_boot.services.impl;
 
-import com.ra.base_spring_boot.model.Candidate;
+import com.ra.base_spring_boot.dto.req.ReviewCreateRequest;
+import com.ra.base_spring_boot.dto.req.ReviewUpdateRequest;
+import com.ra.base_spring_boot.dto.resp.ReviewResponse;
 import com.ra.base_spring_boot.model.Review;
 import com.ra.base_spring_boot.repository.ICandidateRepository;
+import com.ra.base_spring_boot.repository.ICompanyRepository;
 import com.ra.base_spring_boot.repository.ReviewRepository;
+import com.ra.base_spring_boot.security.jwt.JwtProvider;
 import com.ra.base_spring_boot.services.IReviewService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.Date;
 import java.util.List;
 
 @Service
@@ -16,40 +21,95 @@ public class ReviewServiceImpl implements IReviewService {
 
     private final ReviewRepository reviewRepository;
     private final ICandidateRepository candidateRepository;
+    private final ICompanyRepository companyRepository;
+    private final JwtProvider jwtProvider;
 
     @Override
-    public List<Review> findAll() {
-        return reviewRepository.findAllByOrderByScoreDesc();
+    public List<ReviewResponse> findAll() {
+        return reviewRepository.findAllByOrderByScoreDesc()
+                .stream().map(this::toResponse).toList();
+    }
+    @Override
+    public List<ReviewResponse> findAllOrderByScoreDesc() {
+        return reviewRepository.findAllByOrderByScoreDesc()
+                .stream().map(this::toResponse).toList();
     }
 
-
     @Override
-    public Review findById(Long id) {
-        return reviewRepository.findById(id)
+    public ReviewResponse findById(Long id) {
+        Review review = reviewRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Review not found"));
+        return toResponse(review);
     }
 
     @Override
-    public Review create(Long candidateId, Review review) {
-        Candidate candidate = candidateRepository.findById(candidateId)
-                .orElseThrow(() -> new RuntimeException("Candidate not found"));
+    public ReviewResponse create(ReviewCreateRequest req) {
+        String userType = jwtProvider.getCurrentUserType();
+        Long userId = jwtProvider.getCurrentUserId();
 
-        review.setCandidate(candidate);
-        return reviewRepository.save(review);
+        Review review = Review.builder()
+                .score(req.getScore())
+                .detail(req.getDetail())
+                .reviewerId(userId)
+                .reviewerType(userType)
+                .company(companyRepository.findById(req.getCompanyId())
+                        .orElseThrow(() -> new RuntimeException("Company not found")))
+                .createdAt(new Date())
+                .build();
+
+        return toResponse(reviewRepository.save(review));
     }
 
     @Override
-    public Review update(Long id, Review review) {
-        Review old = findById(id);
+    public ReviewResponse update(Long id, ReviewUpdateRequest req) {
+        Review old = reviewRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Review not found"));
 
-        old.setScore(review.getScore());
-        old.setDetail(review.getDetail());
+        old.setScore(req.getScore());
+        old.setDetail(req.getDetail());
 
-        return reviewRepository.save(old);
+        return toResponse(reviewRepository.save(old));
     }
 
     @Override
     public void delete(Long id) {
         reviewRepository.deleteById(id);
+    }
+
+    private ReviewResponse toResponse(Review r) {
+        String reviewerName = null;
+        String reviewerLogo = null;
+
+        if ("CANDIDATE".equals(r.getReviewerType())) {
+            var c = candidateRepository.findById(r.getReviewerId());
+            if (c.isPresent()) {
+                reviewerName = c.get().getName();
+                reviewerLogo = c.get().getLogo();
+            }
+        } else if ("COMPANY".equals(r.getReviewerType())) {
+            var c = companyRepository.findById(r.getReviewerId());
+            if (c.isPresent()) {
+                reviewerName = c.get().getName();
+                reviewerLogo = c.get().getLogo();
+            }
+        } else if ("ACCOUNT_COMPANY".equals(r.getReviewerType())) {
+            var c = companyRepository.findByAccountId(r.getReviewerId());
+            if (c.isPresent()) {
+                reviewerName = c.get().getName();
+                reviewerLogo = c.get().getLogo();
+            }
+        }
+
+        return ReviewResponse.builder()
+                .id(r.getId())
+                .score(r.getScore())
+                .detail(r.getDetail())
+                .createdAt(r.getCreatedAt())
+                .reviewerName(reviewerName)
+                .reviewerLogo(reviewerLogo)
+                .reviewerType(r.getReviewerType())
+                .companyId(r.getCompany().getId())
+                .companyName(r.getCompany().getName())
+                .build();
     }
 }

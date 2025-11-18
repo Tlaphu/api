@@ -1,24 +1,32 @@
 package com.ra.base_spring_boot.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+
+import java.util.Date;
 
 @Entity
 @Table(name = "reviews")
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
+@Builder
+@Getter
+@Setter
+@NoArgsConstructor @AllArgsConstructor
 public class Review {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     private int score;
     private String detail;
+
+    private Long reviewerId;      // ai review
+    private String reviewerType;  // CANDIDATE / COMPANY
+
     @ManyToOne
-    @JoinColumn(name = "candidate_id")
-    @JsonIgnore
-    private Candidate candidate;
+    @JoinColumn(name = "company_id")
+    private Company company;      // review cho công ty (target)
+
+    private Date createdAt;
 }
+
