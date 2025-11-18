@@ -19,10 +19,11 @@ public class NotificationEventListener {
                 event.getMessage(),
                 event.getReceiverId(),
                 event.getReceiverType(),
-                event.getType(),
-                event.getRedirectUrl(),
+                event.getSenderId(),
                 event.getSenderType(),
-                event.getSenderId()
+                event.getType(),
+                event.getRedirectUrl()
+
         );
     }
 }

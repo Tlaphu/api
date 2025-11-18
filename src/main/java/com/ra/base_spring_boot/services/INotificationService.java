@@ -8,7 +8,16 @@ import java.util.List;
 
 public interface INotificationService {
 
-    Notification createNotification(String title, String message, Long receiverId, String receiverType, String type, String redirectUrl);
+    Notification createNotification(
+            String title,
+            String message,
+            Long receiverId,
+            String receiverType,
+            Long senderId,
+            String senderType,
+            String type,
+            String redirectUrl
+    );
 
     List<NotificationResponse> getNotificationsForCurrentUser(Long userId, String userType);
     long countUnreadForCurrentUser(Long userId, String userType);

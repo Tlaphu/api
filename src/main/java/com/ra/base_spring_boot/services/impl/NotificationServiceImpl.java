@@ -26,31 +26,34 @@ public class NotificationServiceImpl implements INotificationService {
     private final JwtProvider jwtProvider;
     private final HttpServletRequest request;
 
-
     @Override
-    public Notification createNotification(String title, String message, Long receiverId, String receiverType, String type, String redirectUrl) {
+    public Notification createNotification(
+            String title,
+            String message,
+            Long receiverId,
+            String receiverType,
+            Long senderId,
+            String senderType,
+            String type,
+            String redirectUrl
+    ) {
 
-        Long senderId = null;
-        String senderType = null;
+        String senderLogo = null;
 
-        String role = jwtProvider.getCurrentUserType(); // COMPANY, CANDIDATE hoặc ADMIN
+        if ("COMPANY".equals(senderType)) {
+            senderLogo = companyRepository.findById(senderId)
+                    .map(Company::getLogo)
+                    .orElse(null);
 
-        if ("COMPANY".equals(role)) {
-            String email = jwtProvider.getCompanyUsername();
-            senderId = companyRepository.findByEmail(email).map(Company::getId).orElse(null);
-            senderType = "COMPANY";
-
-        } else if ("CANDIDATE".equals(role)) {
-            String email = jwtProvider.getCandidateUsername();
-            senderId = candidateRepository.findByEmail(email).map(Candidate::getId).orElse(null);
-            senderType = "CANDIDATE";
-
-        } else if ("ADMIN".equals(role)) {
-            // Admin không đại diện công ty hay ứng viên
+        } else if ("CANDIDATE".equals(senderType)) {
+            senderLogo = candidateRepository.findById(senderId)
+                    .map(Candidate::getLogo)
+                    .orElse(null);
+        } else if ("ADMIN".equals(senderType)) {
             senderId = null;
-            senderType = "SYSTEM";     // Gửi từ hệ thống
+            senderType = "SYSTEM";
+            senderLogo =  null; // <-- LOGO HỆ THỐNG (tùy bạn cấu hình)
         }
-
 
         Notification notification = Notification.builder()
                 .title(title)
@@ -59,13 +62,15 @@ public class NotificationServiceImpl implements INotificationService {
                 .redirectUrl(redirectUrl)
                 .receiverId(receiverId)
                 .receiverType(receiverType)
-                .isRead(false)
                 .senderId(senderId)
                 .senderType(senderType)
+                .logo(senderLogo)
+                .isRead(false)
                 .build();
 
         return notificationRepository.save(notification);
     }
+
 
 
     @Override

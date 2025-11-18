@@ -133,6 +133,8 @@ public class NotificationController {
                 request.getMessage(),
                 request.getReceiverId(),
                 request.getReceiverType(),
+                request.getSenderId(),
+                request.getSenderType(),
                 request.getType(),
                 request.getRedirectUrl()
         );
