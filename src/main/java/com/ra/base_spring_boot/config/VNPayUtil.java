@@ -65,7 +65,7 @@ public class VNPayUtil {
             if ((fieldValue != null) && (fieldValue.length() > 0)) {
                 hashData.append(fieldName);
                 hashData.append("=");
-                // ✅ Sử dụng UTF-8 cho mã hóa
+
                 hashData.append(URLEncoder.encode(fieldValue, StandardCharsets.UTF_8.toString()));
                 hashData.append("&");
             }
