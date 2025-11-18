@@ -1,5 +1,6 @@
 package com.ra.base_spring_boot.repository;
 
+import com.ra.base_spring_boot.model.Candidate;
 import com.ra.base_spring_boot.model.Job;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;

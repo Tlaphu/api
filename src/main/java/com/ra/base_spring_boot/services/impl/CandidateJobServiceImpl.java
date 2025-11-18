@@ -1,5 +1,6 @@
 package com.ra.base_spring_boot.services.impl;
 
+import com.ra.base_spring_boot.event.NotificationEvent;
 import com.ra.base_spring_boot.exception.HttpBadRequest;
 import com.ra.base_spring_boot.model.Candidate;
 import com.ra.base_spring_boot.model.Job;
@@ -8,6 +9,7 @@ import com.ra.base_spring_boot.repository.JobRepository;
 import com.ra.base_spring_boot.security.jwt.JwtProvider;
 import com.ra.base_spring_boot.services.ICandidateJobService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +23,8 @@ public class CandidateJobServiceImpl implements ICandidateJobService {
     private final ICandidateRepository candidateRepository;
     private final JobRepository jobRepository;
     private final JwtProvider jwtProvider;
+    private final ApplicationEventPublisher eventPublisher;
+
 
     private Job getJobById(Long jobId) {
         return jobRepository.findById(jobId)
@@ -42,6 +46,17 @@ public class CandidateJobServiceImpl implements ICandidateJobService {
 
         candidate.getFavoriteJobs().add(job);
         candidateRepository.save(candidate);
+        eventPublisher.publishEvent(new NotificationEvent(
+                this,
+                "Lưu công việc",
+                "Bạn vừa lưu công việc: " + job.getTitle(),
+                "FAVORITE_JOB_ADD",
+                candidate.getId(),      // receiverId
+                "CANDIDATE",            // receiverType
+                "/job/" + job.getId(),
+                "SYSTEM",               // senderType
+                0L                      // senderId (SYSTEM = 0 hoặc null)
+        ));
     }
 
     @Override

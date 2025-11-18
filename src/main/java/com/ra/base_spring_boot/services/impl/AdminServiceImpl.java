@@ -190,7 +190,7 @@ public class AdminServiceImpl implements IAdminService {
     public List<CandidateResponse> findAllCandidates() {
         return candidateRepository.findAll()
                 .stream()
-                .map(this::toCandidateResponse)
+                .map(this::mapCandidateToResponse)
                 .collect(Collectors.toList());
     }
 
@@ -209,7 +209,7 @@ public class AdminServiceImpl implements IAdminService {
         candidate.setUpdated_at(new Date());
         candidateRepository.save(candidate);
 
-        return toCandidateResponse(candidate);
+        return mapCandidateToResponse(candidate);
     }
 
     @Override
@@ -219,19 +219,6 @@ public class AdminServiceImpl implements IAdminService {
         candidateRepository.delete(candidate);
     }
 
-    private CandidateResponse toCandidateResponse(Candidate candidate) {
-        return CandidateResponse.builder()
-                .id(candidate.getId())
-                .name(candidate.getName())
-                .email(candidate.getEmail())
-                .phone(candidate.getPhone())
-                .address(candidate.getAddress())
-                .gender((candidate.getGender()))
-                .dob(candidate.getDob())
-                .link(candidate.getLink())
-                .status(candidate.isStatus())
-                .build();
-    }
 
     @Override
     public List<AccountCompanyResponse> findAllAccountsCompany() {
@@ -258,5 +245,78 @@ public class AdminServiceImpl implements IAdminService {
     public void deleteAccountCompany(Long id) {
         accountCompanyRepository.deleteById(id);
     }
-
+    private CandidateResponse mapCandidateToResponse(Candidate candidate) {
+        return CandidateResponse.builder()
+                .id(candidate.getId())
+                .name(candidate.getName())
+                .email(candidate.getEmail())
+                .phone(candidate.getPhone())
+                .address(candidate.getAddress())
+                .gender(candidate.getGender())
+                .dob(candidate.getDob())
+                .link(candidate.getLink())
+                .status(candidate.isStatus())
+                .logo(candidate.getLogo())
+                .isOpen(candidate.getIsOpen())
+                .Title(candidate.getTitle())
+                .description(candidate.getDescription())
+                .experience(candidate.getExperience())
+                .development(candidate.getDevelopment())
+                .skills(candidate.getSkillCandidates() == null ? null
+                        : candidate.getSkillCandidates().stream()
+                        .map(s -> SkillsCandidateResponse.builder()
+                                .id(s.getId())
+                                .skillName(s.getSkill() != null ? s.getSkill().getName() : null)
+                                .levelJobName(s.getLevelJob() != null ? s.getLevelJob().getName() : null)
+                                .createdAt(s.getCreatedAt())
+                                .updatedAt(s.getUpdatedAt())
+                                .build())
+                        .collect(Collectors.toList()))
+                .educations(candidate.getEducationCandidates() == null ? null
+                        : candidate.getEducationCandidates().stream()
+                        .<EducationCandidateResponse>map(e -> EducationCandidateResponse.builder()
+                                .id(e.getId())
+                                .nameEducation(e.getNameEducation())
+                                .major(e.getMajor())
+                                .gpa(e.getGpa())
+                                .startedAt((e.getStartedAt()))
+                                .endAt((e.getEndAt()))
+                                .info(e.getInfo())
+                                .build())
+                        .collect(Collectors.toList()))
+                .experiences(candidate.getExperienceCandidates() == null ? null
+                        : candidate.getExperienceCandidates().stream()
+                        .map(ex -> ExperienceCandidateResponse.builder()
+                                .id(ex.getId())
+                                .company(ex.getCompany())
+                                .position(ex.getPosition())
+                                .started_at((ex.getStarted_at()))
+                                .end_at((ex.getEnd_at()))
+                                .info(ex.getInfo())
+                                .build())
+                        .collect(Collectors.toList()))
+                .certificates(candidate.getCertificateCandidates() == null ? null
+                        : candidate.getCertificateCandidates().stream()
+                        .map(c -> CertificateCandidateResponse.builder()
+                                .id(c.getId())
+                                .name(c.getName())
+                                .organization(c.getOrganization())
+                                .started_at((c.getStarted_at()))
+                                .end_at((c.getEnd_at()))
+                                .info(c.getInfo())
+                                .build())
+                        .collect(Collectors.toList()))
+                .project(candidate.getProjectCandidates() == null ? null :
+                        candidate.getProjectCandidates().stream()
+                                .map(p -> ProjectCandidateResponse.builder()
+                                        .id(p.getId())
+                                        .name(p.getName())
+                                        .link(p.getLink())
+                                        .started_at(p.getStarted_at())
+                                        .end_at(p.getEnd_at())
+                                        .info(p.getInfo())
+                                        .build())
+                                .collect(Collectors.toList()))
+                .build();
+    }
 }

@@ -1,5 +1,6 @@
 package com.ra.base_spring_boot.services.impl;
 
+import com.ra.base_spring_boot.event.NotificationEvent;
 import com.ra.base_spring_boot.exception.HttpBadRequest;
 import com.ra.base_spring_boot.model.*;
 import com.ra.base_spring_boot.repository.IJobCandidateRepository;
@@ -13,6 +14,7 @@ import com.ra.base_spring_boot.dto.resp.JobCandidateResponse;
 import com.ra.base_spring_boot.dto.resp.CandidateResponse;
 import com.ra.base_spring_boot.dto.resp.SkillsCandidateResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional; // Cần import này
 
@@ -28,6 +30,8 @@ public class JobCandidateServiceImpl implements JobCandidateService {
     private final ICandidateRepository candidateRepository;
     private final ICandidateCVRepository cvRepository;
     private final JwtProvider jwtProvider;
+    private final ApplicationEventPublisher eventPublisher;
+
     // Không cần ICVCreationCountRepository, ta dùng IJobCandidateRepository để đếm
 
     @Autowired
@@ -35,12 +39,13 @@ public class JobCandidateServiceImpl implements JobCandidateService {
                                    JobRepository jobRepository,
                                    ICandidateRepository candidateRepository,
                                    ICandidateCVRepository cvRepository,
-                                   JwtProvider jwtProvider) {
+                                   JwtProvider jwtProvider, ApplicationEventPublisher eventPublisher) {
         this.jobCandidateRepository = jobCandidateRepository;
         this.jobRepository = jobRepository;
         this.candidateRepository = candidateRepository;
         this.cvRepository = cvRepository;
         this.jwtProvider = jwtProvider;
+        this.eventPublisher = eventPublisher;
     }
 
     // --- HÀM TIỆN ÍCH CHO LOGIC GIỚI HẠN (CẦN THIẾT) ---
@@ -202,10 +207,37 @@ public class JobCandidateServiceImpl implements JobCandidateService {
 
 
         JobCandidate jobCandidateToCreate = toEntity(form);
+        Job job = jobRepository.findById(form.getJobId())
+                .orElseThrow(() -> new NoSuchElementException("Job not found"));
 
         JobCandidate savedJobCandidate = jobCandidateRepository.save(jobCandidateToCreate);
+        eventPublisher.publishEvent(new NotificationEvent(
+                this,
+                "Ứng tuyển thành công",
+                "Bạn đã ứng tuyển vào công việc: " + job.getTitle(),
+                "APPLY_JOB",
+                candidate.getId(),
+                "CANDIDATE",
+                "/job/" + job.getId(),
+                "SYSTEM",
+                0L
+        ));
+
+        Company company = job.getCompany();
+        eventPublisher.publishEvent(new NotificationEvent(
+                this,
+                "Có ứng viên ứng tuyển",
+                "Ứng viên " + candidate.getName() + " vừa ứng tuyển vào công việc: " + job.getTitle(),
+                "CANDIDATE_APPLIED",
+                company.getId(),
+                "COMPANY",
+                "/candidate/" + candidate.getId(),
+                "CANDIDATE",
+                candidate.getId()
+        ));
 
         return toResponse(savedJobCandidate);
+
     }
 
     @Override

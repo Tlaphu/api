@@ -2,6 +2,7 @@ package com.ra.base_spring_boot.controller;
 
 import com.ra.base_spring_boot.dto.ResponseWrapper;
 import com.ra.base_spring_boot.dto.resp.CandidateResponse;
+import com.ra.base_spring_boot.event.NotificationEvent;
 import com.ra.base_spring_boot.model.*;
 import com.ra.base_spring_boot.repository.*;
 import com.ra.base_spring_boot.dto.req.FormJob;
@@ -10,6 +11,7 @@ import com.ra.base_spring_boot.dto.resp.DashboardStats;
 import com.ra.base_spring_boot.services.ICompanyAuthService;
 import com.ra.base_spring_boot.services.JobCandidateService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -37,6 +39,7 @@ public class JobController {
     private final LevelJobRepository levelJobRepository;
     private final LevelJobRelationRepository levelJobRelationRepository;
     private final IJobCandidateRepository jobCandidateRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     private String buildAutoRequirements(LevelJob levelJob, Set<Skill> skills) {
         StringBuilder sb = new StringBuilder("[");
@@ -493,6 +496,7 @@ public class JobController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body("Cannot delete Job with ID: " + id + ". Candidates have already applied to this job.");
         }
+        List<Candidate> followers = candidateRepository.findAllCandidatesByFavoriteJobId(id);
 
 
         if (job.getLevelJobRelations() != null && !job.getLevelJobRelations().isEmpty()) {
@@ -503,6 +507,19 @@ public class JobController {
         jobRepository.deleteFavoriteJobsByJobId(id);
 
         jobRepository.deleteById(id);
+        followers.forEach(candidate -> {
+            eventPublisher.publishEvent(new NotificationEvent(
+                    this,
+                    "Công việc đã bị gỡ bỏ",
+                    "Công việc bạn đã yêu thích \"" + job.getTitle() + "\" đã bị công ty gỡ xuống.",
+                    "FAVORITE_JOB_DELETED",
+                    candidate.getId(),  // receiverId
+                    "CANDIDATE",        // receiverType
+                    "/jobs",            // link redirect sang danh sách job
+                    "COMPANY",          // senderType
+                    currentCompany.getId()
+            ));
+        });
 
         return ResponseEntity.ok("Deleted Job successfully with id: " + id);
     }

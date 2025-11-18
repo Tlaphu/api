@@ -10,6 +10,6 @@ import java.util.Optional;
 public interface ISkillRepository extends JpaRepository<Skill, Long> {
 
     Optional<Skill> findByNameIgnoreCase(String name);
-
+    boolean existsByName(String name);
     boolean existsByNameIgnoreCase(String name);
 }

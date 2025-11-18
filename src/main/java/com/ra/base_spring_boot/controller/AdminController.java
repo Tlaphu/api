@@ -4,7 +4,9 @@ import com.ra.base_spring_boot.dto.req.FormLogin;
 import com.ra.base_spring_boot.dto.req.FormUpdateCompany;
 import com.ra.base_spring_boot.dto.req.FormUpdateProfile;
 import com.ra.base_spring_boot.dto.resp.*;
+import com.ra.base_spring_boot.model.Skill;
 import com.ra.base_spring_boot.services.IAdminService;
+import com.ra.base_spring_boot.services.ISkillService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,6 +19,7 @@ import java.util.List;
 public class AdminController {
 
     private final IAdminService adminService;
+    private final ISkillService skillService;
 
     @PostMapping("/login")
     public ResponseEntity<JwtResponse> login(@RequestBody FormLogin formLogin) {
@@ -77,5 +80,30 @@ public class AdminController {
     public ResponseEntity<?> activateCompanyAccount(@PathVariable Long id) {
         adminService.activateCompanyAccount(id);
         return ResponseEntity.ok("Company account activated and notified successfully.");
+    }
+    @GetMapping("/skill")
+    public List<Skill> getAll() {
+        return skillService.findAll();
+    }
+
+    @GetMapping("/skill/{id}")
+    public Skill getById(@PathVariable Long id) {
+        return skillService.findById(id);
+    }
+
+    @PostMapping("/skill/{id}")
+    public Skill create(@RequestBody Skill skill) {
+        return skillService.create(skill);
+    }
+
+    @PutMapping("/skill/{id}")
+    public Skill update(@PathVariable Long id, @RequestBody Skill skill) {
+        return skillService.update(id, skill);
+    }
+
+    @DeleteMapping("/skill/{id}")
+    public String delete(@PathVariable Long id) {
+        skillService.delete(id);
+        return "Deleted skill with id: " + id;
     }
 }
