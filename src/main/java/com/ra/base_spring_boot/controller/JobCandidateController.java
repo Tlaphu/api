@@ -60,7 +60,7 @@ public class JobCandidateController {
 
 
     @GetMapping("/candidate/{candidateId}")
-    @PreAuthorize("hasAnyAuthority('ROLE_COMPANY', 'ROLE_ADMIN') or (hasAuthority('ROLE_CANDIDATE') and #candidateId == authentication.principal.id)")
+    @PreAuthorize("hasAuthority('ROLE_CANDIDATE') and #candidateId == authentication.principal.id")
     public ResponseEntity<List<JobCandidateResponse>> getApplicationsByCandidateId(@PathVariable Long candidateId) {
         List<JobCandidateResponse> responses = jobCandidateService.findByCandidateId(candidateId);
         return ResponseEntity.ok(responses);

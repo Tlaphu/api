@@ -18,6 +18,8 @@ public class FormEducationCandidate {
     private Date startedAt;
     private Date endAt;
     private String info;
+
+
 }
 
 
