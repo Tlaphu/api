@@ -4,6 +4,7 @@
     import com.ra.base_spring_boot.model.Admin;
     import com.ra.base_spring_boot.model.Candidate;
     import com.ra.base_spring_boot.model.AccountCompany;
+    import com.ra.base_spring_boot.model.Company;
     import com.ra.base_spring_boot.security.principle.MyAdminDetails;
     import com.ra.base_spring_boot.security.principle.MyCompanyDetails;
     import com.ra.base_spring_boot.security.principle.MyUserDetails;
@@ -139,6 +140,24 @@
         public String getCompanyUsername() {
             AccountCompany company = getCurrentAccountCompany();
             return company != null ? company.getEmail() : null;
+        }
+
+        public Company getCurrentCompany() {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+            if (authentication == null || !authentication.isAuthenticated()) {
+                return null;
+            }
+
+            Object principal = authentication.getPrincipal();
+
+            // Nếu principal là Company
+            if (principal instanceof MyCompanyDetails companyDetails) {
+                AccountCompany account = companyDetails.getAccountCompany();
+                return account != null ? account.getCompany() : null;
+            }
+
+            return null;
         }
 
         public Boolean validateAdminToken(String token, Admin admin) {
