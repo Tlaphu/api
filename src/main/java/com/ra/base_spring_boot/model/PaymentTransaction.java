@@ -1,5 +1,6 @@
 package com.ra.base_spring_boot.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -29,9 +30,11 @@ public class PaymentTransaction {
     private Long id;
 
     @ManyToOne
+    @JsonIgnore
     @JoinColumn(name = "candidate_id")
     private Candidate candidate;
     @ManyToOne
+    @JsonIgnore
     @JoinColumn(name = "account_company_id")
     private AccountCompany accountCompany;
     @ManyToOne

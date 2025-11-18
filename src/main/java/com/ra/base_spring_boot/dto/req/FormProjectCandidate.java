@@ -16,4 +16,6 @@ public class FormProjectCandidate {
     private Date started_at;
     private Date end_at;
     private String info;
+
+
 }

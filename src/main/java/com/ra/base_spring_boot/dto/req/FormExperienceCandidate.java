@@ -18,4 +18,6 @@ public class FormExperienceCandidate {
     private Date started_at;
     private Date end_at;
     private String info;
+
+
 }

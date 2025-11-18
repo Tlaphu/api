@@ -16,8 +16,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CandidateCVResponse {
-
-
+    // ... (Các trường cá nhân giữ nguyên)
     private Long id;
     private String name;
     private Date dob;
@@ -35,18 +34,26 @@ public class CandidateCVResponse {
     private String hobbies;
 
     // --- SKILLS ---
-    private List<String> skills; // (Nội dung Skill - Giữ nguyên)
+    private List<String> skills;
 
     // --- PROJECTS (Hoạt động) ---
-    private List<String> projects; // Tên dự án (ProjectCandidateNames)
-    private List<String> projectLinks;       // Link dự án (ProjectCandidateLink)
-    private List<String> projectInfos;       // Thông tin chi tiết + Thời gian (ProjectCandidateInfo)
+    private List<String> projects;          // Tên dự án (ProjectCandidateNames)
+    private List<String> projectLinks;
+    private List<String> projectInfos;
+
+    // NEW FIELDS
+    private List<String> projectStartDates; // Ngày bắt đầu Project
+    private List<String> projectEndDates;   // Ngày kết thúc Project
 
     // --- EDUCATIONS (Học vấn) ---
-    private List<String> educations; // Tên trường (EducationCandidateNames)
-    private List<String> educationMajors;    // Ngành học (EducationCandidateMajor)
-    private List<String> educationGPAs;      // GPA/Điểm số (EducationCandidateGPA)
-    private List<String> educationInfos;     // Thông tin chi tiết + Thời gian (EductaionCandidateInfo)
+    private List<String> educations;        // Tên trường (EducationCandidateNames)
+    private List<String> educationMajors;
+    private List<String> educationGPAs;
+    private List<String> educationInfos;
+
+    // NEW FIELDS
+    private List<String> educationStartDates; // Ngày bắt đầu Education
+    private List<String> educationEndDates;   // Ngày kết thúc Education
 
 
     private List<String> experiences;
@@ -54,8 +61,16 @@ public class CandidateCVResponse {
     private List<String> experiencePositions;
     private List<String> experienceInfos;
 
+    // NEW FIELDS
+    private List<String> experienceStartDates; // Ngày bắt đầu Experience
+    private List<String> experienceEndDates;   // Ngày kết thúc Experience
+
 
     private List<String> certificates;
     private List<String> certificateOrganizations;
     private List<String> certificateInfos;
+
+    // NEW FIELDS
+    private List<String> certificateStartDates; // Ngày cấp Certificate
+    private List<String> certificateEndDates;   // Ngày hết hạn Certificate (hoặc Năm cấp)
 }
