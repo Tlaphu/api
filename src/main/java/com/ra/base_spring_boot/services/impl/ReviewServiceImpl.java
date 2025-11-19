@@ -52,8 +52,6 @@ public class ReviewServiceImpl implements IReviewService {
                 .detail(req.getDetail())
                 .reviewerId(userId)
                 .reviewerType(userType)
-                .company(companyRepository.findById(req.getCompanyId())
-                        .orElseThrow(() -> new RuntimeException("Company not found")))
                 .createdAt(new Date())
                 .build();
 
@@ -108,8 +106,6 @@ public class ReviewServiceImpl implements IReviewService {
                 .reviewerName(reviewerName)
                 .reviewerLogo(reviewerLogo)
                 .reviewerType(r.getReviewerType())
-                .companyId(r.getCompany().getId())
-                .companyName(r.getCompany().getName())
                 .build();
     }
 }

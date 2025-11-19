@@ -23,10 +23,6 @@ public class Review {
     private Long reviewerId;      // ai review
     private String reviewerType;  // CANDIDATE / COMPANY
 
-    @ManyToOne
-    @JoinColumn(name = "company_id")
-    private Company company;      // review cho công ty (target)
-
     private Date createdAt;
 }
 
