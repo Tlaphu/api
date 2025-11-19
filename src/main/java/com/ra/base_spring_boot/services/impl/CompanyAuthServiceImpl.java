@@ -295,7 +295,7 @@ public class CompanyAuthServiceImpl implements ICompanyAuthService {
             throw new HttpBadRequest("Unauthorized: Company not found in token");
         }
 
-        if (form.getFullName() != null) accountCompany.setFullName(form.getFullName());
+       accountCompany.setFullName(form.getFullName());
         if (form.getPhone() != null) accountCompany.setPhone(form.getPhone());
         if (form.getDob() != null) accountCompany.setDob(form.getDob());
         if (form.getGender() != null) accountCompany.setGender(form.getGender());
@@ -366,12 +366,23 @@ public class CompanyAuthServiceImpl implements ICompanyAuthService {
                         .link_Github(company.getLink_Github())
                         .follower(company.getFollower())
                         .size(company.getSize())
+                        .addresses(
+                                company.getAddresses() != null
+                                        ? company.getAddresses().stream()
+                                        .map(address -> AddressCompanyResponse.builder()
+                                                .id(address.getId())
+                                                .address(address.getAddress())
+                                                .build()
+                                        ).toList()
+                                        : null
+                        )
                         .description(company.getDescription())
                         .CompanyPolicy(company.getCompanyPolicy())
                         .created_at(company.getCreated_at())
                         .updated_at(company.getUpdated_at())
                         .typeCompanyName(company.getTypeCompany() != null ? company.getTypeCompany().getName() : null)
                         .build())
+
                 .build();
     }
 
