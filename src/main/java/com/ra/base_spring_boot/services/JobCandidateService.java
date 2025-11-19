@@ -3,6 +3,7 @@ package com.ra.base_spring_boot.services;
 import com.ra.base_spring_boot.dto.req.FormJobCandidate;
 import com.ra.base_spring_boot.dto.resp.CandidateResponse;
 import com.ra.base_spring_boot.dto.resp.JobCandidateResponse;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Optional;
@@ -21,4 +22,9 @@ public interface JobCandidateService {
     List<CandidateResponse> getSuitableCandidatesForCompanyJob(Long jobId);
     void deleteByJobId(Long jobId);
     JobCandidateResponse setAcceptanceStatus(Long id, Boolean isAccepted);
+    // Giữ lại cho tương thích cũ
+
+    // ⭐️ Phương thức mới để xử lý file
+    JobCandidateResponse createWithFile(FormJobCandidate form, MultipartFile pdfFile);
+
 }

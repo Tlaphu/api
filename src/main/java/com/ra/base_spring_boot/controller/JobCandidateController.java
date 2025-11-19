@@ -8,9 +8,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.access.AccessDeniedException; // ✨ IMPORT MỚI ✨
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.*;
-
+import org.springframework.web.multipart.MultipartFile; // ⭐️ IMPORT MỚI ⭐️
 import java.util.List;
 import java.util.NoSuchElementException;
 
@@ -25,11 +25,20 @@ public class JobCandidateController {
         this.jobCandidateService = jobCandidateService;
     }
 
-    // --- CREATE ---
+    // --- CREATE (ĐÃ SỬA ĐỔI) ---
     @PostMapping
     @PreAuthorize("hasAuthority('ROLE_CANDIDATE')")
-    public ResponseEntity<JobCandidateResponse> createJobCandidate(@Valid @RequestBody FormJobCandidate form) {
-        JobCandidateResponse response = jobCandidateService.create(form);
+    public ResponseEntity<JobCandidateResponse> createJobCandidate(
+            @Valid @ModelAttribute FormJobCandidate form, // Nhận dữ liệu text/số từ form
+            @RequestParam(value = "pdfFile", required = false) MultipartFile pdfFile // Nhận file PDF
+    ) {
+        // Kiểm tra bắt buộc phải có CV cũ hoặc file mới
+        if (form.getCvid() == null && (pdfFile == null || pdfFile.isEmpty())) {
+            throw new IllegalArgumentException("You must either select an existing CV or upload a new PDF file.");
+        }
+
+        // Gọi phương thức mới trong service để xử lý file
+        JobCandidateResponse response = jobCandidateService.createWithFile(form, pdfFile);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
@@ -109,4 +118,5 @@ public class JobCandidateController {
             return ResponseEntity.notFound().build();
         }
     }
+
 }

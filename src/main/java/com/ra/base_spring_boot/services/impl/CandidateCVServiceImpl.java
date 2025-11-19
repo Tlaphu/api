@@ -3,22 +3,25 @@ package com.ra.base_spring_boot.services.impl;
 import com.ra.base_spring_boot.dto.req.*;
 import com.ra.base_spring_boot.dto.resp.CandidateCVResponse;
 import com.ra.base_spring_boot.exception.HttpBadRequest;
+
 import com.ra.base_spring_boot.model.*;
 import com.ra.base_spring_boot.repository.*;
 import com.ra.base_spring_boot.services.ICandidateCVService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.io.File;
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-
+import com.ra.base_spring_boot.exception.HttpForbiden;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.NoSuchElementException;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -30,7 +33,10 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
     private final ICVCreationCountRepository cvCreationCountRepository;
     private final ICandidateCVArchiveRepository candidateCVArchiveRepository;
     private final IJobCandidateRepository jobCandidateRepository;
+    private final ICandidateCVRepository cvRepository;
 
+    @Value("${file.upload.cv-dir:./uploads/cv_files/}")
+    private String UPLOAD_DIR;
     private static final SimpleDateFormat YEAR_FORMAT = new SimpleDateFormat("yyyy");
     private static final SimpleDateFormat MONTH_YEAR_FORMAT = new SimpleDateFormat("MM/yyyy");
 
@@ -38,17 +44,14 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
         Candidate candidate = candidateCV.getCandidate();
         final String DELIMITER = " | ";
 
-        // --- PROJECTS ---
         List<String> projectNames = splitStringToList(candidateCV.getProjectCandidateNames(), DELIMITER);
         List<String> projectLinks = splitStringToList(candidateCV.getProjectCandidateLink(), DELIMITER);
         List<String> projectInfos = splitStringToList(candidateCV.getProjectCandidateInfo(), DELIMITER);
         List<String> projectStartDates = splitStringToList(candidateCV.getProjectCandidateStartDates(), DELIMITER);
         List<String> projectEndDates = splitStringToList(candidateCV.getProjectCandidateEndDates(), DELIMITER);
 
-        // --- SKILLS ---
         List<String> skillNames = splitStringToList(candidateCV.getSkillCandidateNames(), DELIMITER);
 
-        // --- EDUCATION ---
         List<String> educationNames = splitStringToList(candidateCV.getEducationCandidateNames(), DELIMITER);
         List<String> educationMajors = splitStringToList(candidateCV.getEducationCandidateMajor(), DELIMITER);
         List<String> educationGPAs = splitStringToList(candidateCV.getEducationCandidateGPA(), DELIMITER);
@@ -56,7 +59,6 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
         List<String> educationStartDates = splitStringToList(candidateCV.getEducationCandidateStartDates(), DELIMITER);
         List<String> educationEndDates = splitStringToList(candidateCV.getEducationCandidateEndDates(), DELIMITER);
 
-        // --- EXPERIENCE ---
         List<String> experienceNames = splitStringToList(candidateCV.getExperienceCandidateNames(), DELIMITER);
         List<String> experiencePositions = splitStringToList(candidateCV.getExperienceCandidatePosition(), DELIMITER);
         List<String> experienceCompanies = splitStringToList(candidateCV.getExperienceCandidateCompany(), DELIMITER);
@@ -64,7 +66,6 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
         List<String> experienceStartDates = splitStringToList(candidateCV.getExperienceCandidateStartDates(), DELIMITER);
         List<String> experienceEndDates = splitStringToList(candidateCV.getExperienceCandidateEndDates(), DELIMITER);
 
-        // --- CERTIFICATE ---
         List<String> certificateNames = splitStringToList(candidateCV.getCertificateCandidateNames(), DELIMITER);
         List<String> certificateOrganizations = splitStringToList(candidateCV.getCertificateCandidateOrganization(), DELIMITER);
         List<String> certificateInfos = splitStringToList(candidateCV.getCertificateCandidateInfo(), DELIMITER);
@@ -93,8 +94,8 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
                 .projects(projectNames)
                 .projectLinks(projectLinks)
                 .projectInfos(projectInfos)
-                .projectStartDates(projectStartDates) // NEW
-                .projectEndDates(projectEndDates) // NEW
+                .projectStartDates(projectStartDates)
+                .projectEndDates(projectEndDates)
 
                 .skills(skillNames)
 
@@ -102,21 +103,21 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
                 .educationMajors(educationMajors)
                 .educationGPAs(educationGPAs)
                 .educationInfos(educationInfos)
-                .educationStartDates(educationStartDates) // NEW
-                .educationEndDates(educationEndDates) // NEW
+                .educationStartDates(educationStartDates)
+                .educationEndDates(educationEndDates)
 
                 .experiences(experienceNames)
                 .experiencePositions(experiencePositions)
                 .experienceCompanies(experienceCompanies)
                 .experienceInfos(experienceInfos)
-                .experienceStartDates(experienceStartDates) // NEW
-                .experienceEndDates(experienceEndDates) // NEW
+                .experienceStartDates(experienceStartDates)
+                .experienceEndDates(experienceEndDates)
 
                 .certificates(certificateNames)
                 .certificateOrganizations(certificateOrganizations)
                 .certificateInfos(certificateInfos)
-                .certificateStartDates(certificateStartDates) // NEW
-                .certificateEndDates(certificateEndDates) // NEW
+                .certificateStartDates(certificateStartDates)
+                .certificateEndDates(certificateEndDates)
 
                 .build();
     }
@@ -151,7 +152,6 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
     }
 
     private void mapPersonalInfo(CandidateCV cvEntity, FormCandidateCV cvForm, Candidate candidate) {
-        // Ánh xạ vào CandidateCV entity (Lấy từ form, nếu null thì lấy từ candidate gốc)
         cvEntity.setName(cvForm.getName() != null ? cvForm.getName() : candidate.getName());
         cvEntity.setGender(cvForm.getGender() != null ? cvForm.getGender() : candidate.getGender());
         cvEntity.setDob(cvForm.getDob() != null ? cvForm.getDob() : candidate.getDob());
@@ -164,10 +164,59 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
         cvEntity.setCandidateTitle(cvForm.getCandidateTitle() != null ? cvForm.getCandidateTitle() : candidate.getTitle());
         cvEntity.setHobbies(cvForm.getHobbies()!= null ? cvForm.getHobbies() : cvEntity.getHobbies());
         cvEntity.setAvatar(cvForm.getAvatar() != null ? cvForm.getAvatar() : cvEntity.getAvatar());
+    }
+    @Override
+    @Transactional
+    public CandidateCV setCvPublicStatus(Long cvId, Long candidateId, Boolean isPublic) {
+        CandidateCV existingCV = candidateCVRepository.findByIdAndCandidate_Id(cvId, candidateId)
+                .orElseThrow(() -> new HttpBadRequest("CV not found or does not belong to this candidate."));
 
+        existingCV.setIsPublic(isPublic);
 
+        return candidateCVRepository.save(existingCV);
     }
 
+    @Override
+    public byte[] downloadCvForCompany(Long cvId, Long companyId) {
+
+        CandidateCV cvEntity = candidateCVRepository.findById(cvId)
+                .orElseThrow(() -> new NoSuchElementException("CV not found with id: " + cvId));
+
+        List<JobCandidate> applications = jobCandidateRepository.findByCandidateCVId(cvId);
+
+        boolean hasPermission = applications.stream()
+                .anyMatch(app -> app.getJob().getCompany().getId().equals(companyId));
+
+        if (!hasPermission) {
+            throw new HttpForbiden("Access Denied: This CV is not associated with any of your company's job applications.");
+        }
+
+        if (cvEntity.getIs_upload_file() != null && !cvEntity.getIs_upload_file()) {
+
+            return generatePdfFromCV(cvId, cvEntity.getCandidate().getId());
+
+        } else {
+            String filePathString = cvEntity.getFile_cv();
+            if (filePathString == null || filePathString.isEmpty()) {
+                throw new HttpBadRequest("File CV path is missing. Cannot retrieve uploaded file.");
+            }
+
+            try {
+                Path filePath = Paths.get(filePathString);
+
+                if (!Files.exists(filePath)) {
+                    filePath = Paths.get(UPLOAD_DIR, filePathString);
+                    if (!Files.exists(filePath)) {
+                        throw new IOException("CV file not found (Check if file path in DB is correct: " + filePathString + ")");
+                    }
+                }
+
+                return Files.readAllBytes(filePath);
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to read CV file: " + e.getMessage(), e);
+            }
+        }
+    }
 
     @Override
     @Transactional
@@ -208,7 +257,7 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
             if (totalMonthlyCount >= MAX_CVS_COUNT) {
                 Date newLockDate = addDaysToDate(today, LOCK_PERIOD_DAYS);
                 candidate.setPremiumUntil(newLockDate);
-                candidateRepository.save(candidate); // Vẫn cần lưu để lưu lock period
+                candidateRepository.save(candidate);
 
                 SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
                 String lockDateStr = sdf.format(newLockDate);
@@ -307,7 +356,6 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
     private void updateAllCVDetails(CandidateCV candidateCV, FormCandidateCV cvForm) {
         final String DELIMITER = " | ";
 
-        // --- 1. SKILLS ---
         if (cvForm.getSkills() != null) {
             candidateCV.setSkillCandidateIds(null);
 
@@ -319,8 +367,6 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
             candidateCV.setSkillCandidateNames(null);
         }
 
-
-        // --- 2. EDUCATION ---
         if (cvForm.getEducations() != null) {
 
             candidateCV.setEducationCandidateNames(cvForm.getEducations().stream()
@@ -335,17 +381,14 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
                     .map(e -> e.getMajor() != null ? e.getMajor() : "Unknown Major")
                     .collect(Collectors.joining(DELIMITER)));
 
-            // NEW: EDUCATION START DATES
             candidateCV.setEducationCandidateStartDates(cvForm.getEducations().stream()
                     .map(e -> e.getStartedAt() != null ? YEAR_FORMAT.format(e.getStartedAt()) : "?")
                     .collect(Collectors.joining(DELIMITER)));
 
-            // NEW: EDUCATION END DATES
             candidateCV.setEducationCandidateEndDates(cvForm.getEducations().stream()
                     .map(e -> e.getEndAt() != null ? YEAR_FORMAT.format(e.getEndAt()) : "Current")
                     .collect(Collectors.joining(DELIMITER)));
 
-            // Info (using the new date fields)
             candidateCV.setEducationCandidateInfo(cvForm.getEducations().stream()
                     .map(e -> (e.getInfo() != null ? e.getInfo() : "None") +
                             " (" + (e.getStartedAt() != null ? YEAR_FORMAT.format(e.getStartedAt()) : "?") +
@@ -356,11 +399,10 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
             candidateCV.setEducationCandidateGPA(null);
             candidateCV.setEducationCandidateMajor(null);
             candidateCV.setEducationCandidateInfo(null);
-            candidateCV.setEducationCandidateStartDates(null); // NEW
-            candidateCV.setEducationCandidateEndDates(null); // NEW
+            candidateCV.setEducationCandidateStartDates(null);
+            candidateCV.setEducationCandidateEndDates(null);
         }
 
-        // --- 3. EXPERIENCE ---
         if (cvForm.getExperiences() != null) {
 
             candidateCV.setExperienceCandidateNames(cvForm.getExperiences().stream()
@@ -376,17 +418,14 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
                     .map(e -> e.getCompany() != null ? e.getCompany() : "Unknown Company")
                     .collect(Collectors.joining(DELIMITER)));
 
-            // NEW: EXPERIENCE START DATES
             candidateCV.setExperienceCandidateStartDates(cvForm.getExperiences().stream()
                     .map(e -> e.getStarted_at() != null ? MONTH_YEAR_FORMAT.format(e.getStarted_at()) : "?")
                     .collect(Collectors.joining(DELIMITER)));
 
-            // NEW: EXPERIENCE END DATES
             candidateCV.setExperienceCandidateEndDates(cvForm.getExperiences().stream()
                     .map(e -> e.getEnd_at() != null ? MONTH_YEAR_FORMAT.format(e.getEnd_at()) : "Present")
                     .collect(Collectors.joining(DELIMITER)));
 
-            // Info (using the new date fields)
             candidateCV.setExperienceCandidateInfo(cvForm.getExperiences().stream()
                     .map(e -> {
                         String description = e.getDescription() != null && !e.getDescription().isEmpty()
@@ -405,14 +444,12 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
             candidateCV.setExperienceCandidatePosition(null);
             candidateCV.setExperienceCandidateCompany(null);
             candidateCV.setExperienceCandidateInfo(null);
-            candidateCV.setExperienceCandidateStartDates(null); // NEW
-            candidateCV.setExperienceCandidateEndDates(null); // NEW
+            candidateCV.setExperienceCandidateStartDates(null);
+            candidateCV.setExperienceCandidateEndDates(null);
         }
 
-        // --- 4. CERTIFICATE ---
         if (cvForm.getCertificates() != null) {
 
-            // ... (Giữ nguyên Name và Organization)
             candidateCV.setCertificateCandidateNames(cvForm.getCertificates().stream()
                     .map(c -> c.getName() != null ? c.getName() : "Untitled Certificate")
                     .collect(Collectors.joining(DELIMITER)));
@@ -421,31 +458,26 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
                     .map(c -> c.getOrganization() != null ? c.getOrganization() : "Unknown Organization")
                     .collect(Collectors.joining(DELIMITER)));
 
-            // NEW: CERTIFICATE START DATES (Dùng started_at)
             candidateCV.setCertificateCandidateStartDates(cvForm.getCertificates().stream()
                     .map(c -> c.getStarted_at() != null ? YEAR_FORMAT.format(c.getStarted_at()) : "?")
                     .collect(Collectors.joining(DELIMITER)));
 
-            // NEW: CERTIFICATE END DATES (Dùng end_at)
             candidateCV.setCertificateCandidateEndDates(cvForm.getCertificates().stream()
                     .map(c -> c.getEnd_at() != null ? YEAR_FORMAT.format(c.getEnd_at()) : "N/A")
                     .collect(Collectors.joining(DELIMITER)));
 
-            // Info (Giữ nguyên logic cũ, có thể bạn muốn dùng dates mới ở đây)
             candidateCV.setCertificateCandidateInfo(cvForm.getCertificates().stream()
                     .map(c -> (c.getYear() != null ? "Năm cấp: " + c.getYear() : "N/A") +
                             (c.getInfo() != null && !c.getInfo().isEmpty() ? " - " + c.getInfo() : ""))
                     .collect(Collectors.joining(DELIMITER)));
         } else {
-            // ... (Giữ nguyên logic cũ)
             candidateCV.setCertificateCandidateNames(null);
             candidateCV.setCertificateCandidateOrganization(null);
             candidateCV.setCertificateCandidateInfo(null);
-            candidateCV.setCertificateCandidateStartDates(null); // NEW
-            candidateCV.setCertificateCandidateEndDates(null); // NEW
+            candidateCV.setCertificateCandidateStartDates(null);
+            candidateCV.setCertificateCandidateEndDates(null);
         }
 
-        // --- 5. PROJECT ---
         if (cvForm.getProjects() != null) {
             candidateCV.setProjectCandidateNames(cvForm.getProjects().stream()
                     .map(p -> p.getName() != null ? p.getName() : "Untitled Project")
@@ -455,17 +487,14 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
                     .map(p -> p.getLink() != null ? p.getLink() : "None")
                     .collect(Collectors.joining(DELIMITER)));
 
-            // NEW: PROJECT START DATES
             candidateCV.setProjectCandidateStartDates(cvForm.getProjects().stream()
                     .map(p -> p.getStarted_at() != null ? YEAR_FORMAT.format(p.getStarted_at()) : "?")
                     .collect(Collectors.joining(DELIMITER)));
 
-            // NEW: PROJECT END DATES
             candidateCV.setProjectCandidateEndDates(cvForm.getProjects().stream()
                     .map(p -> p.getEnd_at() != null ? YEAR_FORMAT.format(p.getEnd_at()) : "Current")
                     .collect(Collectors.joining(DELIMITER)));
 
-            // Info (using the new date fields)
             candidateCV.setProjectCandidateInfo(cvForm.getProjects().stream()
                     .map(p -> (p.getInfo() != null ? p.getInfo() : "None") +
                             " (" + (p.getStarted_at() != null ? YEAR_FORMAT.format(p.getStarted_at()) : "?") +
@@ -475,8 +504,8 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
             candidateCV.setProjectCandidateNames(null);
             candidateCV.setProjectCandidateLink(null);
             candidateCV.setProjectCandidateInfo(null);
-            candidateCV.setProjectCandidateStartDates(null); // NEW
-            candidateCV.setProjectCandidateEndDates(null); // NEW
+            candidateCV.setProjectCandidateStartDates(null);
+            candidateCV.setProjectCandidateEndDates(null);
         }
     }
 
@@ -490,7 +519,6 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
                 .createdAt(new Date())
                 .build());
 
-        // ... (Thông tin cá nhân)
         archive.setCandidateName(cvEntity.getName());
         archive.setDob(cvEntity.getDob());
         archive.setEmail(cvEntity.getEmail());
@@ -501,35 +529,30 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
         archive.setCandidateTitle(cvEntity.getCandidateTitle());
         archive.setHobbies(cvEntity.getHobbies());
 
-        // ... (SKILL)
         archive.setSkillCandidateIds(cvEntity.getSkillCandidateIds());
         archive.setSkillCandidateNames(cvEntity.getSkillCandidateNames());
 
-        // --- EDUCATION ---
         archive.setEducationCandidateIds(cvEntity.getEducationCandidateIds());
         archive.setEducationCandidateNames(cvEntity.getEducationCandidateNames());
         archive.setEducationCandidateGPA(cvEntity.getEducationCandidateGPA());
         archive.setEducationCandidateMajor(cvEntity.getEducationCandidateMajor());
-        archive.setEducationCandidateStartDates(cvEntity.getEducationCandidateStartDates()); // NEW
-        archive.setEducationCandidateEndDates(cvEntity.getEducationCandidateEndDates()); // NEW
+        archive.setEducationCandidateStartDates(cvEntity.getEducationCandidateStartDates());
+        archive.setEducationCandidateEndDates(cvEntity.getEducationCandidateEndDates());
 
-        // --- EXPERIENCE ---
         archive.setExperienceCandidateIds(cvEntity.getExperienceCandidateIds());
         archive.setExperienceCandidateNames(cvEntity.getExperienceCandidateNames());
-        archive.setExperienceCandidateStartDates(cvEntity.getExperienceCandidateStartDates()); // NEW
-        archive.setExperienceCandidateEndDates(cvEntity.getExperienceCandidateEndDates()); // NEW
+        archive.setExperienceCandidateStartDates(cvEntity.getExperienceCandidateStartDates());
+        archive.setExperienceCandidateEndDates(cvEntity.getExperienceCandidateEndDates());
 
-        // --- PROJECT ---
         archive.setProjectCandidateIds(cvEntity.getProjectCandidateIds());
         archive.setProjectCandidateNames(cvEntity.getProjectCandidateNames());
-        archive.setProjectCandidateStartDates(cvEntity.getProjectCandidateStartDates()); // NEW
-        archive.setProjectCandidateEndDates(cvEntity.getProjectCandidateEndDates()); // NEW
+        archive.setProjectCandidateStartDates(cvEntity.getProjectCandidateStartDates());
+        archive.setProjectCandidateEndDates(cvEntity.getProjectCandidateEndDates());
 
-        // --- CERTIFICATE ---
         archive.setCertificateCandidateIds(cvEntity.getCertificateCandidateIds());
         archive.setCertificateCandidateNames(cvEntity.getCertificateCandidateNames());
-        archive.setCertificateCandidateStartDates(cvEntity.getCertificateCandidateStartDates()); // NEW
-        archive.setCertificateCandidateEndDates(cvEntity.getCertificateCandidateEndDates()); // NEW
+        archive.setCertificateCandidateStartDates(cvEntity.getCertificateCandidateStartDates());
+        archive.setCertificateCandidateEndDates(cvEntity.getCertificateCandidateEndDates());
 
         archive.setTitle(cvEntity.getTitle());
         archive.setUpdatedAt(new Date());
@@ -563,9 +586,6 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
             existingArchive.setEducationCandidateIds(updateForm.getEducationCandidateIds());
         }
 
-        // Có thể cần thêm logic cập nhật các trường ngày tháng ở đây nếu FormCandidateCVArchive có
-        // ...
-
         existingArchive.setUpdatedAt(new Date());
 
         return candidateCVArchiveRepository.save(existingArchive);
@@ -574,7 +594,6 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
     public CandidateCVArchive mapArchiveToResponse(CandidateCVArchive archive) {
         return archive;
     }
-
 
     private String escapeHtml(String text) {
         if (text == null) {
@@ -622,7 +641,6 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
         }
     }
 
-
     public String generateHtmlContent(CandidateCV cvEntity) {
 
         String candidateName = escapeHtml(cvEntity.getName() != null ? cvEntity.getName() : "Unknown Candidate");
@@ -631,7 +649,6 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
         String candidatePhone = escapeHtml(cvEntity.getPhone() != null ? cvEntity.getPhone() : "");
         String candidateTitle = escapeHtml(cvEntity.getCandidateTitle() != null ? cvEntity.getCandidateTitle() : "");
 
-        // --- LẤY THÊM THÔNG TIN DOB VÀ GENDER ---
         String candidateDob = "";
         if (cvEntity.getDob() != null) {
             SimpleDateFormat dobFormat = new SimpleDateFormat("dd/MM/yyyy");
@@ -652,7 +669,6 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
                     break;
             }
         }
-        // ----------------------------------------
 
         String hobbies = escapeHtml(cvEntity.getHobbies() != null ? cvEntity.getHobbies() : "");
 
@@ -662,27 +678,23 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
         List<String> educationNames = splitStringToList(cvEntity.getEducationCandidateNames(), " | ").stream().map(this::escapeHtml).collect(Collectors.toList());
         List<String> educationMajors = splitStringToList(cvEntity.getEducationCandidateMajor(), " | ").stream().map(this::escapeHtml).collect(Collectors.toList());
         List<String> educationInfos = splitStringToList(cvEntity.getEducationCandidateInfo(), " | ").stream().map(this::escapeHtml).collect(Collectors.toList());
-        // Lấy thêm các trường ngày tháng mới cho Education
         List<String> educationStartDates = splitStringToList(cvEntity.getEducationCandidateStartDates(), " | ").stream().map(this::escapeHtml).collect(Collectors.toList());
         List<String> educationEndDates = splitStringToList(cvEntity.getEducationCandidateEndDates(), " | ").stream().map(this::escapeHtml).collect(Collectors.toList());
 
 
         List<String> experienceNames = splitStringToList(cvEntity.getExperienceCandidateNames(), " | ").stream().map(this::escapeHtml).collect(Collectors.toList());
         List<String> experienceInfos = splitStringToList(cvEntity.getExperienceCandidateInfo(), " | ").stream().map(this::escapeHtml).collect(Collectors.toList());
-        // Lấy thêm các trường ngày tháng mới cho Experience
         List<String> experienceStartDates = splitStringToList(cvEntity.getExperienceCandidateStartDates(), " | ").stream().map(this::escapeHtml).collect(Collectors.toList());
         List<String> experienceEndDates = splitStringToList(cvEntity.getExperienceCandidateEndDates(), " | ").stream().map(this::escapeHtml).collect(Collectors.toList());
 
         List<String> projectNames = splitStringToList(cvEntity.getProjectCandidateNames(), " | ").stream().map(this::escapeHtml).collect(Collectors.toList());
         List<String> projectLinks = splitStringToList(cvEntity.getProjectCandidateLink(), " | ").stream().map(this::escapeHtml).collect(Collectors.toList());
         List<String> projectInfos = splitStringToList(cvEntity.getProjectCandidateInfo(), " | ").stream().map(this::escapeHtml).collect(Collectors.toList());
-        // Lấy thêm các trường ngày tháng mới cho Project
         List<String> projectStartDates = splitStringToList(cvEntity.getProjectCandidateStartDates(), " | ").stream().map(this::escapeHtml).collect(Collectors.toList());
         List<String> projectEndDates = splitStringToList(cvEntity.getProjectCandidateEndDates(), " | ").stream().map(this::escapeHtml).collect(Collectors.toList());
 
         List<String> certificateNames = splitStringToList(cvEntity.getCertificateCandidateNames(), " | ").stream().map(this::escapeHtml).collect(Collectors.toList());
         List<String> certificateOrgs = splitStringToList(cvEntity.getCertificateCandidateOrganization(), " | ").stream().map(this::escapeHtml).collect(Collectors.toList());
-        // Lấy thêm các trường ngày tháng mới cho Certificate (tạm dùng Org/Info vì bạn không lưu riêng)
 
 
         StringBuilder html = new StringBuilder();
@@ -727,7 +739,7 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
             String dates = (i < experienceStartDates.size() ? experienceStartDates.get(i) : "?") +
                     " - " + (i < experienceEndDates.size() ? experienceEndDates.get(i) : "Present");
 
-            html.append("<div class='item-title'>").append(experienceNames.get(i)).append(" (").append(dates).append(")</div>") // UPDATED: Add dates to title
+            html.append("<div class='item-title'>").append(experienceNames.get(i)).append(" (").append(dates).append(")</div>")
                     .append("<div class='item-detail'>").append(experienceInfos.get(i).replace("\n", "<br/>")).append("</div>");
         }
 
@@ -735,12 +747,11 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
         html.append("<h2 class='section'>Education</h2>");
         for (int i = 0; i < educationNames.size(); i++) {
             String major = i < educationMajors.size() ? educationMajors.get(i) : "";
-            // String info = i < educationInfos.size() ? educationInfos.get(i) : ""; // Info already contains dates
 
             String dates = (i < educationStartDates.size() ? educationStartDates.get(i) : "?") +
                     " - " + (i < educationEndDates.size() ? educationEndDates.get(i) : "Current");
 
-            html.append("<div class='item-title'>").append(educationNames.get(i)).append(" (").append(dates).append(")</div>") // UPDATED: Add dates to title
+            html.append("<div class='item-title'>").append(educationNames.get(i)).append(" (").append(dates).append(")</div>")
                     .append("<div class='item-detail'>").append(major).append(" | ").append(educationInfos.get(i)).append("</div>");
         }
 
@@ -753,22 +764,19 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
             String dates = (i < projectStartDates.size() ? projectStartDates.get(i) : "?") +
                     " - " + (i < projectEndDates.size() ? projectEndDates.get(i) : "Current");
 
-            html.append("<div class='item-title'>").append(projectNames.get(i)).append(" (").append(dates).append(")</div>") // UPDATED: Add dates to title
+            html.append("<div class='item-title'>").append(projectNames.get(i)).append(" (").append(dates).append(")</div>")
                     .append("<div class='item-detail'>").append(info).append(" | Link: <a href='").append(link).append("'>").append(link).append("</a></div>");
         }
 
-        // --- 7. Hobbies ---
         if (!hobbies.isEmpty()) {
             html.append("<h2 class='section'>Hobbies</h2>")
                     .append("<p>").append(hobbies.replace("\n", "<br/>")).append("</p>");
         }
 
-        // --- 8. Certificates ---
         html.append("<h2 class='section'>Certificates</h2>");
         for (int i = 0; i < certificateNames.size(); i++) {
             String org = i < certificateOrgs.size() ? certificateOrgs.get(i) : "";
 
-            // Lấy ngày tháng từ các trường mới
             String startDate = i < splitStringToList(cvEntity.getCertificateCandidateStartDates(), " | ").size()
                     ? splitStringToList(cvEntity.getCertificateCandidateStartDates(), " | ").get(i) : "N/A";
             String endDate = i < splitStringToList(cvEntity.getCertificateCandidateEndDates(), " | ").size()
@@ -776,7 +784,7 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
 
             String dates = startDate + (endDate.equals("N/A") || startDate.equals(endDate) ? "" : " - " + endDate);
 
-            html.append("<div class='item-title'>").append(certificateNames.get(i)).append(" (").append(dates).append(")</div>") // UPDATED: Add dates to title
+            html.append("<div class='item-title'>").append(certificateNames.get(i)).append(" (").append(dates).append(")</div>")
                     .append("<div class='item-detail'>Issued by: ").append(org).append("</div>");
         }
 

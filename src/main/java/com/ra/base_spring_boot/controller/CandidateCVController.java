@@ -140,6 +140,20 @@ public class CandidateCVController {
 
         return ResponseEntity.noContent().build();
     }
+    @PatchMapping("/{cvId}/public")
+    public ResponseEntity<CandidateCVResponse> setCvPublicStatus(
+            @PathVariable Long cvId,
+            @RequestParam boolean isPublic) { // Nhận trạng thái công khai mới (true/false)
+
+        Long candidateId = getCurrentCandidateId();
+
+        // Gọi Service để cập nhật trạng thái và xác minh quyền sở hữu
+        CandidateCV updatedCV = candidateCVService.setCvPublicStatus(cvId, candidateId, isPublic);
+
+        CandidateCVResponse cvResponse = candidateCVServiceImpl.mapToResponse(updatedCV);
+
+        return ResponseEntity.ok(cvResponse);
+    }
 
 
 }

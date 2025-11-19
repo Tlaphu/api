@@ -25,4 +25,6 @@ public interface ICandidateCVService {
     void deleteCVArchive(Long archiveId);
     CandidateCVArchive updateCVArchive(Long archiveId, FormCandidateCVArchive updateForm);
     byte[] generatePdfFromCV(Long cvId, Long candidateId);
+    byte[] downloadCvForCompany(Long cvId, Long companyId);
+    CandidateCV setCvPublicStatus(Long cvId, Long candidateId, Boolean isPublic);
 }

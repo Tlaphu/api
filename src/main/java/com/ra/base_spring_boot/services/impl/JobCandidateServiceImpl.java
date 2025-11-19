@@ -9,6 +9,7 @@ import com.ra.base_spring_boot.repository.ICandidateRepository;
 import com.ra.base_spring_boot.repository.ICandidateCVRepository;
 import com.ra.base_spring_boot.security.jwt.JwtProvider;
 import com.ra.base_spring_boot.services.JobCandidateService;
+import com.ra.base_spring_boot.services.ICandidateCVService;
 import com.ra.base_spring_boot.dto.req.FormJobCandidate;
 import com.ra.base_spring_boot.dto.resp.JobCandidateResponse;
 import com.ra.base_spring_boot.dto.resp.CandidateResponse;
@@ -17,12 +18,20 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.security.access.AccessDeniedException; // ✨ IMPORT MỚI ✨
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.beans.factory.annotation.Value;
 
+import java.io.IOException;
+import org.springframework.web.multipart.MultipartFile;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
-
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException; 
+import java.util.NoSuchElementException;
 @Service
 public class JobCandidateServiceImpl implements JobCandidateService {
 
@@ -32,21 +41,24 @@ public class JobCandidateServiceImpl implements JobCandidateService {
     private final ICandidateCVRepository cvRepository;
     private final JwtProvider jwtProvider;
     private final ApplicationEventPublisher eventPublisher;
+    private final ICandidateCVService candidateCVService;
+    @Value("${file.upload.cv-dir:./uploads/cv_files/}")
+    private String UPLOAD_DIR;
 
-    // Không cần ICVCreationCountRepository, ta dùng IJobCandidateRepository để đếm
 
-    @Autowired
     public JobCandidateServiceImpl(IJobCandidateRepository jobCandidateRepository,
                                    JobRepository jobRepository,
                                    ICandidateRepository candidateRepository,
                                    ICandidateCVRepository cvRepository,
-                                   JwtProvider jwtProvider, ApplicationEventPublisher eventPublisher) {
+                                   JwtProvider jwtProvider, ApplicationEventPublisher eventPublisher,
+                                   ICandidateCVService candidateCVService) {
         this.jobCandidateRepository = jobCandidateRepository;
         this.jobRepository = jobRepository;
         this.candidateRepository = candidateRepository;
         this.cvRepository = cvRepository;
         this.jwtProvider = jwtProvider;
         this.eventPublisher = eventPublisher;
+        this.candidateCVService = candidateCVService;
     }
 
     // --- HÀM TIỆN ÍCH CHO LOGIC GIỚI HẠN (CẦN THIẾT) ---
@@ -143,6 +155,88 @@ public class JobCandidateServiceImpl implements JobCandidateService {
         return response;
     }
 
+    private String calculateFileHash(MultipartFile file) throws Exception {
+        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        byte[] hash = digest.digest(file.getBytes());
+
+        StringBuilder hexString = new StringBuilder();
+        for (byte b : hash) {
+            String hex = Integer.toHexString(0xff & b);
+            if (hex.length() == 1) hexString.append('0');
+            hexString.append(hex);
+        }
+        return hexString.toString();
+    }
+
+    @Override
+    @Transactional
+    public JobCandidateResponse createWithFile(FormJobCandidate form, MultipartFile pdfFile) {
+
+
+        if (pdfFile != null && !pdfFile.isEmpty()) {
+
+            if (!"application/pdf".equalsIgnoreCase(pdfFile.getContentType())) {
+                throw new HttpBadRequest("File uploaded must be in PDF format.");
+            }
+
+            try {
+
+                String newFileHash = calculateFileHash(pdfFile);
+
+
+                Optional<CandidateCV> existingCV = cvRepository.findByCandidateIdAndFileHash(
+                        form.getCandidateId(), newFileHash
+                );
+
+                if (existingCV.isPresent()) {
+
+                    form.setCvid(existingCV.get().getId());
+
+                } else {
+
+                    String originalFilename = pdfFile.getOriginalFilename();
+                    String safeFilename = originalFilename != null ? originalFilename.replaceAll("[^a-zA-Z0-9._-]", "_") : "cv_file.pdf";
+                    String filename = System.currentTimeMillis() + "_" + safeFilename;
+
+                    Path uploadPath = Paths.get(UPLOAD_DIR);
+                    if (!Files.exists(uploadPath)) {
+                        Files.createDirectories(uploadPath);
+                    }
+                    Path filePath = uploadPath.resolve(filename);
+                    Files.copy(pdfFile.getInputStream(), filePath);
+
+                    String fileUrl = UPLOAD_DIR + filename;
+
+                    Candidate candidate = candidateRepository.findById(form.getCandidateId())
+                            .orElseThrow(() -> new NoSuchElementException("Candidate not found"));
+
+                    // b. Tạo bản ghi CV mới
+                    CandidateCV newCv = CandidateCV.builder()
+                            .title("Uploaded CV: " + candidate.getName() + " (" + new SimpleDateFormat("yyyy-MM-dd").format(new Date()) + ")")
+                            .file_cv(fileUrl)
+                            .fileHash(newFileHash) // ⭐️ LƯU HASH ⭐️
+                            .candidate(candidate)
+                            .created_at(new Date())
+                            .is_active(true)
+                            .is_upload_file(true) // Giả định đã có
+                            .build();
+
+                    CandidateCV savedCV = cvRepository.save(newCv);
+                    form.setCvid(savedCV.getId());
+                }
+
+            } catch (NoSuchAlgorithmException | IOException e) {
+                // Xử lý lỗi tính Hash hoặc lỗi I/O khi lưu file
+                throw new RuntimeException("Failed to process or store PDF file due to an internal error: " + e.getMessage(), e);
+            } catch (Exception e) {
+                // Xử lý các lỗi khác
+                throw new HttpBadRequest("Failed to process PDF file: " + e.getMessage());
+            }
+        }
+
+        // Chạy logic tạo/cập nhật đơn ứng tuyển
+        return create(form);
+    }
     // Trong JobCandidateServiceImpl.java
 
     @Override

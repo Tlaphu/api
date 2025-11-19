@@ -40,5 +40,6 @@ public interface IJobCandidateRepository extends JpaRepository<JobCandidate, Lon
     boolean existsByJob_IdAndCandidate_Id(Long jobId, Long candidateId);
     boolean existsByJobId(Long jobId);
     Optional<JobCandidate> findByJobIdAndCandidateId(Long jobId, Long candidateId);
+    List<JobCandidate> findByCandidateCVId(Long cvId);
 
 }

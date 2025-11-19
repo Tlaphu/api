@@ -134,4 +134,15 @@ public class CandidateCV {
 
     @Column(name = "project_candidate_end_dates", columnDefinition = "TEXT")
     private String projectCandidateEndDates;
+    @Column(name = "file_cv", columnDefinition = "TEXT")
+    private String file_cv;
+    @Default
+    private Boolean is_upload_file = false;
+    @Column(name = "is_active")
+    @Default
+    private Boolean is_active = true;
+    @Column(name = "file_hash")
+    private String fileHash;
+    @Column(name = "is_public")
+    private Boolean isPublic = false;
 }
