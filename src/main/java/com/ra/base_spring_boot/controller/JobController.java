@@ -470,7 +470,7 @@ public class JobController {
 
         Job job = jobOpt.get();
 
-        
+        // 2. Lấy thông tin công ty hiện tại và kiểm tra quyền
         AccountCompany currentAccountCompany = companyAuthService.getCurrentAccountCompany();
         if (currentAccountCompany == null) {
             return ResponseEntity.status(403).body("Access denied. Company must be logged in.");
@@ -484,7 +484,7 @@ public class JobController {
 
         Company currentCompany = currentCompanyOpt.get();
 
-        // 3. Kiểm tra quyền Admin/Sở hữu
+
         boolean isAdmin = SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
 
@@ -499,6 +499,10 @@ public class JobController {
         }
 
 
+        jobCandidateRepository.deleteByJobId(id);
+        // ------------------------------------
+
+
         List<Candidate> followers = candidateRepository.findAllCandidatesByFavoriteJobId(id);
 
 
@@ -509,10 +513,10 @@ public class JobController {
 
         jobRepository.deleteFavoriteJobsByJobId(id);
 
-
+       
         jobRepository.deleteById(id);
 
-
+        // 7. Gửi thông báo đến người theo dõi
         followers.forEach(candidate -> {
             eventPublisher.publishEvent(new NotificationEvent(
                     this,
