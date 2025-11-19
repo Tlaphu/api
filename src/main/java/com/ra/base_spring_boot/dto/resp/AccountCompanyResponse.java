@@ -21,8 +21,7 @@ public class AccountCompanyResponse {
     private boolean status;
     private boolean isPremium;
     @JsonIgnoreProperties({
-            "accounts", "jobs", "addresses"
+            "accounts", "jobs",
     })
     private CompanyResponse company;
-    private List<AddressCompanyResponse> addresses;
 }

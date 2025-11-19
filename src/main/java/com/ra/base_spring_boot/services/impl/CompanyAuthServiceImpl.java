@@ -174,7 +174,7 @@ public class CompanyAuthServiceImpl implements ICompanyAuthService {
 
         AccountCompany fullCompany = accountCompanyRepository.findById(accountCompany.getId())
                 .orElseThrow(() -> new HttpBadRequest("Company not found"));
-
+        fullCompany.getCompany().getAddresses().size();
         return toAccountResponse(fullCompany);
     }
 
