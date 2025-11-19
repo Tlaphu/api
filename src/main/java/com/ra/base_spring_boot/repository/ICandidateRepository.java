@@ -5,6 +5,7 @@ import com.ra.base_spring_boot.model.constants.RoleName;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.Query;
@@ -30,4 +31,5 @@ public interface ICandidateRepository extends JpaRepository<Candidate, Long> {
     Optional<Candidate> findByIdWithFavoriteCompanies(@Param("id") Long id);
     @Query("SELECT c FROM Candidate c JOIN c.favoriteJobs f WHERE f.id = :jobId")
     List<Candidate> findAllCandidatesByFavoriteJobId(@Param("jobId") Long jobId);
+    List<Candidate> findByIsPremiumTrueAndPremiumUntilBefore(Date date);
 }

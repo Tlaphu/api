@@ -2,7 +2,7 @@ package com.ra.base_spring_boot.repository;
 
 import com.ra.base_spring_boot.model.AccountCompany;
 import org.springframework.data.jpa.repository.JpaRepository;
-
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -13,5 +13,6 @@ public interface IAccountCompanyRepository extends JpaRepository<AccountCompany,
     Optional<AccountCompany> findByEmailAndRoles_RoleName(String email, String roleName);
     Optional<AccountCompany> findByVerificationToken(String verificationToken);
    Optional<AccountCompany> findByResetToken(String resetToken);
+    List<AccountCompany> findByIsPremiumTrueAndPremiumUntilBefore(Date date);
 }
 

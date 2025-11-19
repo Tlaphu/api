@@ -11,6 +11,7 @@ import com.ra.base_spring_boot.services.VNPayService;
 import com.ra.base_spring_boot.services.IRoleService;
 import com.ra.base_spring_boot.services.EmailService;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -154,68 +155,51 @@ public class VNPayServiceImpl implements VNPayService {
 
         if ("00".equals(vnp_ResponseCode)) {
 
-            // Cập nhật trạng thái giao dịch
             transaction.setTransactionStatus("SUCCESS");
             transaction.setPaymentDate(new Date());
             transactionRepository.save(transaction);
 
-            // 1. Lấy số ngày cần cộng thêm
             int durationInDays = transaction.getSubscriptionPlan().getDurationInDays();
 
-            // 2. Chuẩn bị ngày bắt đầu cộng dồn
             Calendar c = Calendar.getInstance();
-            Date currentDate = new Date(); // Ngày thanh toán
+            Date currentDate = getCurrentDateWithoutTime();
 
-            // Xử lý cho Candidate
             if (transaction.getCandidate() != null) {
 
                 Candidate candidate = transaction.getCandidate();
                 Date currentPremiumUntil = candidate.getPremiumUntil();
 
-                // Logic Cộng dồn:
-                // Nếu đã hết hạn (currentPremiumUntil <= currentDate) hoặc chưa từng Premium (null): Bắt đầu từ ngày hiện tại.
-                // Ngược lại (còn thời hạn): Bắt đầu từ ngày hết hạn hiện tại để cộng dồn.
                 if (currentPremiumUntil == null || currentPremiumUntil.before(currentDate)) {
                     c.setTime(currentDate);
                 } else {
-                    c.setTime(currentPremiumUntil); // BẮT ĐẦU CỘNG DỒN
+                    c.setTime(currentPremiumUntil);
                 }
 
-                // Thực hiện cộng dồn
                 c.add(Calendar.DATE, durationInDays);
                 Date newPremiumUntil = c.getTime();
 
-                // Cập nhật thông tin Premium
                 candidate.setPremium(true);
                 candidate.setPremiumUntil(newPremiumUntil);
                 candidateRepository.save(candidate);
 
-                // Xử lý cho AccountCompany (Tài khoản công ty)
             } else if (transaction.getAccountCompany() != null) {
 
                 AccountCompany principalAccount = transaction.getAccountCompany();
                 Date currentPremiumUntil = principalAccount.getPremiumUntil();
 
-                // Logic Cộng dồn:
-                // Nếu đã hết hạn (currentPremiumUntil <= currentDate) hoặc chưa từng Premium (null): Bắt đầu từ ngày hiện tại.
-                // Ngược lại (còn thời hạn): Bắt đầu từ ngày hết hạn hiện tại để cộng dồn.
                 if (currentPremiumUntil == null || currentPremiumUntil.before(currentDate)) {
                     c.setTime(currentDate);
                 } else {
-                    c.setTime(currentPremiumUntil); // BẮT ĐẦU CỘNG DỒN
+                    c.setTime(currentPremiumUntil);
                 }
 
-                // Thực hiện cộng dồn
                 c.add(Calendar.DATE, durationInDays);
                 Date newPremiumUntil = c.getTime();
 
-                // Cập nhật thông tin Premium
                 principalAccount.setPremium(true);
                 principalAccount.setPremiumUntil(newPremiumUntil);
                 accountCompanyRepository.save(principalAccount);
 
-                // Tạo các tài khoản phụ (nếu là Company)
-                createExtraAccounts(principalAccount, principalAccount.getCompany());
 
             } else {
                 return false;
@@ -228,5 +212,43 @@ public class VNPayServiceImpl implements VNPayService {
             transactionRepository.save(transaction);
             return false;
         }
+    }
+
+    private Date getCurrentDateWithoutTime() {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeZone(TimeZone.getTimeZone("Etc/GMT+7"));
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+        return calendar.getTime();
+    }
+
+    @Scheduled(cron = "0 0 1 * * *")
+    @Transactional
+    public void deactivateExpiredPremiumAccounts() {
+        System.out.println("Starting scheduled task: Deactivating expired premium accounts...");
+
+        Date currentDate = getCurrentDateWithoutTime();
+
+        List<Candidate> expiredCandidates = candidateRepository.findByIsPremiumTrueAndPremiumUntilBefore(currentDate);
+        if (expiredCandidates != null && !expiredCandidates.isEmpty()) {
+            for (Candidate candidate : expiredCandidates) {
+                candidate.setPremium(false);
+            }
+            candidateRepository.saveAll(expiredCandidates);
+            System.out.printf("Deactivated %d expired Candidate accounts.\n", expiredCandidates.size());
+        }
+
+        List<AccountCompany> expiredCompanyAccounts = accountCompanyRepository.findByIsPremiumTrueAndPremiumUntilBefore(currentDate);
+        if (expiredCompanyAccounts != null && !expiredCompanyAccounts.isEmpty()) {
+            for (AccountCompany account : expiredCompanyAccounts) {
+                account.setPremium(false);
+            }
+            accountCompanyRepository.saveAll(expiredCompanyAccounts);
+            System.out.printf("Deactivated %d expired principal AccountCompany accounts.\n", expiredCompanyAccounts.size());
+        }
+
+        System.out.println("Scheduled task completed.");
     }
 }
