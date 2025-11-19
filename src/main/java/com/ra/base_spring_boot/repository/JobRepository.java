@@ -34,4 +34,5 @@ public interface JobRepository extends JpaRepository<Job, Long> {
     @Query("SELECT DISTINCT j FROM Job j JOIN j.skills s WHERE s.id IN :skillIds AND j.status = 'ACTIVE'")
     List<Job> findBySkillsInAndStatusActive(@Param("skillIds") List<Long> skillIds);
 
+
 }

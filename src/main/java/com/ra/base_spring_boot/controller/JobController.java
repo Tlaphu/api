@@ -462,6 +462,7 @@ public class JobController {
     @DeleteMapping("/{id}")
     @Transactional
     public ResponseEntity<?> delete(@PathVariable Long id) {
+        // 1. Tìm công việc
         Optional<Job> jobOpt = jobRepository.findById(id);
         if (jobOpt.isEmpty()) {
             return ResponseEntity.status(404).body("Job not found");
@@ -469,7 +470,7 @@ public class JobController {
 
         Job job = jobOpt.get();
 
-
+        
         AccountCompany currentAccountCompany = companyAuthService.getCurrentAccountCompany();
         if (currentAccountCompany == null) {
             return ResponseEntity.status(403).body("Access denied. Company must be logged in.");
@@ -483,7 +484,7 @@ public class JobController {
 
         Company currentCompany = currentCompanyOpt.get();
 
-
+        // 3. Kiểm tra quyền Admin/Sở hữu
         boolean isAdmin = SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
 
@@ -492,10 +493,12 @@ public class JobController {
         }
 
 
-        if (jobCandidateRepository.existsByJobId(id)) {
+        if (jobCandidateRepository.existsByJobIdAndIsAcceptedIsNull(id)) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body("Cannot delete Job with ID: " + id + ". Candidates have already applied to this job.");
+                    .body("Cannot delete Job with ID: " + id + ". There are candidates whose application status is still pending (isAccepted is null).");
         }
+
+
         List<Candidate> followers = candidateRepository.findAllCandidatesByFavoriteJobId(id);
 
 
@@ -506,7 +509,10 @@ public class JobController {
 
         jobRepository.deleteFavoriteJobsByJobId(id);
 
+
         jobRepository.deleteById(id);
+
+
         followers.forEach(candidate -> {
             eventPublisher.publishEvent(new NotificationEvent(
                     this,
@@ -523,7 +529,6 @@ public class JobController {
 
         return ResponseEntity.ok("Deleted Job successfully with id: " + id);
     }
-
     @GetMapping("/featured")
     public ResponseEntity<?> getFeaturedJobs() {
         List<Job> allJobs = jobRepository.findByStatus("ACTIVE");
