@@ -5,7 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
-
+import com.ra.base_spring_boot.model.Company;
 public interface IAccountCompanyRepository extends JpaRepository<AccountCompany, Long> {
     boolean existsByEmail(String email);
     Optional<AccountCompany> findByEmail(String email);
@@ -14,5 +14,11 @@ public interface IAccountCompanyRepository extends JpaRepository<AccountCompany,
     Optional<AccountCompany> findByVerificationToken(String verificationToken);
    Optional<AccountCompany> findByResetToken(String resetToken);
     List<AccountCompany> findByIsPremiumTrueAndPremiumUntilBefore(Date date);
+
+
+    // (PHƯƠNG THỨC CẦN THÊM để tìm 3 tài khoản phụ)
+    List<AccountCompany> findByCompanyAndEmailStartingWith(Company company, String emailPrefix);
+    List<AccountCompany> findByCompanyAndEmailLike(Company company, String emailPattern);
+
 }
 

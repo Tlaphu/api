@@ -179,6 +179,7 @@ public class VNPayServiceImpl implements VNPayService {
                 Date newPremiumUntil = c.getTime();
 
                 candidate.setPremium(true);
+                candidate.setStatus(true); // Mở khóa/Đảm bảo active cho Candidate
                 candidate.setPremiumUntil(newPremiumUntil);
                 candidateRepository.save(candidate);
 
@@ -187,7 +188,9 @@ public class VNPayServiceImpl implements VNPayService {
                 AccountCompany principalAccount = transaction.getAccountCompany();
                 Date currentPremiumUntil = principalAccount.getPremiumUntil();
 
-                if (currentPremiumUntil == null || currentPremiumUntil.before(currentDate)) {
+                boolean isFirstTimePurchase = (currentPremiumUntil == null || currentPremiumUntil.before(currentDate));
+
+                if (isFirstTimePurchase) {
                     c.setTime(currentDate);
                 } else {
                     c.setTime(currentPremiumUntil);
@@ -198,8 +201,19 @@ public class VNPayServiceImpl implements VNPayService {
 
                 principalAccount.setPremium(true);
                 principalAccount.setPremiumUntil(newPremiumUntil);
+                // MỞ KHÓA TÀI KHOẢN CÔNG TY KHI THANH TOÁN THÀNH CÔNG (Tài khoản chính luôn được mở khóa)
+                principalAccount.setStatus(true);
                 accountCompanyRepository.save(principalAccount);
 
+                // Khi mua lại/gia hạn, cần đảm bảo 3 tài khoản phụ cũng được mở khóa và gia hạn theo tài khoản chính.
+                if (!isFirstTimePurchase) {
+                    unlockAndExtendSubAccounts(principalAccount, newPremiumUntil);
+                }
+
+                // CHỈ TẠO TÀI KHOẢN PHỤ NẾU LÀ LẦN MUA ĐẦU TIÊN
+                if (isFirstTimePurchase) {
+                    createExtraAccounts(principalAccount, principalAccount.getCompany());
+                }
 
             } else {
                 return false;
@@ -211,6 +225,29 @@ public class VNPayServiceImpl implements VNPayService {
             transaction.setTransactionStatus("FAILED");
             transactionRepository.save(transaction);
             return false;
+        }
+    }
+
+    /**
+     * Phương thức mới: Mở khóa và gia hạn thời gian cho các tài khoản phụ liên quan khi tài khoản chính gia hạn.
+     */
+    @Transactional
+    public void unlockAndExtendSubAccounts(AccountCompany principalAccount, Date newPremiumUntil) {
+        String subEmailPrefix = "sub_%_" + principalAccount.getEmail();
+
+        // Tìm các tài khoản phụ có cùng Company và email theo mẫu sub_%_[email_chinh]
+        List<AccountCompany> subAccounts = accountCompanyRepository.findByCompanyAndEmailLike(
+                principalAccount.getCompany(), subEmailPrefix
+        );
+
+        if (subAccounts != null && !subAccounts.isEmpty()) {
+            for (AccountCompany subAccount : subAccounts) {
+                subAccount.setStatus(true); // Mở khóa
+                subAccount.setPremium(true); // Đảm bảo Premium
+                subAccount.setPremiumUntil(newPremiumUntil); // Gia hạn theo tài khoản chính
+            }
+            accountCompanyRepository.saveAll(subAccounts);
+            System.out.println("Unlocked and extended " + subAccounts.size() + " sub-accounts for company: " + principalAccount.getEmail());
         }
     }
 
@@ -231,24 +268,53 @@ public class VNPayServiceImpl implements VNPayService {
 
         Date currentDate = getCurrentDateWithoutTime();
 
+        // 1. Xử lý Candidate: Chuyển về tài khoản thường, KHÔNG khóa.
         List<Candidate> expiredCandidates = candidateRepository.findByIsPremiumTrueAndPremiumUntilBefore(currentDate);
         if (expiredCandidates != null && !expiredCandidates.isEmpty()) {
             for (Candidate candidate : expiredCandidates) {
                 candidate.setPremium(false);
             }
             candidateRepository.saveAll(expiredCandidates);
-            System.out.printf("Deactivated %d expired Candidate accounts.\n", expiredCandidates.size());
+            System.out.printf("Deactivated %d expired Candidate accounts to regular status.\n", expiredCandidates.size());
         }
 
-        List<AccountCompany> expiredCompanyAccounts = accountCompanyRepository.findByIsPremiumTrueAndPremiumUntilBefore(currentDate);
-        if (expiredCompanyAccounts != null && !expiredCompanyAccounts.isEmpty()) {
-            for (AccountCompany account : expiredCompanyAccounts) {
-                account.setPremium(false);
+        // 2. Xử lý AccountCompany (Tài khoản chính): Chuyển về tài khoản thường, KHÔNG khóa tài khoản chính.
+        List<AccountCompany> expiredPrincipalAccounts = accountCompanyRepository.findByIsPremiumTrueAndPremiumUntilBefore(currentDate);
+
+        if (expiredPrincipalAccounts != null && !expiredPrincipalAccounts.isEmpty()) {
+            for (AccountCompany principalAccount : expiredPrincipalAccounts) {
+                principalAccount.setPremium(false);
+                // KHÔNG KHÓA TÀI KHOẢN CHÍNH
+
+                // TÌM VÀ KHÓA 3 TÀI KHOẢN PHỤ
+                lockExpiredSubAccounts(principalAccount);
             }
-            accountCompanyRepository.saveAll(expiredCompanyAccounts);
-            System.out.printf("Deactivated %d expired principal AccountCompany accounts.\n", expiredCompanyAccounts.size());
+            accountCompanyRepository.saveAll(expiredPrincipalAccounts);
+            System.out.printf("Deactivated premium status for %d expired principal AccountCompany accounts.\n", expiredPrincipalAccounts.size());
         }
 
         System.out.println("Scheduled task completed.");
+    }
+
+    /**
+     * Phương thức mới: Tìm và khóa 3 tài khoản phụ liên quan đến tài khoản chính đã hết hạn.
+     */
+    @Transactional
+    public void lockExpiredSubAccounts(AccountCompany principalAccount) {
+        String subEmailPrefix = "sub_%_" + principalAccount.getEmail();
+
+        // Tìm các tài khoản phụ có cùng Company và email theo mẫu sub_%_[email_chinh]
+        List<AccountCompany> subAccounts = accountCompanyRepository.findByCompanyAndEmailLike(
+                principalAccount.getCompany(), subEmailPrefix
+        );
+
+        if (subAccounts != null && !subAccounts.isEmpty()) {
+            for (AccountCompany subAccount : subAccounts) {
+                subAccount.setPremium(false); // Đặt trạng thái premium = false
+                subAccount.setStatus(false); // KHÓA TÀI KHOẢN PHỤ
+            }
+            accountCompanyRepository.saveAll(subAccounts);
+            System.out.println("Locked " + subAccounts.size() + " sub-accounts for company: " + principalAccount.getEmail());
+        }
     }
 }
