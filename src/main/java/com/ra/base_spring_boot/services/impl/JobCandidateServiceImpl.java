@@ -117,24 +117,20 @@ public class JobCandidateServiceImpl implements JobCandidateService {
     }
 
     private JobCandidateResponse toResponse(JobCandidate entity) {
-        // Sử dụng @Builder để khởi tạo nếu JobCandidateResponse có @Builder
-        // Hoặc sử dụng cách khởi tạo truyền thống nếu muốn giữ nguyên
+
         JobCandidateResponse response = new JobCandidateResponse();
 
-        // 1. Thiết lập trường cơ bản của JobCandidate
         response.setId(entity.getId());
         response.setCover_letter(entity.getCover_letter());
         response.setStatus(entity.getStatus());
         response.setIsAccepted(entity.getIsAccepted());
 
-        // 2. Thiết lập thông tin Job
         if (entity.getJob() != null) {
             Job job = entity.getJob();
             response.setJobId(job.getId());
-            response.setJobTitle(job.getTitle()); // Giả sử Job có getTitle()
+            response.setJobTitle(job.getTitle());
         }
 
-        // 3. Thiết lập thông tin Candidate và Skills
         if (entity.getCandidate() != null) {
             Candidate candidate = entity.getCandidate();
             response.setCandidateId(candidate.getId());
@@ -142,30 +138,28 @@ public class JobCandidateServiceImpl implements JobCandidateService {
             response.setCandidateTitle(candidate.getTitle());
             response.setCandidateAddress(candidate.getAddress());
 
+            response.setLogoCandidate(candidate.getLogo());
+
             Set<SkillsCandidate> skills = candidate.getSkillCandidates();
 
             if (skills != null && !skills.isEmpty()) {
 
-                skills.stream().findFirst().ifPresent(sc -> {
-                    response.setSkillcandidateId(sc.getId());
+                // Đoạn code này là nơi gọi sc.getSkill().getName() và cần transaction
+                String allSkillNames = skills.stream()
+                        .map(sc -> sc.getSkill() != null ? sc.getSkill().getName() : "")
+                        .filter(name -> !name.isEmpty())
+                        .distinct()
+                        .collect(Collectors.joining(", "));
 
+                response.setSkillcandidateName(allSkillNames);
 
-                    Skill skillEntity = sc.getSkill();
+                // Bỏ qua skillcandidateId (vì nó đã bị xóa logic)
 
-                    if (skillEntity != null) {
-
-                        response.setSkillcandidateName(skillEntity.getName());
-                    } else {
-                        response.setSkillcandidateName(null);
-                    }
-                });
             } else {
-                response.setSkillcandidateId(null);
                 response.setSkillcandidateName(null);
             }
         }
 
-    
         if (entity.getCandidateCV() != null) {
             response.setCvId(entity.getCandidateCV().getId());
         } else {
@@ -441,6 +435,7 @@ public class JobCandidateServiceImpl implements JobCandidateService {
     // ... (Các phương thức khác) ...
 
     @Override
+    @Transactional
     public Optional<JobCandidateResponse> findById(Long id) {
         return jobCandidateRepository.findById(id).map(this::toResponse);
     }
