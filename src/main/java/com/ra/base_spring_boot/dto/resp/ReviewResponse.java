@@ -16,8 +16,6 @@ public class ReviewResponse {
     private String reviewerLogo;
     private String reviewerType;
 
-    private Long companyId;
-    private String companyName;
 }
 
 

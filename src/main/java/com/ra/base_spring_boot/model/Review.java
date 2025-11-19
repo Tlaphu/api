@@ -1,6 +1,7 @@
 package com.ra.base_spring_boot.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Size;
 import lombok.*;
 
 import java.util.Date;
@@ -18,14 +19,12 @@ public class Review {
     private Long id;
 
     private int score;
+    @Size(max = 36)
+    @Column(length = 36)
     private String detail;
 
-    private Long reviewerId;      // ai review
-    private String reviewerType;  // CANDIDATE / COMPANY
-
-    @ManyToOne
-    @JoinColumn(name = "company_id")
-    private Company company;      // review cho công ty (target)
+    private Long reviewerId;
+    private String reviewerType;
 
     private Date createdAt;
 }

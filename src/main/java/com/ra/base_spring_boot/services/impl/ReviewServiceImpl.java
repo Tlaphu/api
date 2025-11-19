@@ -3,6 +3,7 @@ package com.ra.base_spring_boot.services.impl;
 import com.ra.base_spring_boot.dto.req.ReviewCreateRequest;
 import com.ra.base_spring_boot.dto.req.ReviewUpdateRequest;
 import com.ra.base_spring_boot.dto.resp.ReviewResponse;
+import com.ra.base_spring_boot.exception.HttpBadRequest;
 import com.ra.base_spring_boot.model.Review;
 import com.ra.base_spring_boot.repository.ICandidateRepository;
 import com.ra.base_spring_boot.repository.ICompanyRepository;
@@ -47,13 +48,15 @@ public class ReviewServiceImpl implements IReviewService {
         String userType = jwtProvider.getCurrentUserType();
         Long userId = jwtProvider.getCurrentUserId();
 
+        String detail = req.getDetail();
+        if (detail != null && detail.length() > 36) {
+            throw new HttpBadRequest("Review must not exceed 36 characters");
+        }
         Review review = Review.builder()
                 .score(req.getScore())
                 .detail(req.getDetail())
                 .reviewerId(userId)
                 .reviewerType(userType)
-                .company(companyRepository.findById(req.getCompanyId())
-                        .orElseThrow(() -> new RuntimeException("Company not found")))
                 .createdAt(new Date())
                 .build();
 
@@ -65,8 +68,13 @@ public class ReviewServiceImpl implements IReviewService {
         Review old = reviewRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Review not found"));
 
+        String detail = req.getDetail();
+        if (detail != null && detail.length() > 36) {
+            throw new HttpBadRequest("Review must not exceed 36 characters");
+        }
         old.setScore(req.getScore());
         old.setDetail(req.getDetail());
+
 
         return toResponse(reviewRepository.save(old));
     }
@@ -108,8 +116,6 @@ public class ReviewServiceImpl implements IReviewService {
                 .reviewerName(reviewerName)
                 .reviewerLogo(reviewerLogo)
                 .reviewerType(r.getReviewerType())
-                .companyId(r.getCompany().getId())
-                .companyName(r.getCompany().getName())
                 .build();
     }
 }

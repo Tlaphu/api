@@ -19,6 +19,5 @@ public class ReviewCreateRequest {
     @NotBlank(message = "Detail is required")
     private String detail;  // nội dung đánh giá
 
-    @NotNull(message = "Company ID is required")
-    private Long companyId; // công ty được đánh giá
+
 }
