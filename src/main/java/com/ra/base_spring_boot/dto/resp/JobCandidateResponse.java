@@ -24,7 +24,7 @@ public class JobCandidateResponse {
     private String candidateTitle;
     private String candidateAddress;
     private Long skillcandidateId;
-
+    private String skillcandidateName;
     private Boolean isAccepted;
     private Long cvId;
     private String cover_letter;

@@ -117,15 +117,24 @@ public class JobCandidateServiceImpl implements JobCandidateService {
     }
 
     private JobCandidateResponse toResponse(JobCandidate entity) {
+        // Sử dụng @Builder để khởi tạo nếu JobCandidateResponse có @Builder
+        // Hoặc sử dụng cách khởi tạo truyền thống nếu muốn giữ nguyên
         JobCandidateResponse response = new JobCandidateResponse();
-        response.setId(entity.getId());
 
+        // 1. Thiết lập trường cơ bản của JobCandidate
+        response.setId(entity.getId());
+        response.setCover_letter(entity.getCover_letter());
+        response.setStatus(entity.getStatus());
+        response.setIsAccepted(entity.getIsAccepted());
+
+        // 2. Thiết lập thông tin Job
         if (entity.getJob() != null) {
             Job job = entity.getJob();
             response.setJobId(job.getId());
-            response.setJobTitle(job.getTitle());
+            response.setJobTitle(job.getTitle()); // Giả sử Job có getTitle()
         }
 
+        // 3. Thiết lập thông tin Candidate và Skills
         if (entity.getCandidate() != null) {
             Candidate candidate = entity.getCandidate();
             response.setCandidateId(candidate.getId());
@@ -134,27 +143,37 @@ public class JobCandidateServiceImpl implements JobCandidateService {
             response.setCandidateAddress(candidate.getAddress());
 
             Set<SkillsCandidate> skills = candidate.getSkillCandidates();
+
             if (skills != null && !skills.isEmpty()) {
-                Optional<SkillsCandidate> firstSkill = skills.stream().findFirst();
-                firstSkill.ifPresent(sc -> response.setSkillcandidateId(sc.getId()));
+
+                skills.stream().findFirst().ifPresent(sc -> {
+                    response.setSkillcandidateId(sc.getId());
+
+
+                    Skill skillEntity = sc.getSkill();
+
+                    if (skillEntity != null) {
+
+                        response.setSkillcandidateName(skillEntity.getName());
+                    } else {
+                        response.setSkillcandidateName(null);
+                    }
+                });
             } else {
                 response.setSkillcandidateId(null);
+                response.setSkillcandidateName(null);
             }
         }
 
+    
         if (entity.getCandidateCV() != null) {
             response.setCvId(entity.getCandidateCV().getId());
         } else {
             response.setCvId(null);
         }
 
-        response.setCover_letter(entity.getCover_letter());
-        response.setStatus(entity.getStatus());
-        response.setIsAccepted(entity.getIsAccepted());
-
         return response;
     }
-
     private String calculateFileHash(MultipartFile file) throws Exception {
         MessageDigest digest = MessageDigest.getInstance("SHA-256");
         byte[] hash = digest.digest(file.getBytes());
