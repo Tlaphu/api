@@ -19,6 +19,7 @@ public class AccountCompanyResponse {
     private Integer gender;
     private Date dob;
     private boolean status;
+    private boolean isPremium;
     @JsonIgnoreProperties({
             "accounts", "jobs", "addresses"
     })

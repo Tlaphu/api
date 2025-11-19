@@ -165,13 +165,17 @@ public class CompanyAuthServiceImpl implements ICompanyAuthService {
         accountCompanyRepository.save(accountCompany);
     }
     @Override
+    @Transactional
     public AccountCompanyResponse getCurrentCompanyInfo() {
         AccountCompany accountCompany = jwtProvider.getCurrentAccountCompany();
         if (accountCompany == null) {
             throw new HttpBadRequest("Unauthorized: No company account found in token");
         }
 
-        return toAccountResponse(accountCompany);
+        AccountCompany fullCompany = accountCompanyRepository.findById(accountCompany.getId())
+                .orElseThrow(() -> new HttpBadRequest("Company not found"));
+
+        return toAccountResponse(fullCompany);
     }
 
 
@@ -349,6 +353,7 @@ public class CompanyAuthServiceImpl implements ICompanyAuthService {
                 .dob(accountCompany.getDob())
                 .gender(accountCompany.getGender())
                 .status(accountCompany.isStatus())
+                .isPremium(accountCompany.isPremium())
                 .company(CompanyResponse.builder()
                         .id(company.getId())
                         .name(company.getName())
