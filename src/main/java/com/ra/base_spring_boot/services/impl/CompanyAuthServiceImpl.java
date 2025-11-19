@@ -193,7 +193,7 @@ public class CompanyAuthServiceImpl implements ICompanyAuthService {
 
         String frontendBaseUrl = "http://localhost:5173";
 
-        String resetLink = frontendBaseUrl + "/reset-password?token=" + resetToken;
+        String resetLink = frontendBaseUrl + "/reset-password?token=" + resetToken + "&role=COMPANY";
 
         emailService.sendResetPasswordEmail(
                 accountCompany.getEmail(),
