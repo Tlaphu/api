@@ -5,7 +5,10 @@ import com.ra.base_spring_boot.dto.req.FormUpdateCompany;
 import com.ra.base_spring_boot.dto.req.FormUpdateProfile;
 import com.ra.base_spring_boot.dto.resp.*;
 import com.ra.base_spring_boot.model.Skill;
+import com.ra.base_spring_boot.repository.ICandidateRepository;
+import com.ra.base_spring_boot.repository.ICompanyRepository;
 import com.ra.base_spring_boot.services.IAdminService;
+import com.ra.base_spring_boot.services.IBlacklistedWordService;
 import com.ra.base_spring_boot.services.INotificationService;
 import com.ra.base_spring_boot.services.ISkillService;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/admin")
@@ -22,6 +26,7 @@ public class AdminController {
     private final IAdminService adminService;
     private final ISkillService skillService;
     private final INotificationService notificationService;
+    private final IBlacklistedWordService blacklistedWordService;
 
     @PostMapping("/login")
     public ResponseEntity<JwtResponse> login(@RequestBody FormLogin formLogin) {
@@ -111,6 +116,23 @@ public class AdminController {
     @GetMapping("/admin/notifications")
     public ResponseEntity<?> getAllAdminNotifications() {
         return ResponseEntity.ok(notificationService.getAllNotificationsForAdmin());
+    }
+    @GetMapping("/words")
+    public List<String> listWords() {
+        return blacklistedWordService.findAllWords();
+    }
+
+    @PostMapping("/words")
+    public ResponseEntity<?> addWord(@RequestBody Map<String,String> body) {
+        String w = body.get("word");
+        blacklistedWordService.addWord(w);
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/words/{id}")
+    public ResponseEntity<?> remove(@PathVariable Long id) {
+        blacklistedWordService.removeById(id);
+        return ResponseEntity.ok().build();
     }
 
 }
