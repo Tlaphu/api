@@ -413,6 +413,7 @@ public class JobCandidateServiceImpl implements JobCandidateService {
                 .orElseThrow(() -> new NoSuchElementException("JobCandidate not found with id: " + id));
 
         AccountCompany currentCompany = jwtProvider.getCurrentAccountCompany();
+        Company company = currentCompany.getCompany();
 
 
         if (currentCompany == null ||
@@ -427,7 +428,6 @@ public class JobCandidateServiceImpl implements JobCandidateService {
 
         existingCandidate.setStatus(isAccepted ? "ACCEPTED" : "REJECTED");
         Candidate candidate = existingCandidate.getCandidate();
-        Company company = existingCandidate.getJob().getCompany();
 
         String title = isAccepted ? "Hồ sơ đã được duyệt" : "Hồ sơ bị từ chối";
         String message = isAccepted
