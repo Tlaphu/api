@@ -27,4 +27,5 @@ public interface ICandidateCVService {
     byte[] generatePdfFromCV(Long cvId, Long candidateId);
     byte[] downloadCvForCompany(Long cvId, Long companyId);
     CandidateCV setCvPublicStatus(Long cvId, Long candidateId, Boolean isPublic);
+    CandidateCV getPublicCVById(Long cvId);
 }

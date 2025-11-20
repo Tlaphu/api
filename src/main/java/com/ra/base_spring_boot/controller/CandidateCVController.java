@@ -154,6 +154,17 @@ public class CandidateCVController {
 
         return ResponseEntity.ok(cvResponse);
     }
+    @GetMapping("/public/{cvId}")
+    @PreAuthorize("permitAll()") // Ghi đè quyền, cho phép mọi người truy cập
+    public ResponseEntity<CandidateCVResponse> getPublicCVById(@PathVariable Long cvId) {
+
+
+        CandidateCV cvEntity = candidateCVService.getPublicCVById(cvId);
+
+        CandidateCVResponse cvResponse = candidateCVServiceImpl.mapToResponse(cvEntity);
+
+        return ResponseEntity.ok(cvResponse);
+    }
 
 
 }

@@ -110,6 +110,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/job/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/auth/company/top20").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/auth/company/{id}").permitAll()
+                        .requestMatchers("/api/v1/candidate/cv/public/**").permitAll()
                         .requestMatchers("/api/v1/auth/company/login").permitAll()
                         .requestMatchers("/api/v1/auth/company/register").permitAll()
                         .requestMatchers("/api/v1/auth/company/forgot-password").permitAll()
@@ -124,6 +125,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/location/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/reviews").permitAll()
                         .requestMatchers("/api/payment/create", "/api/payment/vnpay_return").permitAll()
+
                         .requestMatchers("/api/payment/**").permitAll()
                         .requestMatchers(
                                 "/api/v1/auth/candidate/login",
@@ -145,7 +147,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/admin/**").hasAuthority(RoleName.ROLE_ADMIN.toString())
                         .requestMatchers("/api/v1/candidate/**").hasAuthority(RoleName.ROLE_CANDIDATE.toString())
                         .requestMatchers("/api/v1/company/**").hasAuthority(RoleName.ROLE_COMPANY.toString())
-
+                        .requestMatchers("/api/v1/job-candidates/**")
+                        .hasAnyAuthority(RoleName.ROLE_ADMIN.toString(), RoleName.ROLE_COMPANY.toString(), RoleName.ROLE_CANDIDATE.toString())
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

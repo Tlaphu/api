@@ -24,6 +24,12 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
+// THYMELAFF IMPORTS
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.thymeleaf.TemplateEngine;
+import org.thymeleaf.context.Context;
+import org.thymeleaf.exceptions.TemplateInputException; // Import mới cho xử lý lỗi
+
 @Service
 @RequiredArgsConstructor
 public class CandidateCVServiceImpl implements ICandidateCVService {
@@ -34,6 +40,10 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
     private final ICandidateCVArchiveRepository candidateCVArchiveRepository;
     private final IJobCandidateRepository jobCandidateRepository;
     private final ICandidateCVRepository cvRepository;
+
+    // INJECT THYMELAFF TEMPLATE ENGINE
+    @Qualifier("pdfTemplateEngine")
+    private final TemplateEngine templateEngine;
 
     @Value("${file.upload.cv-dir:./uploads/cv_files/}")
     private String UPLOAD_DIR;
@@ -624,6 +634,8 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
 
                 builder.useFont(fontFile, fontName);
 
+                // Giữ lại phần này, nhưng lưu ý: nếu template HTML tự định nghĩa font,
+                // thì việc replace này có thể không cần hoặc cần điều chỉnh
                 htmlContent = htmlContent.replace("font-family: Arial, sans-serif;", "font-family: " + fontName + ", sans-serif;");
             }
 
@@ -641,158 +653,43 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
         }
     }
 
+    /**
+     * THAY THẾ PHƯƠNG THỨC TẠO HTML TĨNH BẰNG LOGIC RENDER TEMPLATE ĐỘNG (Thymeleaf)
+     */
     public String generateHtmlContent(CandidateCV cvEntity) {
-
-        String candidateName = escapeHtml(cvEntity.getName() != null ? cvEntity.getName() : "Unknown Candidate");
-        String candidateAddress = escapeHtml(cvEntity.getAddress() != null ? cvEntity.getAddress() : "");
-        String candidateEmail = escapeHtml(cvEntity.getEmail() != null ? cvEntity.getEmail() : "");
-        String candidatePhone = escapeHtml(cvEntity.getPhone() != null ? cvEntity.getPhone() : "");
-        String candidateTitle = escapeHtml(cvEntity.getCandidateTitle() != null ? cvEntity.getCandidateTitle() : "");
-
-        String candidateDob = "";
-        if (cvEntity.getDob() != null) {
-            SimpleDateFormat dobFormat = new SimpleDateFormat("dd/MM/yyyy");
-            candidateDob = dobFormat.format(cvEntity.getDob());
+        String templateNumber = cvEntity.getTemplate();
+        if (templateNumber == null || templateNumber.trim().isEmpty()) {
+            templateNumber = "default";
+        } else {
+            templateNumber = templateNumber.trim();
         }
 
-        String candidateGender = "N/A";
-        if (cvEntity.getGender() != null) {
-            switch (cvEntity.getGender()) {
-                case 0:
-                    candidateGender = "Male";
-                    break;
-                case 1:
-                    candidateGender = "Female";
-                    break;
-                default:
-                    candidateGender = "N/A";
-                    break;
-            }
+        CandidateCVResponse cvData = mapToResponse(cvEntity);
+
+        Context context = new Context(Locale.ENGLISH);
+        context.setVariable("cvData", cvData);
+
+        String templateFile = "cv-" + templateNumber;
+
+        try {
+            return templateEngine.process(templateFile, context);
+        } catch (TemplateInputException e) {
+            String errorMessage = String.format("CV Template '%s' not found. Check if file 'templates/cv/%s.html' exists.",
+                    templateNumber, templateFile);
+            throw new RuntimeException(errorMessage, e);
+        } catch (Exception e) {
+            String errorMessage = String.format("Failed to process CV Template '%s'. Check template syntax or data logic.",
+                    templateNumber);
+            throw new RuntimeException(errorMessage, e);
         }
-
-        String hobbies = escapeHtml(cvEntity.getHobbies() != null ? cvEntity.getHobbies() : "");
-
-        String candidateDevelopment = escapeHtml(cvEntity.getDevelopment() != null ? cvEntity.getDevelopment() : "N/A");
-
-        List<String> skills = splitStringToList(cvEntity.getSkillCandidateNames(), " | ").stream().map(this::escapeHtml).collect(Collectors.toList());
-        List<String> educationNames = splitStringToList(cvEntity.getEducationCandidateNames(), " | ").stream().map(this::escapeHtml).collect(Collectors.toList());
-        List<String> educationMajors = splitStringToList(cvEntity.getEducationCandidateMajor(), " | ").stream().map(this::escapeHtml).collect(Collectors.toList());
-        List<String> educationInfos = splitStringToList(cvEntity.getEducationCandidateInfo(), " | ").stream().map(this::escapeHtml).collect(Collectors.toList());
-        List<String> educationStartDates = splitStringToList(cvEntity.getEducationCandidateStartDates(), " | ").stream().map(this::escapeHtml).collect(Collectors.toList());
-        List<String> educationEndDates = splitStringToList(cvEntity.getEducationCandidateEndDates(), " | ").stream().map(this::escapeHtml).collect(Collectors.toList());
-
-
-        List<String> experienceNames = splitStringToList(cvEntity.getExperienceCandidateNames(), " | ").stream().map(this::escapeHtml).collect(Collectors.toList());
-        List<String> experienceInfos = splitStringToList(cvEntity.getExperienceCandidateInfo(), " | ").stream().map(this::escapeHtml).collect(Collectors.toList());
-        List<String> experienceStartDates = splitStringToList(cvEntity.getExperienceCandidateStartDates(), " | ").stream().map(this::escapeHtml).collect(Collectors.toList());
-        List<String> experienceEndDates = splitStringToList(cvEntity.getExperienceCandidateEndDates(), " | ").stream().map(this::escapeHtml).collect(Collectors.toList());
-
-        List<String> projectNames = splitStringToList(cvEntity.getProjectCandidateNames(), " | ").stream().map(this::escapeHtml).collect(Collectors.toList());
-        List<String> projectLinks = splitStringToList(cvEntity.getProjectCandidateLink(), " | ").stream().map(this::escapeHtml).collect(Collectors.toList());
-        List<String> projectInfos = splitStringToList(cvEntity.getProjectCandidateInfo(), " | ").stream().map(this::escapeHtml).collect(Collectors.toList());
-        List<String> projectStartDates = splitStringToList(cvEntity.getProjectCandidateStartDates(), " | ").stream().map(this::escapeHtml).collect(Collectors.toList());
-        List<String> projectEndDates = splitStringToList(cvEntity.getProjectCandidateEndDates(), " | ").stream().map(this::escapeHtml).collect(Collectors.toList());
-
-        List<String> certificateNames = splitStringToList(cvEntity.getCertificateCandidateNames(), " | ").stream().map(this::escapeHtml).collect(Collectors.toList());
-        List<String> certificateOrgs = splitStringToList(cvEntity.getCertificateCandidateOrganization(), " | ").stream().map(this::escapeHtml).collect(Collectors.toList());
-
-
-        StringBuilder html = new StringBuilder();
-        html.append("<html><head>")
-
-
-                .append("<meta charset=\"UTF-8\"/>")
-
-                .append("<style>")
-
-                .append("body{font-family: Arial, sans-serif; margin: 0; padding: 20px;} h1{text-align: center; margin-bottom: 5px;}")
-                .append(".contact{text-align: center; font-size: 0.9em; color: #555;} .title{text-align: center; font-size: 1.1em; font-weight: bold; color: #333;}")
-                .append(".section{margin-top: 15px; border-bottom: 2px solid #ccc; padding-bottom: 3px; font-size: 1.2em; color: #000;}")
-                .append(".item-title{font-weight: bold; margin-bottom: 2px;} .item-detail{margin-left: 20px; font-size: 0.95em;}")
-
-                .append("</style></head><body>");
-
-
-        html.append("<h1>").append(candidateName).append("</h1>")
-                .append("<p class='contact'>")
-                .append(candidateDob).append(" | ")
-                .append(candidateGender).append(" | ")
-                .append(candidatePhone).append(" | ")
-                .append(candidateEmail).append(" | ")
-                .append(candidateAddress)
-                .append("</p>")
-                .append("<div class='title'>").append(candidateTitle).append("</div>");
-
-
-        html.append("<h2 class='section'>Summary / Development Goal</h2>")
-                .append("<p>").append(candidateDevelopment.replace("\n", "<br/>")).append("</p>");
-
-
-        html.append("<h2 class='section'>Skills</h2>")
-                .append("<ul>");
-        skills.forEach(skill -> html.append("<li>").append(skill).append("</li>"));
-        html.append("</ul>");
-
-
-        html.append("<h2 class='section'>Experience</h2>");
-        for (int i = 0; i < experienceNames.size(); i++) {
-            String dates = (i < experienceStartDates.size() ? experienceStartDates.get(i) : "?") +
-                    " - " + (i < experienceEndDates.size() ? experienceEndDates.get(i) : "Present");
-
-            html.append("<div class='item-title'>").append(experienceNames.get(i)).append(" (").append(dates).append(")</div>")
-                    .append("<div class='item-detail'>").append(experienceInfos.get(i).replace("\n", "<br/>")).append("</div>");
-        }
-
-
-        html.append("<h2 class='section'>Education</h2>");
-        for (int i = 0; i < educationNames.size(); i++) {
-            String major = i < educationMajors.size() ? educationMajors.get(i) : "";
-
-            String dates = (i < educationStartDates.size() ? educationStartDates.get(i) : "?") +
-                    " - " + (i < educationEndDates.size() ? educationEndDates.get(i) : "Current");
-
-            html.append("<div class='item-title'>").append(educationNames.get(i)).append(" (").append(dates).append(")</div>")
-                    .append("<div class='item-detail'>").append(major).append(" | ").append(educationInfos.get(i)).append("</div>");
-        }
-
-
-        html.append("<h2 class='section'>Projects</h2>");
-        for (int i = 0; i < projectNames.size(); i++) {
-            String link = i < projectLinks.size() ? projectLinks.get(i) : "N/A";
-            String info = i < projectInfos.size() ? projectInfos.get(i) : "N/A";
-
-            String dates = (i < projectStartDates.size() ? projectStartDates.get(i) : "?") +
-                    " - " + (i < projectEndDates.size() ? projectEndDates.get(i) : "Current");
-
-            html.append("<div class='item-title'>").append(projectNames.get(i)).append(" (").append(dates).append(")</div>")
-                    .append("<div class='item-detail'>").append(info).append(" | Link: <a href='").append(link).append("'>").append(link).append("</a></div>");
-        }
-
-        if (!hobbies.isEmpty()) {
-            html.append("<h2 class='section'>Hobbies</h2>")
-                    .append("<p>").append(hobbies.replace("\n", "<br/>")).append("</p>");
-        }
-
-        html.append("<h2 class='section'>Certificates</h2>");
-        for (int i = 0; i < certificateNames.size(); i++) {
-            String org = i < certificateOrgs.size() ? certificateOrgs.get(i) : "";
-
-            String startDate = i < splitStringToList(cvEntity.getCertificateCandidateStartDates(), " | ").size()
-                    ? splitStringToList(cvEntity.getCertificateCandidateStartDates(), " | ").get(i) : "N/A";
-            String endDate = i < splitStringToList(cvEntity.getCertificateCandidateEndDates(), " | ").size()
-                    ? splitStringToList(cvEntity.getCertificateCandidateEndDates(), " | ").get(i) : "N/A";
-
-            String dates = startDate + (endDate.equals("N/A") || startDate.equals(endDate) ? "" : " - " + endDate);
-
-            html.append("<div class='item-title'>").append(certificateNames.get(i)).append(" (").append(dates).append(")</div>")
-                    .append("<div class='item-detail'>Issued by: ").append(org).append("</div>");
-        }
-
-
-        html.append("</body></html>");
-        return html.toString();
     }
+    @Override
+    public CandidateCV getPublicCVById(Long cvId) {
+        return candidateCVRepository.findById(cvId)
+                .filter(CandidateCV::getIsPublic)
+                .orElseThrow(() -> new HttpBadRequest("Public CV not found with ID: " + cvId));
 
+    }
 
     private Date getStartOfMonth(Date date) {
         Calendar calendar = Calendar.getInstance();

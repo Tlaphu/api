@@ -43,3 +43,5 @@ servlet:
 file:
   upload:
     cv-dir: ./uploads/cv_files/
+thymeleaf:
+  cache: false
