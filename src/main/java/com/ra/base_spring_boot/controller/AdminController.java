@@ -6,6 +6,7 @@ import com.ra.base_spring_boot.dto.req.FormUpdateProfile;
 import com.ra.base_spring_boot.dto.resp.*;
 import com.ra.base_spring_boot.model.Skill;
 import com.ra.base_spring_boot.services.IAdminService;
+import com.ra.base_spring_boot.services.INotificationService;
 import com.ra.base_spring_boot.services.ISkillService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -20,6 +21,7 @@ public class AdminController {
 
     private final IAdminService adminService;
     private final ISkillService skillService;
+    private final INotificationService notificationService;
 
     @PostMapping("/login")
     public ResponseEntity<JwtResponse> login(@RequestBody FormLogin formLogin) {
@@ -106,4 +108,9 @@ public class AdminController {
         skillService.delete(id);
         return "Deleted skill with id: " + id;
     }
+    @GetMapping("/admin/notifications")
+    public ResponseEntity<?> getAllAdminNotifications() {
+        return ResponseEntity.ok(notificationService.getAllNotificationsForAdmin());
+    }
+
 }

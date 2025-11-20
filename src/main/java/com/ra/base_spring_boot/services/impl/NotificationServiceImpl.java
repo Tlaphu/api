@@ -81,6 +81,14 @@ public class NotificationServiceImpl implements INotificationService {
                 .map(this::toResponse)
                 .collect(Collectors.toList());
     }
+    @Override
+    public List<NotificationResponse> getAllNotificationsForAdmin() {
+        return notificationRepository.findAllByOrderByCreatedAtDesc()
+                .stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+    }
+
 
     @Override
     public long countUnreadForCurrentUser(Long userId, String userType) {
