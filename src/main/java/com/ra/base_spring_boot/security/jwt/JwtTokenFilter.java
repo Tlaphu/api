@@ -36,18 +36,29 @@ public class JwtTokenFilter extends OncePerRequestFilter {
         String method = request.getMethod();
 
         boolean isPublicJobGet = method.equalsIgnoreCase("GET") && (
-                path.equals("/api/job") ||
-                        path.matches("^/api/job/\\d+$") ||
-                        path.equals("/api/job/featured") ||
-                        path.equals("/api/job/stats")||
-                        path.equals("/api/job/by-skills")
+                path.startsWith("/api/job") ||
+                        path.startsWith("/api/v1/job") ||
+                        path.equals("/api/v1/auth/company/top20") ||
+                        path.matches("^/api/v1/auth/company/\\d+$") ||
+                        path.startsWith("/api/location") ||
+                        path.equals("/api/v1/reviews")
         );
+
         boolean isPublicAuth = path.equals("/api/v1/auth/candidate/login")
                 || path.equals("/api/v1/auth/candidate/register")
+                || path.equals("/api/v1/auth/candidate/forgot-password")
+                || path.equals("/api/v1/auth/candidate/reset-password")
+                || path.equals("/api/v1/auth/candidate/verify")
                 || path.equals("/api/v1/auth/company/login")
                 || path.equals("/api/v1/auth/company/register")
-                || path.equals("/api/v1/auth/admin/login")
-                || path.equals("/api/v1/skills");
+                || path.equals("/api/v1/auth/company/forgot-password")
+                || path.equals("/api/v1/auth/company/reset-password")
+                || path.equals("/api/v1/auth/company/verify")
+                || path.equals("/api/v1/admin/login")
+                || path.equals("/api/v1/skills")
+                || path.equals("/api/payment/create")
+                || path.equals("/api/payment/vnpay_return")
+                || path.startsWith("/api/payment");
 
         if (isPublicJobGet || isPublicAuth || path.startsWith("/swagger")
                 || path.startsWith("/v3/api-docs") || path.startsWith("/actuator")) {
@@ -68,22 +79,13 @@ public class JwtTokenFilter extends OncePerRequestFilter {
 
                     if (email != null && type != null) {
                         switch (type) {
-                            case "candidate" -> {
-                                setCandidateAuthentication(email, token, request);
-
-                            }
-                            case "company" -> {
-                                setCompanyAuthentication(email, token, request);
-
-                            }
-                            case "admin" -> {
-                                setAdminAuthentication(email, token, request);
-
-                            }
+                            case "candidate" -> setCandidateAuthentication(email, token, request);
+                            case "company" -> setCompanyAuthentication(email, token, request);
+                            case "admin" -> setAdminAuthentication(email, token, request);
                             default -> log.warn("JwtTokenFilter: unknown token type '{}'", type);
                         }
 
-                } else {
+                    } else {
                         log.warn("JWT Token missing email or type");
                     }
                 } else {
@@ -110,7 +112,6 @@ public class JwtTokenFilter extends OncePerRequestFilter {
                     new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
             authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
             SecurityContextHolder.getContext().setAuthentication(authentication);
-            return;
         } else {
             log.warn("Candidate token invalid for email: {}", email);
         }
@@ -125,7 +126,6 @@ public class JwtTokenFilter extends OncePerRequestFilter {
                     new UsernamePasswordAuthenticationToken(companyDetails, null, companyDetails.getAuthorities());
             authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
             SecurityContextHolder.getContext().setAuthentication(authentication);
-            return;
         } else {
             log.warn("Company token invalid for email: {}", email);
         }
@@ -140,7 +140,6 @@ public class JwtTokenFilter extends OncePerRequestFilter {
                     new UsernamePasswordAuthenticationToken(adminDetails, null, adminDetails.getAuthorities());
             authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
             SecurityContextHolder.getContext().setAuthentication(authentication);
-            return;
         } else {
             log.warn("Admin token invalid for email: {}", email);
         }

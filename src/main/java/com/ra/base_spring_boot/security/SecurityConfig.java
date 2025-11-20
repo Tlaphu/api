@@ -133,7 +133,7 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
 
-                       
+
                         .requestMatchers(PUBLIC_AUTH_ENDPOINTS).permitAll()
 
 
