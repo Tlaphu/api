@@ -77,7 +77,6 @@ public class VNPayServiceImpl implements VNPayService {
 
             accountCompanyRepository.save(subAccount);
         }
-        System.out.println("Created 3 sub-accounts for company: " + principalAccount.getEmail());
     }
 
 
@@ -112,7 +111,6 @@ public class VNPayServiceImpl implements VNPayService {
 
         Map<String, String> sorted_vnp_Params = VNPayUtil.sortParams(vnp_Params);
         String hashData = VNPayUtil.buildHashData(sorted_vnp_Params);
-        System.out.println("HASH DATA TO BE SIGNED: " + hashData);
         String vnp_SecureHash = VNPayUtil.hmacSHA512(vnpayProperties.getHashSecret(), hashData);
 
 
@@ -142,6 +140,7 @@ public class VNPayServiceImpl implements VNPayService {
         }
         String generatedHash = VNPayUtil.hmacSHA512(vnpayProperties.getHashSecret(), hashData);
 
+
         if (!generatedHash.equals(vnp_SecureHash)) {
             return false;
         }
@@ -149,9 +148,17 @@ public class VNPayServiceImpl implements VNPayService {
         PaymentTransaction transaction = transactionRepository.findByVnpayTxnRef(vnp_TxnRef)
                 .orElse(null);
 
+
         if (transaction == null) {
             return false;
         }
+
+        String currentStatus = transaction.getTransactionStatus();
+        if ("SUCCESS".equals(currentStatus) || "FAILED".equals(currentStatus)) {
+
+            return "00".equals(vnp_ResponseCode) && "SUCCESS".equals(currentStatus);
+        }
+
 
         if ("00".equals(vnp_ResponseCode)) {
 
@@ -179,7 +186,7 @@ public class VNPayServiceImpl implements VNPayService {
                 Date newPremiumUntil = c.getTime();
 
                 candidate.setPremium(true);
-                candidate.setStatus(true); // Mở khóa/Đảm bảo active cho Candidate
+                candidate.setStatus(true);
                 candidate.setPremiumUntil(newPremiumUntil);
                 candidateRepository.save(candidate);
 
@@ -201,16 +208,16 @@ public class VNPayServiceImpl implements VNPayService {
 
                 principalAccount.setPremium(true);
                 principalAccount.setPremiumUntil(newPremiumUntil);
-                // MỞ KHÓA TÀI KHOẢN CÔNG TY KHI THANH TOÁN THÀNH CÔNG (Tài khoản chính luôn được mở khóa)
+
                 principalAccount.setStatus(true);
                 accountCompanyRepository.save(principalAccount);
 
-                // Khi mua lại/gia hạn, cần đảm bảo 3 tài khoản phụ cũng được mở khóa và gia hạn theo tài khoản chính.
+                // Extend and unlock sub-accounts upon renewal
                 if (!isFirstTimePurchase) {
                     unlockAndExtendSubAccounts(principalAccount, newPremiumUntil);
                 }
 
-                // CHỈ TẠO TÀI KHOẢN PHỤ NẾU LÀ LẦN MUA ĐẦU TIÊN
+                // Create sub-accounts only for the first-time purchase
                 if (isFirstTimePurchase) {
                     createExtraAccounts(principalAccount, principalAccount.getCompany());
                 }
@@ -222,6 +229,7 @@ public class VNPayServiceImpl implements VNPayService {
             return true;
         } else {
 
+            // Payment Failed
             transaction.setTransactionStatus("FAILED");
             transactionRepository.save(transaction);
             return false;
@@ -229,25 +237,23 @@ public class VNPayServiceImpl implements VNPayService {
     }
 
     /**
-     * Phương thức mới: Mở khóa và gia hạn thời gian cho các tài khoản phụ liên quan khi tài khoản chính gia hạn.
+     * Unlock and extend premium time for sub-accounts upon principal account renewal.
      */
     @Transactional
     public void unlockAndExtendSubAccounts(AccountCompany principalAccount, Date newPremiumUntil) {
         String subEmailPrefix = "sub_%_" + principalAccount.getEmail();
 
-        // Tìm các tài khoản phụ có cùng Company và email theo mẫu sub_%_[email_chinh]
         List<AccountCompany> subAccounts = accountCompanyRepository.findByCompanyAndEmailLike(
                 principalAccount.getCompany(), subEmailPrefix
         );
 
         if (subAccounts != null && !subAccounts.isEmpty()) {
             for (AccountCompany subAccount : subAccounts) {
-                subAccount.setStatus(true); // Mở khóa
-                subAccount.setPremium(true); // Đảm bảo Premium
-                subAccount.setPremiumUntil(newPremiumUntil); // Gia hạn theo tài khoản chính
+                subAccount.setStatus(true);
+                subAccount.setPremium(true);
+                subAccount.setPremiumUntil(newPremiumUntil);
             }
             accountCompanyRepository.saveAll(subAccounts);
-            System.out.println("Unlocked and extended " + subAccounts.size() + " sub-accounts for company: " + principalAccount.getEmail());
         }
     }
 
@@ -264,57 +270,48 @@ public class VNPayServiceImpl implements VNPayService {
     @Scheduled(cron = "0 0 1 * * *")
     @Transactional
     public void deactivateExpiredPremiumAccounts() {
-        System.out.println("Starting scheduled task: Deactivating expired premium accounts...");
 
         Date currentDate = getCurrentDateWithoutTime();
 
-        // 1. Xử lý Candidate: Chuyển về tài khoản thường, KHÔNG khóa.
+        // 1. Process Candidate: Revert to regular account, DO NOT lock.
         List<Candidate> expiredCandidates = candidateRepository.findByIsPremiumTrueAndPremiumUntilBefore(currentDate);
         if (expiredCandidates != null && !expiredCandidates.isEmpty()) {
             for (Candidate candidate : expiredCandidates) {
                 candidate.setPremium(false);
             }
             candidateRepository.saveAll(expiredCandidates);
-            System.out.printf("Deactivated %d expired Candidate accounts to regular status.\n", expiredCandidates.size());
         }
 
-        // 2. Xử lý AccountCompany (Tài khoản chính): Chuyển về tài khoản thường, KHÔNG khóa tài khoản chính.
+        // 2. Process AccountCompany (Principal Account): Revert to regular account, DO NOT lock principal account.
         List<AccountCompany> expiredPrincipalAccounts = accountCompanyRepository.findByIsPremiumTrueAndPremiumUntilBefore(currentDate);
 
         if (expiredPrincipalAccounts != null && !expiredPrincipalAccounts.isEmpty()) {
             for (AccountCompany principalAccount : expiredPrincipalAccounts) {
                 principalAccount.setPremium(false);
-                // KHÔNG KHÓA TÀI KHOẢN CHÍNH
 
-                // TÌM VÀ KHÓA 3 TÀI KHOẢN PHỤ
                 lockExpiredSubAccounts(principalAccount);
             }
             accountCompanyRepository.saveAll(expiredPrincipalAccounts);
-            System.out.printf("Deactivated premium status for %d expired principal AccountCompany accounts.\n", expiredPrincipalAccounts.size());
         }
-
-        System.out.println("Scheduled task completed.");
     }
 
     /**
-     * Phương thức mới: Tìm và khóa 3 tài khoản phụ liên quan đến tài khoản chính đã hết hạn.
+     * Find and lock sub-accounts associated with the expired principal account.
      */
     @Transactional
     public void lockExpiredSubAccounts(AccountCompany principalAccount) {
         String subEmailPrefix = "sub_%_" + principalAccount.getEmail();
 
-        // Tìm các tài khoản phụ có cùng Company và email theo mẫu sub_%_[email_chinh]
         List<AccountCompany> subAccounts = accountCompanyRepository.findByCompanyAndEmailLike(
                 principalAccount.getCompany(), subEmailPrefix
         );
 
         if (subAccounts != null && !subAccounts.isEmpty()) {
             for (AccountCompany subAccount : subAccounts) {
-                subAccount.setPremium(false); // Đặt trạng thái premium = false
-                subAccount.setStatus(false); // KHÓA TÀI KHOẢN PHỤ
+                subAccount.setPremium(false); // Set premium status to false
+                subAccount.setStatus(false); // LOCK SUB-ACCOUNT
             }
             accountCompanyRepository.saveAll(subAccounts);
-            System.out.println("Locked " + subAccounts.size() + " sub-accounts for company: " + principalAccount.getEmail());
         }
     }
 }

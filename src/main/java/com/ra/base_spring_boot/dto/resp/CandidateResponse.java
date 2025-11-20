@@ -19,6 +19,8 @@ public class CandidateResponse {
     private Date dob;
     private String link;
     private boolean status;
+    private boolean isPremium;
+    private Date premiumUntil;
     private Integer isOpen;
     private String logo;
     private String Title;

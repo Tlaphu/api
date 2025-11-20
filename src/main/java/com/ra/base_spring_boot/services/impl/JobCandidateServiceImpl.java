@@ -414,17 +414,17 @@ public class JobCandidateServiceImpl implements JobCandidateService {
 
         AccountCompany currentCompany = jwtProvider.getCurrentAccountCompany();
 
-        // 1. KIỂM TRA QUYỀN SỞ HỮU
+
         if (currentCompany == null ||
                 !existingCandidate.getJob().getCompany().getId().equals(currentCompany.getId())) {
 
-            // ✨ Ném AccessDeniedException thay vì SecurityException ✨
+
             throw new AccessDeniedException("You do not have permission to modify the status of this job application.");
         }
 
-        // 2. Cập nhật trạng thái
+
         existingCandidate.setIsAccepted(isAccepted);
-        // Tùy chọn: Cập nhật status dựa trên kết quả
+
         existingCandidate.setStatus(isAccepted ? "ACCEPTED" : "REJECTED");
         Candidate candidate = existingCandidate.getCandidate();
         Company company = existingCandidate.getJob().getCompany();
