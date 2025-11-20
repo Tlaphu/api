@@ -20,6 +20,9 @@ public interface INotificationService {
     );
 
     List<NotificationResponse> getNotificationsForCurrentUser(Long userId, String userType);
+
+    List<NotificationResponse> getAllNotificationsForAdmin();
+
     long countUnreadForCurrentUser(Long userId, String userType);
     void markAsRead(Long notificationId);
     void markAllAsReadForCurrentUser(Long userId, String userType);
