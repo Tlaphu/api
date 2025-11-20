@@ -89,7 +89,7 @@ public class SecurityConfig {
         configuration.setAllowedOrigins(List.of(
                 "http://localhost:5173"
         ));
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")); // ĐÃ THÊM PATCH
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
         configuration.setExposedHeaders(List.of("Authorization"));
@@ -101,50 +101,60 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
-        String candidateAuthPattern = "/api/v1/auth/candidate/**";
-        String companyAuthPattern = "/api/v1/auth/company/**";
+        String[] PUBLIC_AUTH_ENDPOINTS = {
+                "/api/v1/auth/company/login",
+                "/api/v1/auth/company/register",
+                "/api/v1/auth/company/forgot-password",
+                "/api/v1/auth/company/reset-password",
+                "/api/v1/auth/company/verify",
+
+                "/api/v1/auth/candidate/login",
+                "/api/v1/auth/candidate/register",
+                "/api/v1/auth/candidate/forgot-password",
+                "/api/v1/auth/candidate/reset-password",
+                "/api/v1/auth/candidate/verify",
+
+                "/api/v1/admin/login",
+                "/api/v1/skills",
+                "/api/payment/create",
+                "/api/payment/vnpay_return",
+                "/api/payment/**"
+        };
+
+        String[] COMPANY_SPECIFIC_AUTH_ENDPOINTS = {
+                "/api/v1/auth/company/change-password",
+                "/api/v1/auth/company/update-profile",
+                "/api/v1/auth/company/logout"
+        };
+
 
         return http
                 .csrf(AbstractHttpConfigurer::disable)
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
+
+                       
+                        .requestMatchers(PUBLIC_AUTH_ENDPOINTS).permitAll()
+
+
                         .requestMatchers(HttpMethod.GET, "/api/job/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/auth/company/top20").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/auth/company/{id}").permitAll()
-                        .requestMatchers("/api/v1/auth/company/login").permitAll()
-                        .requestMatchers("/api/v1/auth/company/register").permitAll()
-                        .requestMatchers("/api/v1/auth/company/forgot-password").permitAll()
-                        .requestMatchers("/api/v1/auth/company/reset-password").permitAll()
-                        .requestMatchers("/api/v1/auth/company/verify").permitAll()
-                        .requestMatchers("/api/v1/auth/candidate/login").permitAll()
-                        .requestMatchers("/api/v1/skills").permitAll()
-                        .requestMatchers("/api/v1/auth/candidate/register").permitAll()
-                        .requestMatchers("/api/v1/auth/candidate/forgot-password").permitAll()
-                        .requestMatchers("/api/v1/auth/candidate/reset-password").permitAll()
-                        .requestMatchers("/api/v1/auth/candidate/verify").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/location/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/reviews").permitAll()
-                        .requestMatchers("/api/payment/create", "/api/payment/vnpay_return").permitAll()
-                        .requestMatchers("/api/payment/**").permitAll()
-                        .requestMatchers(
-                                "/api/v1/auth/candidate/login",
-                                "/api/v1/auth/candidate/register",
-                                "/api/v1/auth/candidate/forgot-password",
-                                "/api/v1/auth/candidate/reset-password",
-                                "/api/v1/auth/candidate/verify"
-                        ).permitAll()
-                        .requestMatchers("/api/v1/auth/candidate/**").hasAuthority("ROLE_CANDIDATE")
 
-                        .requestMatchers(companyAuthPattern).permitAll()
 
-                        .requestMatchers("/api/v1/admin/login").permitAll()
-                        .requestMatchers("/api/v1/auth/company/change-password",
-                                "/api/v1/auth/company/update-profile",
-                                "/api/v1/auth/company/logout")
+                        .requestMatchers(COMPANY_SPECIFIC_AUTH_ENDPOINTS)
                         .hasAuthority(RoleName.ROLE_COMPANY.toString())
+
 
                         .requestMatchers("/api/v1/admin/**").hasAuthority(RoleName.ROLE_ADMIN.toString())
                         .requestMatchers("/api/v1/candidate/**").hasAuthority(RoleName.ROLE_CANDIDATE.toString())
                         .requestMatchers("/api/v1/company/**").hasAuthority(RoleName.ROLE_COMPANY.toString())
+
+
+                        .requestMatchers("/api/v1/auth/candidate/**").hasAuthority(RoleName.ROLE_CANDIDATE.toString())
+
 
                         .anyRequest().authenticated()
                 )

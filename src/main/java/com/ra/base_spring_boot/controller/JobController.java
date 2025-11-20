@@ -10,6 +10,7 @@ import com.ra.base_spring_boot.dto.req.FormJobResponseDTO;
 import com.ra.base_spring_boot.dto.resp.DashboardStats;
 import com.ra.base_spring_boot.services.ICompanyAuthService;
 import com.ra.base_spring_boot.services.JobCandidateService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
@@ -131,7 +132,7 @@ public class JobController {
     @PreAuthorize("hasAuthority('ROLE_COMPANY') or hasAuthority('ROLE_ADMIN')")
     @PostMapping
     @Transactional
-    public ResponseEntity<?> create(@RequestBody FormJob form) {
+    public ResponseEntity<?> create(@Valid @RequestBody FormJob form) {
 
         AccountCompany currentAccountCompany = companyAuthService.getCurrentAccountCompany();
         if (currentAccountCompany == null) {
@@ -333,7 +334,7 @@ public class JobController {
     @PreAuthorize("hasAuthority('ROLE_COMPANY') or hasAuthority('ROLE_ADMIN')")
     @PutMapping("/{id}")
     @Transactional
-    public ResponseEntity<?> update(@PathVariable Long id, @RequestBody FormJob form) {
+    public ResponseEntity<?> update(@PathVariable Long id,@Valid @RequestBody FormJob form) {
 
         Optional<Job> jobOpt = jobRepository.findById(id);
         if (jobOpt.isEmpty()) {
