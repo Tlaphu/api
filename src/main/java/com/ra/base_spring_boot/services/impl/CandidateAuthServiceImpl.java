@@ -369,6 +369,8 @@ public class CandidateAuthServiceImpl implements ICandidateAuthService {
                 .dob(candidate.getDob())
                 .link(candidate.getLink())
                 .status(candidate.isStatus())
+                .isPremium(candidate.isPremium())
+                .premiumUntil(candidate.getPremiumUntil())
                 .logo(candidate.getLogo())
                 .isOpen(candidate.getIsOpen())
                 .Title(candidate.getTitle())

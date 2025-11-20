@@ -513,7 +513,7 @@ public class JobController {
 
         jobRepository.deleteFavoriteJobsByJobId(id);
 
-       
+
         jobRepository.deleteById(id);
 
         // 7. Gửi thông báo đến người theo dõi
