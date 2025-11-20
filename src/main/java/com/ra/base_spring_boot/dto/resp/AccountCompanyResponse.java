@@ -20,6 +20,7 @@ public class AccountCompanyResponse {
     private Date dob;
     private boolean status;
     private boolean isPremium;
+    private Date premiumUntil;
     @JsonIgnoreProperties({
             "accounts", "jobs",
     })

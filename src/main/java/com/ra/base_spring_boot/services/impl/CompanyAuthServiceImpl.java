@@ -354,6 +354,7 @@ public class CompanyAuthServiceImpl implements ICompanyAuthService {
                 .gender(accountCompany.getGender())
                 .status(accountCompany.isStatus())
                 .isPremium(accountCompany.isPremium())
+                .premiumUntil(accountCompany.getPremiumUntil())
                 .company(CompanyResponse.builder()
                         .id(company.getId())
                         .name(company.getName())
@@ -401,6 +402,7 @@ public class CompanyAuthServiceImpl implements ICompanyAuthService {
                 .size(company.getSize())
                 .description(company.getDescription())
                 .CompanyPolicy(company.getCompanyPolicy())
+
                 .created_at(company.getCreated_at())
                 .updated_at(company.getUpdated_at())
                 .typeCompanyName(

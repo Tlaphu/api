@@ -140,7 +140,7 @@ public class VNPayServiceImpl implements VNPayService {
         }
         String generatedHash = VNPayUtil.hmacSHA512(vnpayProperties.getHashSecret(), hashData);
 
-        // Check Hash Signature
+
         if (!generatedHash.equals(vnp_SecureHash)) {
             return false;
         }
@@ -148,18 +148,18 @@ public class VNPayServiceImpl implements VNPayService {
         PaymentTransaction transaction = transactionRepository.findByVnpayTxnRef(vnp_TxnRef)
                 .orElse(null);
 
-        // Check if transaction exists
+
         if (transaction == null) {
             return false;
         }
 
         String currentStatus = transaction.getTransactionStatus();
         if ("SUCCESS".equals(currentStatus) || "FAILED".equals(currentStatus)) {
-            // Transaction already processed (Idempotency check)
+
             return "00".equals(vnp_ResponseCode) && "SUCCESS".equals(currentStatus);
         }
 
-     
+
         if ("00".equals(vnp_ResponseCode)) {
 
             transaction.setTransactionStatus("SUCCESS");
