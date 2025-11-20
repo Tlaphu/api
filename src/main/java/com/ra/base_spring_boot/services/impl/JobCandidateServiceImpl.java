@@ -426,6 +426,26 @@ public class JobCandidateServiceImpl implements JobCandidateService {
         existingCandidate.setIsAccepted(isAccepted);
         // Tùy chọn: Cập nhật status dựa trên kết quả
         existingCandidate.setStatus(isAccepted ? "ACCEPTED" : "REJECTED");
+        Candidate candidate = existingCandidate.getCandidate();
+        Company company = existingCandidate.getJob().getCompany();
+
+        String title = isAccepted ? "Hồ sơ đã được duyệt" : "Hồ sơ bị từ chối";
+        String message = isAccepted
+                ? "Công ty " + company.getName() + " đã chấp nhận hồ sơ ứng tuyển của bạn."
+                : "Công ty " + company.getName() + " đã từ chối hồ sơ ứng tuyển của bạn.";
+
+        eventPublisher.publishEvent(new NotificationEvent(
+                this,
+                title,
+                message,
+                isAccepted ? "JOB_ACCEPTED" : "JOB_REJECTED",   // type
+                candidate.getId(),    // receiverId
+                "CANDIDATE",          // receiverType
+                "/candidate/applications", // url chuyển hướng
+                "COMPANY",            // senderType
+                company.getId()       // senderId
+        ));
+
 
         JobCandidate updatedJobCandidate = jobCandidateRepository.save(existingCandidate);
 
