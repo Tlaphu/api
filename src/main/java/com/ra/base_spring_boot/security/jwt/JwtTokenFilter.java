@@ -35,6 +35,9 @@ public class JwtTokenFilter extends OncePerRequestFilter {
         String path = request.getServletPath();
         String method = request.getMethod();
 
+        // Đã thêm isPublicCV vào điều kiện logic
+        boolean isPublicCV = path.startsWith("/api/v1/candidate/cv/public/");
+
         boolean isPublicJobGet = method.equalsIgnoreCase("GET") && (
                 path.equals("/api/job") ||
                         path.matches("^/api/job/\\d+$") ||
@@ -49,7 +52,8 @@ public class JwtTokenFilter extends OncePerRequestFilter {
                 || path.equals("/api/v1/auth/admin/login")
                 || path.equals("/api/v1/skills");
 
-        if (isPublicJobGet || isPublicAuth || path.startsWith("/swagger")
+        // ĐÃ SỬA: Thêm isPublicCV vào điều kiện IF
+        if (isPublicCV || isPublicJobGet || isPublicAuth || path.startsWith("/swagger")
                 || path.startsWith("/v3/api-docs") || path.startsWith("/actuator")) {
             filterChain.doFilter(request, response);
             return;
@@ -83,7 +87,7 @@ public class JwtTokenFilter extends OncePerRequestFilter {
                             default -> log.warn("JwtTokenFilter: unknown token type '{}'", type);
                         }
 
-                } else {
+                    } else {
                         log.warn("JWT Token missing email or type");
                     }
                 } else {

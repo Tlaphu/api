@@ -683,6 +683,13 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
             throw new RuntimeException(errorMessage, e);
         }
     }
+    @Override
+    public CandidateCV getPublicCVById(Long cvId) {
+        return candidateCVRepository.findById(cvId)
+                .filter(CandidateCV::getIsPublic)
+                .orElseThrow(() -> new HttpBadRequest("Public CV not found with ID: " + cvId));
+
+    }
 
     private Date getStartOfMonth(Date date) {
         Calendar calendar = Calendar.getInstance();
