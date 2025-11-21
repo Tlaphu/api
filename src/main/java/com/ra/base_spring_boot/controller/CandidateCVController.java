@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
 import com.ra.base_spring_boot.security.jwt.JwtProvider;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.thymeleaf.exceptions.TemplateInputException;
 
 @RestController
 @RequestMapping("/api/v1/candidate/cv")
@@ -106,22 +107,29 @@ public class CandidateCVController {
     @GetMapping("/{cvId}/export/pdf")
     public ResponseEntity<byte[]> exportCVToPdf(@PathVariable Long cvId) {
         Long candidateId = getCurrentCandidateId();
+        byte[] pdfBytes;
 
-
-        byte[] pdfBytes = candidateCVService.generatePdfFromCV(cvId, candidateId);
+        try {
+            // Lỗi render Template sẽ được ném ra từ Service
+            pdfBytes = candidateCVService.generatePdfFromCV(cvId, candidateId);
+        } catch (TemplateInputException e) {
+            // Xử lý khi không tìm thấy file template (cv-1.html, cv-2.html, ...)
+            throw new HttpBadRequest("Export failed: CV Template not found or invalid. " + e.getMessage());
+        } catch (RuntimeException e) {
+            // Xử lý các lỗi Runtime khác (ví dụ: lỗi logic, lỗi file font, lỗi PDF generation)
+            throw new HttpBadRequest("PDF generation failed: " + e.getMessage());
+        }
 
 
         if (pdfBytes == null || pdfBytes.length == 0) {
-
             throw new HttpBadRequest("Failed to generate PDF content.");
         }
 
         CandidateCV cvEntity = candidateCVService.getCVById(cvId, candidateId);
+        // Tên file thân thiện hơn, loại bỏ ký tự đặc biệt
         String filename = cvEntity.getTitle().replaceAll("[^a-zA-Z0-9_-]", "") + "_CV.pdf";
 
         HttpHeaders headers = new HttpHeaders();
-
-
         headers.setContentType(MediaType.APPLICATION_PDF);
         headers.setContentDispositionFormData("attachment", filename);
         headers.setContentLength(pdfBytes.length);

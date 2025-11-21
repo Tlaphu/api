@@ -11,10 +11,17 @@
             padding: 30px;
             font-size: 14px;
             line-height: 1.5;
-            width: 867.56px; /* Chiều rộng cố định */
+            width: 867.56px; /* A4 width */
             margin: 0 auto;
+            color: #333;
         }
-        .header { text-align: center; margin-bottom: 20px; }
+        .cv-container {
+            border: 1px solid #eee;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            padding: 25px 30px;
+            min-height: 1120px;
+        }
+        .header { text-align: center; margin-bottom: 25px; }
         .name {
             font-size: 22px;
             font-weight: bold;
@@ -25,10 +32,12 @@
             font-size: 16px;
             font-weight: 500;
             margin-bottom: 10px;
+            color: #555;
         }
         .info-contact {
             display: flex;
             justify-content: center;
+            flex-wrap: wrap;
             gap: 15px;
             font-size: 13px;
             color: #555;
@@ -37,19 +46,22 @@
             white-space: nowrap;
         }
 
-        .section { margin-bottom: 15px; }
+        .section { margin-bottom: 20px; }
         .section-title {
             font-size: 15px;
             font-weight: bold;
-            margin-bottom: 5px;
+            margin-bottom: 10px;
             padding-bottom: 5px;
-            border-bottom: 1px solid black;
+            border-bottom: 1px solid #333; /* Đường kẻ dưới màu đen */
+            text-transform: uppercase;
         }
 
-        .item { margin-bottom: 10px; }
-        .item-header { font-weight: bold; }
+        .item { margin-bottom: 15px; }
+        .item-header { font-weight: bold; font-size: 1em; margin-bottom: 2px; }
         .item-period { font-size: 0.9em; color: #666; margin-bottom: 3px; }
-        .item-details { margin-left: 10px; font-size: 0.9em; }
+        .item-details { margin-left: 0; font-size: 0.9em; margin-top: 5px; }
+        .item-details ul { list-style-type: disc; margin-top: 5px; padding-left: 20px; }
+        .info-list-square { list-style-type: square; margin-left: 20px; }
     </style>
 </head>
 <body>
@@ -58,11 +70,11 @@
         <h1 class="name" th:text="${cvData.name}">HỌ VÀ TÊN</h1>
         <h2 class="title" th:text="${cvData.candidateTitle}">Chức danh nghề nghiệp</h2>
         <div class="info-contact">
-            <span th:text="${cvData.phone}">Số điện thoại</span>
+            <span th:text="${cvData.phone}">0123 456 789</span>
             <span>|</span>
-            <span th:text="${cvData.email}">Email</span>
+            <span th:text="${cvData.email}">email@example.com</span>
             <span>|</span>
-            <span th:text="${cvData.address}">Địa chỉ</span>
+            <span th:text="${cvData.address}">Cầu Giấy, Hà Nội</span>
         </div>
     </div>
 
@@ -86,10 +98,10 @@
         </div>
     </div>
 
-    <div class="section" th:if="${cvData.experienceNames != null and !cvData.experienceNames.isEmpty()}">
+    <div class="section" th:if="${cvData.experiences != null and !cvData.experiences.isEmpty()}">
         <div class="section-title">KINH NGHIỆM LÀM VIỆC</div>
-        <div th:each="i : ${#numbers.sequence(0, cvData.experienceNames.size - 1)}" class="item">
-            <div class="item-header" th:text="${cvData.experienceNames[i]}">Vị trí @ Công ty</div>
+        <div th:each="i : ${#numbers.sequence(0, cvData.experiences.size - 1)}" class="item">
+            <div class="item-header" th:text="${cvData.experiences[i]}">Vị trí @ Công ty</div>
             <div class="item-period" th:with="
                      start=${cvData.experienceStartDates.size() > i ? cvData.experienceStartDates[i] : '?'},
                      end=${cvData.experienceEndDates.size() > i ? cvData.experienceEndDates[i] : 'Hiện tại'}"
@@ -100,7 +112,7 @@
 
     <div class="section" th:if="${cvData.skills != null and !cvData.skills.isEmpty()}">
         <div class="section-title">KỸ NĂNG</div>
-        <ul style="list-style-type: disc; margin-left: 20px;">
+        <ul class="info-list-square">
             <li th:each="skill : ${cvData.skills}" th:text="${skill}"></li>
         </ul>
     </div>

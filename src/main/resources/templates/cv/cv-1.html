@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title th:text="${cvData.name} + ' - Template 1'"></title>
+
+    <style>
+        body {
+            font-family: 'ArialUnicode', sans-serif;
+            margin: 0;
+            padding: 0;
+            font-size: 14px;
+            line-height: 1.5;
+            width: 867.56px; /* A4 width for PDF generation */
+            margin: 0 auto;
+            color: #333;
+        }
+        .cv-container {
+            display: flex;
+            border: 1px solid #eee;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            min-height: 1120px; /* Chiều cao A4 */
+        }
+        /* LEFT COLUMN (Smaller, Blue Sidebar) */
+        .left-col {
+            width: 30%; /* Điều chỉnh width để khớp với ảnh */
+            padding: 25px 20px;
+            background-color: #f7f9fa; /* Màu nền xám xanh nhạt */
+            border-right: 1px solid #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            gap: 15px; /* Khoảng cách giữa các section */
+        }
+        /* RIGHT COLUMN (Main Content) */
+        .right-col {
+            width: 70%; /* Điều chỉnh width để khớp với ảnh */
+            padding: 25px 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px; /* Khoảng cách giữa các section */
+        }
+
+        .avatar-container {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .avatar {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #5a9bd4; /* Màu viền xanh */
+        }
+        .name { font-size: 18px; font-weight: bold; color: #333; margin-top: 10px; margin-bottom: 3px; text-align: center; }
+        .title { font-size: 14px; color: #555; margin-bottom: 15px; text-align: center; }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: #5a9bd4; /* Màu xanh */
+            border-bottom: 1px solid #dcdcdc; /* Đường kẻ mỏng hơn */
+            padding-bottom: 5px;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+        .section-title.right {
+            color: #333; /* Tiêu đề cột phải màu đen */
+            border-bottom: 1px solid #ccc;
+        }
+
+        .info-list { list-style: none; padding: 0; margin: 0; font-size: 0.9em; }
+        .info-item { margin-bottom: 7px; display: flex; align-items: flex-start; }
+        .info-item .icon { margin-right: 8px; font-size: 1.1em; color: #5a9bd4; } /* Icon xanh */
+
+        .item { margin-bottom: 15px; }
+        .item-header { font-weight: bold; margin-bottom: 2px; font-size: 1em; }
+        .item-period { font-size: 0.85em; color: #666; margin-bottom: 5px; }
+        .item-details { margin-left: 10px; font-size: 0.9em; }
+        .item-details ul { list-style-type: disc; margin-top: 5px; padding-left: 20px; }
+    </style>
+</head>
+<body>
+<div class="cv-container">
+
+    <div class="left-col">
+        <div class="avatar-container">
+            <div th:if="${cvData.avatar != null}">
+                <img th:src="${cvData.avatar}" alt="Avatar" class="avatar"/>
+            </div>
+        </div>
+        <div class="name" th:text="${cvData.name}">Nguyễn Quỳnh Như</div>
+        <div class="title" th:text="${cvData.candidateTitle}">Vị trí ứng tuyển</div>
+
+        <div class="section">
+            <div class="section-title">Liên hệ</div>
+            <ul class="info-list">
+                <li class="info-item"><span class="icon">📧</span> Email: <span th:text="${cvData.email}"></span></li>
+                <li class="info-item"><span class="icon">📞</span> Phone: <span th:text="${cvData.phone}"></span></li>
+                <li class="info-item"><span class="icon">🏠</span> Address: <span th:text="${cvData.address}"></span></li>
+                <li class="info-item"><span class="icon">🎂</span> Birthday: <span th:if="${cvData.dob != null}" th:text="${#dates.format(cvData.dob, 'dd/MM/yyyy')}"></span></li>
+                <li class="info-item"><span class="icon">🔗</span> <a th:href="${cvData.linkedinLink}" th:text="${cvData.linkedinLink}" target="_blank">LinkedIn</a></li>
+            </ul>
+        </div>
+
+        <div class="section" th:if="${cvData.skills != null and !cvData.skills.isEmpty()}">
+            <div class="section-title">Kỹ Năng</div>
+            <ul class="info-list" style="list-style-type: square; margin-left: 15px;">
+                <li th:each="skill : ${cvData.skills}" th:text="${skill}"></li>
+            </ul>
+        </div>
+
+        <div class="section" th:if="${cvData.hobbies != null and !cvData.hobbies.trim().isEmpty()}">
+            <div class="section-title">Sở Thích</div>
+            <p th:utext="${#strings.replace(cvData.hobbies, '\n', '&lt;br/&gt;')}"></p>
+        </div>
+
+    </div>
+
+    <div class="right-col">
+
+        <div class="section" th:if="${cvData.development != null and !cvData.development.trim().isEmpty()}">
+            <div class="section-title right">Mục Tiêu Nghề Nghiệp</div>
+            <p th:utext="${#strings.replace(cvData.development, '\n', '&lt;br/&gt;')}"></p>
+        </div>
+
+        <div class="section" th:if="${cvData.educations != null and !cvData.educations.isEmpty()}">
+            <div class="section-title right">Học Vấn</div>
+            <div th:each="i : ${#numbers.sequence(0, cvData.educations.size - 1)}" class="item">
+                <div class="item-header" th:text="${cvData.educations[i]}">Tên Trường</div>
+                <div class="item-period" th:with="
+                         start=${cvData.educationStartDates.size() > i ? cvData.educationStartDates[i] : '?'},
+                         end=${cvData.educationEndDates.size() > i ? cvData.educationEndDates[i] : 'Hiện tại'}"
+                     th:text="${start} + ' - ' + ${end}"></div>
+                <div class="item-details" th:if="${cvData.educationMajors.size() > i}" th:text="'Chuyên ngành: ' + ${cvData.educationMajors[i]}"></div>
+            </div>
+        </div>
+
+        <div class="section" th:if="${cvData.experiences != null and !cvData.experiences.isEmpty()}">
+            <div class="section-title right">KINH NGHIỆM LÀM VIỆC</div>
+            <div th:each="i : ${#numbers.sequence(0, cvData.experiences.size - 1)}" class="item">
+                <div class="item-header" th:text="${cvData.experiences[i]}">Vị trí @ Công ty</div>
+                <div class="item-period" th:with="
+                         start=${cvData.experienceStartDates.size() > i ? cvData.experienceStartDates[i] : '?'},
+                         end=${cvData.experienceEndDates.size() > i ? cvData.experienceEndDates[i] : 'Hiện tại'}"
+                     th:text="${start} + ' - ' + ${end}"></div>
+                <div class="item-details" th:utext="${#strings.replace(cvData.experienceInfos[i], '\n', '&lt;br/&gt;')}">Mô tả công việc</div>
+            </div>
+        </div>
+
+        <div class="section" th:if="${cvData.projects != null and !cvData.projects.isEmpty()}">
+            <div class="section-title right">HOẠT ĐỘNG</div>
+            <div th:each="i : ${#numbers.sequence(0, cvData.projects.size - 1)}" class="item">
+                <div class="item-header" th:text="${cvData.projects[i]}">Tên Dự án/Hoạt động</div>
+                <div class="item-period" th:with="
+                         start=${cvData.projectStartDates.size() > i ? cvData.projectStartDates[i] : '?'},
+                         end=${cvData.projectEndDates.size() > i ? cvData.projectEndDates[i] : 'Hiện tại'}"
+                     th:text="${start} + ' - ' + ${end}"></div>
+                <div class="item-details" th:utext="${#strings.replace(cvData.projectInfos[i], '\n', '&lt;br/&gt;')}">Mô tả</div>
+            </div>
+        </div>
+
+        <div class="section" th:if="${cvData.certificates != null and !cvData.certificates.isEmpty()}">
+            <div class="section-title right">CHỨNG CHỈ</div>
+            <div th:each="i : ${#numbers.sequence(0, cvData.certificates.size - 1)}" class="item">
+                <div class="item-header" th:text="${cvData.certificates[i]}">Tên Chứng chỉ</div>
+                <div class="item-period" th:with="
+                         org=${cvData.certificateOrganizations.size() > i ? cvData.certificateOrganizations[i] : 'N/A'}"
+                     th:text="'Tổ chức: ' + ${org}">Tổ chức cấp</div>
+            </div>
+        </div>
+
+    </div>
+</div>
+</body>
+</html>
