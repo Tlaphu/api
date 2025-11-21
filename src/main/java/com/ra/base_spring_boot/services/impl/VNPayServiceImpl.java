@@ -162,7 +162,7 @@ public class VNPayServiceImpl implements VNPayService {
 
         if ("00".equals(vnp_ResponseCode)) {
 
-            transaction.setTransactionStatus("SUCCESS");
+            transaction.setTransactionStatus(" ");
             transaction.setPaymentDate(new Date());
             transactionRepository.save(transaction);
 

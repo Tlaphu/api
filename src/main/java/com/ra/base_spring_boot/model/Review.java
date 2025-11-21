@@ -19,8 +19,8 @@ public class Review {
     private Long id;
 
     private int score;
-    @Size(max = 36)
-    @Column(length = 36)
+    @Size(max = 150)
+    @Column(length = 150)
     private String detail;
 
     private Long reviewerId;

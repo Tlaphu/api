@@ -13,6 +13,7 @@ import com.ra.base_spring_boot.services.IBlacklistedWordService;
 import com.ra.base_spring_boot.services.IReviewService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
 import static com.ra.base_spring_boot.config.BadWordConfig.DEFAULT_BAD_WORDS;
 
 import java.util.*;
@@ -33,6 +34,7 @@ public class ReviewServiceImpl implements IReviewService {
         return reviewRepository.findAllByOrderByScoreDesc()
                 .stream().map(this::toResponse).toList();
     }
+
     @Override
     public List<ReviewResponse> findAllOrderByScoreDesc() {
         return reviewRepository.findAllByOrderByScoreDesc()
@@ -52,8 +54,8 @@ public class ReviewServiceImpl implements IReviewService {
         Long userId = jwtProvider.getCurrentUserId();
 
         String detail = req.getDetail();
-        if (detail != null && detail.length() > 36) {
-            throw new HttpBadRequest("Review must not exceed 36 characters");
+        if (detail != null && detail.length() > 150) {
+            throw new HttpBadRequest("Review must not exceed 80 characters");
         }
 
         validateBlacklist(detail);
@@ -75,8 +77,8 @@ public class ReviewServiceImpl implements IReviewService {
                 .orElseThrow(() -> new RuntimeException("Review not found"));
 
         String detail = req.getDetail();
-        if (detail != null && detail.length() > 36) {
-            throw new HttpBadRequest("Review must not exceed 36 characters");
+        if (detail != null && detail.length() > 150) {
+            throw new HttpBadRequest("Review must not exceed 80 characters");
         }
         validateBlacklist(detail);
         old.setScore(req.getScore());
@@ -125,18 +127,22 @@ public class ReviewServiceImpl implements IReviewService {
                 .reviewerType(r.getReviewerType())
                 .build();
     }
+
     private void validateBlacklist(String detail) {
         if (detail == null || detail.trim().isEmpty()) return;
 
         // lấy từ DB nếu có, nếu không dùng DEFAULT_BAD_WORDS
-        List<String> badWords = Optional.ofNullable(blacklistedWordService)
-                .map(IBlacklistedWordService::findAllWords)
-                .orElse(DEFAULT_BAD_WORDS);
+        List<String> badWords = blacklistedWordService.findAllWords();
+        if (badWords == null || badWords.isEmpty()) {
+            badWords = DEFAULT_BAD_WORDS;
+        }
+
 
         String normalized = normalizeText(detail);
 
         for (String bad : badWords) {
             if (bad == null || bad.isBlank()) continue;
+
             String bw = bad.toLowerCase().trim();
 
             // regex chống lách chữ
