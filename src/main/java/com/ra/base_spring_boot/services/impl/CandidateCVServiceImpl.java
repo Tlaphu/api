@@ -690,7 +690,17 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
                 .orElseThrow(() -> new HttpBadRequest("Public CV not found with ID: " + cvId));
 
     }
-
+    @Override
+    public List<CandidateCV> getCVsByPublicStatus(boolean isPublic) {
+        // Gọi Repository với cú pháp đúng của JPA
+        return candidateCVRepository.findByIsPublic(isPublic);
+    }
+    @Override
+    @Transactional(readOnly = true)
+    public List<CandidateCV> getAllPublicCVsByCandidateId(Long candidateId) {
+        // Gọi phương thức Repository mới
+        return candidateCVRepository.findByCandidate_IdAndIsPublic(candidateId, true);
+    }
     private Date getStartOfMonth(Date date) {
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(date);

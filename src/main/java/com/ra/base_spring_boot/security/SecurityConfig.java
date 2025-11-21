@@ -110,7 +110,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/job/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/auth/company/top20").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/auth/company/{id}").permitAll()
-                        .requestMatchers("/api/v1/candidate/cv/public/**").permitAll()
+                        .requestMatchers("/api/v1/public/cv/**").permitAll()
                         .requestMatchers("/api/v1/auth/company/login").permitAll()
                         .requestMatchers("/api/v1/auth/company/register").permitAll()
                         .requestMatchers("/api/v1/auth/company/forgot-password").permitAll()

@@ -11,11 +11,11 @@ import java.util.List;
 public interface ICandidateCVService {
 
     CandidateCV createNewCV(FormCandidateCV cvForm, Long candidateId);
-    
+
     CandidateCV updateCV(Long cvId, FormCandidateCV cvForm, Long candidateId);
-    
+
     CandidateCV getCVById(Long cvId, Long candidateId);
-    
+
     List<CandidateCV> getAllCVsByCandidate(Long candidateId);
 
     void deleteCV(Long cvId, Long candidateId);
@@ -28,4 +28,8 @@ public interface ICandidateCVService {
     byte[] downloadCvForCompany(Long cvId, Long companyId);
     CandidateCV setCvPublicStatus(Long cvId, Long candidateId, Boolean isPublic);
     CandidateCV getPublicCVById(Long cvId);
+
+    // ⭐ PHƯƠNG THỨC ĐÃ THÊM LẠI CHO VIỆC LẤY DANH SÁCH CV CÔNG KHAI
+    List<CandidateCV> getCVsByPublicStatus(boolean isPublic);
+    List<CandidateCV> getAllPublicCVsByCandidateId(Long candidateId);
 }

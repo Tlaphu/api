@@ -14,4 +14,7 @@ public interface ICandidateCVRepository extends JpaRepository<CandidateCV, Long>
     
     Optional<CandidateCV> findByIdAndCandidate_Id(Long id, Long candidateId);
     Optional<CandidateCV> findByCandidateIdAndFileHash(Long candidateId, String fileHash);
+    List<CandidateCV> findByIsPublic(boolean isPublic);
+
+    List<CandidateCV> findByCandidate_IdAndIsPublic(Long candidateId, boolean isPublic);
 }

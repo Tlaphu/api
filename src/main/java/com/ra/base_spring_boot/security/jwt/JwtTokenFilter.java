@@ -36,7 +36,7 @@ public class JwtTokenFilter extends OncePerRequestFilter {
         String method = request.getMethod();
 
         // Đã thêm isPublicCV vào điều kiện logic
-        boolean isPublicCV = path.startsWith("/api/v1/candidate/cv/public/");
+        boolean isPublicCV = path.startsWith("/api/v1/public/cv");
 
         boolean isPublicJobGet = method.equalsIgnoreCase("GET") && (
                 path.equals("/api/job") ||
