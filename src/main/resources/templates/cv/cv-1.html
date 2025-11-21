@@ -98,7 +98,10 @@
                 <li class="info-item"><span class="icon">📞</span> Phone: <span th:text="${cvData.phone}"></span></li>
                 <li class="info-item"><span class="icon">🏠</span> Address: <span th:text="${cvData.address}"></span></li>
                 <li class="info-item"><span class="icon">🎂</span> Birthday: <span th:if="${cvData.dob != null}" th:text="${#dates.format(cvData.dob, 'dd/MM/yyyy')}"></span></li>
-                <li class="info-item"><span class="icon">🔗</span> <a th:href="${cvData.linkedinLink}" th:text="${cvData.linkedinLink}" target="_blank">LinkedIn</a></li>
+
+                <li class="info-item" th:if="${cvData.link != null and !cvData.link.trim().isEmpty()}">
+                    <span class="icon">🔗</span> <a th:href="${cvData.link}" th:text="${cvData.link}" target="_blank">LinkedIn</a>
+                </li>
             </ul>
         </div>
 
