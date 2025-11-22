@@ -28,7 +28,7 @@ public interface IAdminService {
     List<AccountCompanyResponse> findAllAccountsCompany();
 
     void deleteAccountCompany(Long id);
-  
 
-    void activateCompanyAccount(Long id); 
+
+    boolean activateCompanyAccount(Long id);
 }

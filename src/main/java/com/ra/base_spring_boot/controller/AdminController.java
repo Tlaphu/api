@@ -83,12 +83,19 @@ public class AdminController {
     }
 
 
-    @PutMapping("/companies/accounts/activate/{id}")
+    @PutMapping("/companies/accounts/status/{id}") // Đổi tên endpoint
     public ResponseEntity<String> toggleCompanyAccountStatus(@PathVariable Long id) {
-        adminService.activateCompanyAccount(id);
+        // Gọi service và nhận lại trạng thái mới
+        boolean isNowActive = adminService.activateCompanyAccount(id);
 
-        // Thay đổi thông báo để nó chung chung hơn
-        return ResponseEntity.ok("Company account status successfully toggled (activated/deactivated).");
+        String message;
+        if (isNowActive) {
+            message = "Company account successfully activated. Login credentials may have been sent if this was the first activation.";
+        } else {
+            message = "Company account successfully deactivated.";
+        }
+
+        return ResponseEntity.ok(message);
     }
     @GetMapping("/skill")
     public List<Skill> getAll() {

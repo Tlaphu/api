@@ -97,7 +97,8 @@ public class CompanyAuthServiceImpl implements ICompanyAuthService {
         AccountCompany accountCompany = AccountCompany.builder()
                 .fullName(form.getFullName())
                 .email(form.getEmail())
-                .password(passwordEncoder.encode(""))
+
+                .password(null)
                 .roles(roles)
                 .company(company)
                 .status(false)

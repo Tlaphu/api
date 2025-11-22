@@ -95,36 +95,41 @@ public class AdminServiceImpl implements IAdminService {
     }
 
     @Override
-    public void activateCompanyAccount(Long id) {
+    public boolean activateCompanyAccount(Long id) { // 👈 Sửa từ 'void' thành 'boolean'
+
+        // 1. Tìm tài khoản và xử lý lỗi
         AccountCompany account = accountCompanyRepository.findById(id)
                 .orElseThrow(() -> new HttpBadRequest("Company Account not found"));
 
-
         boolean wasActive = account.isStatus();
-
-
-        boolean newStatus = !wasActive;
+        boolean newStatus = !wasActive; // Giá trị cần trả về
         account.setStatus(newStatus);
 
-
-
+        // --- Xử lý khi TẮT (Deactivate) ---
         if (!newStatus) {
+            // newStatus = false
 
+            // Khi tài khoản bị TẮT, xóa token để đảm bảo người dùng không thể đăng nhập.
+            account.setVerificationToken(null);
             accountCompanyRepository.save(account);
 
-            return;
+            return newStatus; // 👈 Trả về false
         }
 
+        // --- Xử lý khi BẬT (Activate) (newStatus = true) ---
 
+        // Đảm bảo token xác minh được xóa khi tài khoản được kích hoạt
+        account.setVerificationToken(null);
 
+        // Kiểm tra: Đây có phải là lần kích hoạt đầu tiên và cần gửi mật khẩu mặc định?
         if (account.getPassword() == null) {
 
+            // Trường hợp LẦN ĐẦU: Đặt mật khẩu mặc định và gửi email
             account.setPassword(passwordEncoder.encode(DEFAULT_PASSWORD));
-            account.setVerificationToken(null);
 
             accountCompanyRepository.save(account);
 
-
+            // Gửi email chứa thông tin đăng nhập mặc định
             emailService.sendLoginCredentialsEmail(
                     account.getEmail(),
                     account.getFullName(),
@@ -133,11 +138,13 @@ public class AdminServiceImpl implements IAdminService {
 
         } else {
 
-            account.setVerificationToken(null);
+            // Trường hợp LẦN 2 trở lên: Giữ lại mật khẩu cũ.
             accountCompanyRepository.save(account);
 
-
+            // KHÔNG gửi email mật khẩu mặc định.
         }
+
+        return newStatus; // 👈 Trả về true (vì newStatus = true)
     }
 
     @Override
