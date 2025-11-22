@@ -628,14 +628,14 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
             PdfRendererBuilder builder = new PdfRendererBuilder();
 
             File fontFile = new File("src/main/resources/fonts/arial.ttf");
+
             String fontName = "ArialUnicode";
 
             if (fontFile.exists()) {
 
                 builder.useFont(fontFile, fontName);
 
-                // Giữ lại phần này, nhưng lưu ý: nếu template HTML tự định nghĩa font,
-                // thì việc replace này có thể không cần hoặc cần điều chỉnh
+
                 htmlContent = htmlContent.replace("font-family: Arial, sans-serif;", "font-family: " + fontName + ", sans-serif;");
             }
 

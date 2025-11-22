@@ -99,22 +99,45 @@ public class AdminServiceImpl implements IAdminService {
         AccountCompany account = accountCompanyRepository.findById(id)
                 .orElseThrow(() -> new HttpBadRequest("Company Account not found"));
 
-        if (account.isStatus()) {
-            throw new HttpBadRequest("Company Account is already active.");
+
+        boolean wasActive = account.isStatus();
+
+
+        boolean newStatus = !wasActive;
+        account.setStatus(newStatus);
+
+
+
+        if (!newStatus) {
+
+            accountCompanyRepository.save(account);
+
+            return;
         }
 
-        account.setStatus(true);
 
-        account.setPassword(passwordEncoder.encode(DEFAULT_PASSWORD));
-        account.setVerificationToken(null);
 
-        accountCompanyRepository.save(account);
+        if (account.getPassword() == null) {
 
-        emailService.sendLoginCredentialsEmail(
-                account.getEmail(),
-                account.getFullName(),
-                DEFAULT_PASSWORD
-        );
+            account.setPassword(passwordEncoder.encode(DEFAULT_PASSWORD));
+            account.setVerificationToken(null);
+
+            accountCompanyRepository.save(account);
+
+
+            emailService.sendLoginCredentialsEmail(
+                    account.getEmail(),
+                    account.getFullName(),
+                    DEFAULT_PASSWORD
+            );
+
+        } else {
+
+            account.setVerificationToken(null);
+            accountCompanyRepository.save(account);
+
+
+        }
     }
 
     @Override

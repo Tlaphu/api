@@ -81,12 +81,14 @@ public class AdminController {
         adminService.deleteAccountCompany(id);
         return ResponseEntity.ok("Account company deleted successfully");
     }
-   
+
 
     @PutMapping("/companies/accounts/activate/{id}")
-    public ResponseEntity<?> activateCompanyAccount(@PathVariable Long id) {
+    public ResponseEntity<String> toggleCompanyAccountStatus(@PathVariable Long id) {
         adminService.activateCompanyAccount(id);
-        return ResponseEntity.ok("Company account activated and notified successfully.");
+
+        // Thay đổi thông báo để nó chung chung hơn
+        return ResponseEntity.ok("Company account status successfully toggled (activated/deactivated).");
     }
     @GetMapping("/skill")
     public List<Skill> getAll() {
