@@ -10,6 +10,7 @@ import com.ra.base_spring_boot.repository.PaymentTransactionRepository;
 import com.ra.base_spring_boot.services.VNPayService;
 import com.ra.base_spring_boot.services.IRoleService;
 import com.ra.base_spring_boot.services.EmailService;
+import com.ra.base_spring_boot.dto.resp.TransactionResponseDTO; // Import DTO mới
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -20,6 +21,7 @@ import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.stream.Collectors; // Cần thiết cho DTO conversion
 
 @Service
 @Transactional
@@ -49,6 +51,72 @@ public class VNPayServiceImpl implements VNPayService {
         this.roleService = roleService;
         this.emailService = emailService;
     }
+
+    // --- PHƯƠNG THỨC MỚI CHO ADMIN START ---
+
+    /**
+     * Lấy tất cả giao dịch và chuyển đổi sang DTO cho Admin.
+     */
+    @Transactional(readOnly = true)
+    public List<TransactionResponseDTO> getAllTransactionsForAdmin() {
+        List<PaymentTransaction> transactions = transactionRepository.findAll();
+
+        return transactions.stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Logic chuyển đổi từ Entity PaymentTransaction sang DTO (Bao gồm thông tin người mua)
+     */
+    private TransactionResponseDTO convertToDto(PaymentTransaction transaction) {
+        TransactionResponseDTO dto = new TransactionResponseDTO();
+
+        // 1. Sao chép các trường trực tiếp
+        dto.setId(transaction.getId());
+        dto.setAmount(transaction.getAmount());
+        dto.setBankCode(transaction.getBankCode());
+        dto.setTransactionStatus(transaction.getTransactionStatus());
+        dto.setVnpayOrderInfo(transaction.getVnpayOrderInfo());
+        dto.setVnpayTxnRef(transaction.getVnpayTxnRef());
+        dto.setPaymentDate(transaction.getPaymentDate());
+
+        // 2. Lấy thông tin gói đăng ký
+        if (transaction.getSubscriptionPlan() != null) {
+            dto.setSubscriptionPlanName(transaction.getSubscriptionPlan().getName());
+            dto.setSubscriptionDurationDays(transaction.getSubscriptionPlan().getDurationInDays());
+        } else {
+            dto.setSubscriptionPlanName("N/A");
+            dto.setSubscriptionDurationDays(0);
+        }
+
+        // 3. Xác định loại người dùng và ID/Identifier
+        if (transaction.getCandidate() != null) {
+            dto.setUserType("Candidate");
+            dto.setUserIdentifier(transaction.getCandidate().getName());
+            dto.setUserId(transaction.getCandidate().getId());
+
+        } else if (transaction.getAccountCompany() != null) {
+            dto.setUserType("Company");
+            // Lấy tên công ty
+            String companyName = transaction.getAccountCompany().getCompany() != null
+                    ? transaction.getAccountCompany().getCompany().getName()
+                    : transaction.getAccountCompany().getFullName(); // Fallback
+
+            dto.setUserIdentifier(companyName);
+            dto.setUserId(transaction.getAccountCompany().getId());
+
+        } else {
+            dto.setUserType("Unknown");
+            dto.setUserIdentifier("N/A");
+            dto.setUserId(null);
+        }
+
+        return dto;
+    }
+
+    // --- PHƯƠNG THỨC MỚI CHO ADMIN END ---
+
 
     @Transactional
     public void createExtraAccounts(AccountCompany principalAccount, Company company) {
@@ -162,7 +230,7 @@ public class VNPayServiceImpl implements VNPayService {
 
         if ("00".equals(vnp_ResponseCode)) {
 
-            transaction.setTransactionStatus(" ");
+            transaction.setTransactionStatus("SUCCESS"); // Đổi sang SUCCESS
             transaction.setPaymentDate(new Date());
             transactionRepository.save(transaction);
 

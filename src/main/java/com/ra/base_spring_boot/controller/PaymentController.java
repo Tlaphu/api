@@ -3,6 +3,7 @@ package com.ra.base_spring_boot.controller;
 import com.ra.base_spring_boot.model.*;
 import com.ra.base_spring_boot.dto.req.FormPayment;
 import com.ra.base_spring_boot.dto.resp.PaymentResponse;
+import com.ra.base_spring_boot.dto.resp.TransactionResponseDTO;
 import com.ra.base_spring_boot.repository.ICandidateRepository;
 import com.ra.base_spring_boot.repository.IAccountCompanyRepository;
 import com.ra.base_spring_boot.repository.PaymentTransactionRepository;
@@ -114,10 +115,12 @@ public class PaymentController {
 
     @GetMapping("/transactions")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    public ResponseEntity<List<PaymentTransaction>> getAllTransactions() {
+    public ResponseEntity<List<TransactionResponseDTO>> getAllTransactions() {
 
-        List<PaymentTransaction> transactions = transactionRepository.findAll();
 
-        return ResponseEntity.ok(transactions);
+        List<TransactionResponseDTO> responseDTOs = vnpayService.getAllTransactionsForAdmin();
+
+        // 2. Trả về list DTO
+        return ResponseEntity.ok(responseDTOs);
     }
 }
