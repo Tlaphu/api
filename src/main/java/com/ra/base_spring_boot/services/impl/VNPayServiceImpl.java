@@ -62,6 +62,7 @@ public class VNPayServiceImpl implements VNPayService {
         List<PaymentTransaction> transactions = transactionRepository.findAll();
 
         return transactions.stream()
+                .filter(transaction -> !"PENDING".equals(transaction.getTransactionStatus()))
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
     }
