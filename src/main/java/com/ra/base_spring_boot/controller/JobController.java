@@ -134,38 +134,51 @@ public class JobController {
     @Transactional
     public ResponseEntity<?> create(@Valid @RequestBody FormJob form) {
 
-
         boolean isAdmin = SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
 
         Company companyToPost = null;
 
         if (isAdmin) {
+            // --- LOGIC CHO ROLE_ADMIN ---
 
-            return ResponseEntity.status(403).body("Access denied. ADMIN role cannot create jobs via this self-service endpoint without specifying a target company ID in the request body.");
+            // 1. ADMIN phải cung cấp companyName
+            if (form.getCompanyName() == null || form.getCompanyName().trim().isEmpty()) {
+                return ResponseEntity.status(400).body("Access denied. ADMIN role must specify 'companyName' in the request body to create a job.");
+            }
+
+
+            Optional<Company> companyOpt = companyRepository.findByNameIgnoreCase(form.getCompanyName());
+
+            if (companyOpt.isEmpty()) {
+                return ResponseEntity.status(404).body("Target Company not found with name: " + form.getCompanyName());
+            }
+            companyToPost = companyOpt.get();
+
+
+        } else {
+
+
+            AccountCompany currentAccountCompany = companyAuthService.getCurrentAccountCompany();
+            if (currentAccountCompany == null) {
+                return ResponseEntity.status(403).body("Access denied. Company must be logged in.");
+            }
+
+            Optional<Company> companyOpt = companyRepository.findByAccountId(currentAccountCompany.getId());
+            if (companyOpt.isEmpty()) {
+                return ResponseEntity.status(404).body("Associated Company profile not found for the logged-in user.");
+            }
+
+            companyToPost = companyOpt.get();
+
+
+            if (form.getCompanyName() == null || form.getCompanyName().trim().isEmpty() ||
+                    !companyToPost.getName().equalsIgnoreCase(form.getCompanyName())) {
+                return ResponseEntity.status(400).body("The 'companyName' in the request body must match your logged-in company name.");
+            }
         }
 
-
-
-        AccountCompany currentAccountCompany = companyAuthService.getCurrentAccountCompany();
-        if (currentAccountCompany == null) {
-
-            return ResponseEntity.status(403).body("Access denied. Company must be logged in.");
-        }
-
-
-        Optional<Company> companyOpt = companyRepository.findByAccountId(currentAccountCompany.getId());
-        if (companyOpt.isEmpty()) {
-            return ResponseEntity.status(404).body("Associated Company profile not found for the logged-in user.");
-        }
-
-        companyToPost = companyOpt.get();
-
-
-        if (form.getCompanyName() == null || form.getCompanyName().trim().isEmpty() ||
-                !companyToPost.getName().equalsIgnoreCase(form.getCompanyName())) {
-            return ResponseEntity.status(400).body("The 'companyName' in the request body must match your logged-in company name.");
-        }
+        
 
         Location location = null;
         Long locationId = form.getLocationId();
@@ -207,7 +220,7 @@ public class JobController {
                 .benefits(form.getBenefits())
                 .workTime(form.getWorkTime())
                 .location(location)
-                .company(companyToPost) // Gán job cho công ty đang đăng nhập
+                .company(companyToPost) // Gán job cho công ty đã xác định ở trên
                 .created_at(new Date())
                 .expire_at(form.getExpire_at())
                 .status(form.getStatus() != null ? form.getStatus() : "ACTIVE")

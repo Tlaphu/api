@@ -25,5 +25,5 @@ public interface ICompanyRepository extends JpaRepository<Company, Long> {
 
     @Query("SELECT COUNT(j) FROM Job j WHERE j.company.id = :companyId")
     Long countJobsByCompanyId(@Param("companyId") Long companyId);
-
+    Optional<Company> findByNameIgnoreCase(String name);
 }
