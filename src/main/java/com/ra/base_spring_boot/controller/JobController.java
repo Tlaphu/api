@@ -441,7 +441,7 @@ public class JobController {
         job.setBenefits(form.getBenefits());
         job.setWorkTime(form.getWorkTime());
         job.setLocation(location);
-        
+
         job.setCompany(companyToSet);
 
         if (form.getStatus() != null && !form.getStatus().trim().isEmpty()) {
@@ -486,27 +486,39 @@ public class JobController {
 
         Job job = jobOpt.get();
 
-        // 2. Lấy thông tin công ty hiện tại và kiểm tra quyền
-        AccountCompany currentAccountCompany = companyAuthService.getCurrentAccountCompany();
-        if (currentAccountCompany == null) {
-            return ResponseEntity.status(403).body("Access denied. Company must be logged in.");
-        }
-
-        Optional<Company> currentCompanyOpt = companyRepository.findByAccountId(currentAccountCompany.getId());
-
-        if (currentCompanyOpt.isEmpty()) {
-            return ResponseEntity.status(403).body("Access denied. Company profile not found.");
-        }
-
-        Company currentCompany = currentCompanyOpt.get();
-
 
         boolean isAdmin = SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
 
-        if (!isAdmin && (job.getCompany() == null || !job.getCompany().getId().equals(currentCompany.getId()))) {
-            return ResponseEntity.status(403).body("Access denied. You can only delete your own job listings.");
+        Company currentCompany = null;
+        AccountCompany currentAccountCompany = null;
+
+
+        if (!isAdmin) {
+
+            currentAccountCompany = companyAuthService.getCurrentAccountCompany();
+            if (currentAccountCompany == null) {
+                return ResponseEntity.status(403).body("Access denied. Company must be logged in.");
+            }
+
+            Optional<Company> currentCompanyOpt = companyRepository.findByAccountId(currentAccountCompany.getId());
+
+            if (currentCompanyOpt.isEmpty()) {
+                return ResponseEntity.status(403).body("Access denied. Company profile not found.");
+            }
+
+            currentCompany = currentCompanyOpt.get();
+
+
+            if (job.getCompany() == null || !job.getCompany().getId().equals(currentCompany.getId())) {
+                return ResponseEntity.status(403).body("Access denied. You can only delete your own job listings.");
+            }
+        } else {
+
+            currentCompany = job.getCompany();
         }
+
+
 
 
         if (jobCandidateRepository.existsByJobIdAndIsAcceptedIsNull(id)) {
@@ -515,37 +527,39 @@ public class JobController {
         }
 
 
-        jobCandidateRepository.deleteByJobId(id);
-        // ------------------------------------
-
-
         List<Candidate> followers = candidateRepository.findAllCandidatesByFavoriteJobId(id);
 
+       
+        jobCandidateRepository.deleteByJobId(id);
 
         if (job.getLevelJobRelations() != null && !job.getLevelJobRelations().isEmpty()) {
             levelJobRelationRepository.deleteAll(job.getLevelJobRelations());
         }
-
 
         jobRepository.deleteFavoriteJobsByJobId(id);
 
 
         jobRepository.deleteById(id);
 
-        // 7. Gửi thông báo đến người theo dõi
-        followers.forEach(candidate -> {
-            eventPublisher.publishEvent(new NotificationEvent(
-                    this,
-                    "Công việc đã bị gỡ bỏ",
-                    "Công việc bạn đã yêu thích \"" + job.getTitle() + "\" đã bị công ty gỡ xuống.",
-                    "FAVORITE_JOB_DELETED",
-                    candidate.getId(),  // receiverId
-                    "CANDIDATE",        // receiverType
-                    "/jobs",            // link redirect sang danh sách job
-                    "COMPANY",          // senderType
-                    currentCompany.getId()
-            ));
-        });
+
+        if (currentCompany != null) {
+
+            final Long senderCompanyId = currentCompany.getId();
+
+            followers.forEach(candidate -> {
+                eventPublisher.publishEvent(new NotificationEvent(
+                        this,
+                        "Công việc đã bị gỡ bỏ",
+                        "Công việc bạn đã yêu thích \"" + job.getTitle() + "\" đã bị công ty gỡ xuống.",
+                        "FAVORITE_JOB_DELETED",
+                        candidate.getId(),
+                        "CANDIDATE",        // receiverType
+                        "/jobs",            // link redirect sang danh sách job
+                        "COMPANY",          // senderType
+                        senderCompanyId
+                ));
+            });
+        }
 
         return ResponseEntity.ok("Deleted Job successfully with id: " + id);
     }
