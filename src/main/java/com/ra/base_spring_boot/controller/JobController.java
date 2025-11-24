@@ -343,35 +343,49 @@ public class JobController {
 
         Job job = jobOpt.get();
 
-        AccountCompany currentAccountCompany = companyAuthService.getCurrentAccountCompany();
-        if (currentAccountCompany == null) {
-            return ResponseEntity.status(403).body("Access denied. Company must be logged in.");
-        }
-
-        // Đã sửa: Sử dụng findByAccountId
-        Optional<Company> currentCompanyOpt = companyRepository.findByAccountId(currentAccountCompany.getId());
-
-        if (currentCompanyOpt.isEmpty()) {
-            return ResponseEntity.status(403).body("Access denied. Company profile not found.");
-        }
-
-        Company currentCompany = currentCompanyOpt.get();
-
-        // THÊM LOGIC KIỂM TRA TÊN CÔNG TY TRONG FORM KHI UPDATE
-        if (form.getCompanyName() == null || form.getCompanyName().trim().isEmpty() ||
-                !currentCompany.getName().equalsIgnoreCase(form.getCompanyName())) {
-            return ResponseEntity.status(400).body("The 'companyName' in the request body must match your logged-in company name.");
-        }
-
-
         boolean isAdmin = SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
 
-        if (!isAdmin && (job.getCompany() == null || !job.getCompany().getId().equals(currentCompany.getId()))) {
-            return ResponseEntity.status(403).body("Access denied. You can only update your own job listings.");
+        Company currentCompany = null;
+        AccountCompany currentAccountCompany = null;
+
+        // Nếu không phải ADMIN, cần xác định công ty hiện tại
+        if (!isAdmin) {
+            currentAccountCompany = companyAuthService.getCurrentAccountCompany();
+            if (currentAccountCompany == null) {
+                // Mặc dù @PreAuthorize đã kiểm tra, nhưng thêm kiểm tra này là an toàn
+                return ResponseEntity.status(403).body("Access denied. Company must be logged in.");
+            }
+
+            Optional<Company> currentCompanyOpt = companyRepository.findByAccountId(currentAccountCompany.getId());
+
+            if (currentCompanyOpt.isEmpty()) {
+                return ResponseEntity.status(403).body("Access denied. Company profile not found.");
+            }
+
+            currentCompany = currentCompanyOpt.get();
+
+            // LOGIC KIỂM TRA TÊN CÔNG TY TRONG FORM KHI UPDATE CHỈ ÁP DỤNG CHO ROLE_COMPANY
+            if (form.getCompanyName() == null || form.getCompanyName().trim().isEmpty() ||
+                    !currentCompany.getName().equalsIgnoreCase(form.getCompanyName())) {
+                return ResponseEntity.status(400).body("The 'companyName' in the request body must match your logged-in company name.");
+            }
         }
 
-        Company companyToSet = currentCompany;
+
+        if (!isAdmin) {
+            if (job.getCompany() == null || !job.getCompany().getId().equals(currentCompany.getId())) {
+                return ResponseEntity.status(403).body("Access denied. You can only update your own job listings.");
+            }
+        }
+
+
+        Company companyToSet = isAdmin ? job.getCompany() : currentCompany;
+
+
+        if (companyToSet == null) {
+            return ResponseEntity.status(400).body("Cannot update a job without an associated company.");
+        }
 
         Location location = null;
         Long locationId = form.getLocationId();
@@ -427,6 +441,7 @@ public class JobController {
         job.setBenefits(form.getBenefits());
         job.setWorkTime(form.getWorkTime());
         job.setLocation(location);
+        
         job.setCompany(companyToSet);
 
         if (form.getStatus() != null && !form.getStatus().trim().isEmpty()) {
