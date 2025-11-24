@@ -134,8 +134,22 @@ public class JobController {
     @Transactional
     public ResponseEntity<?> create(@Valid @RequestBody FormJob form) {
 
+
+        boolean isAdmin = SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+        Company companyToPost = null;
+
+        if (isAdmin) {
+
+            return ResponseEntity.status(403).body("Access denied. ADMIN role cannot create jobs via this self-service endpoint without specifying a target company ID in the request body.");
+        }
+
+
+
         AccountCompany currentAccountCompany = companyAuthService.getCurrentAccountCompany();
         if (currentAccountCompany == null) {
+
             return ResponseEntity.status(403).body("Access denied. Company must be logged in.");
         }
 
@@ -145,11 +159,11 @@ public class JobController {
             return ResponseEntity.status(404).body("Associated Company profile not found for the logged-in user.");
         }
 
-        Company company = companyOpt.get();
+        companyToPost = companyOpt.get();
 
 
         if (form.getCompanyName() == null || form.getCompanyName().trim().isEmpty() ||
-                !company.getName().equalsIgnoreCase(form.getCompanyName())) {
+                !companyToPost.getName().equalsIgnoreCase(form.getCompanyName())) {
             return ResponseEntity.status(400).body("The 'companyName' in the request body must match your logged-in company name.");
         }
 
@@ -193,7 +207,7 @@ public class JobController {
                 .benefits(form.getBenefits())
                 .workTime(form.getWorkTime())
                 .location(location)
-                .company(company)
+                .company(companyToPost) // Gán job cho công ty đang đăng nhập
                 .created_at(new Date())
                 .expire_at(form.getExpire_at())
                 .status(form.getStatus() != null ? form.getStatus() : "ACTIVE")
@@ -219,8 +233,8 @@ public class JobController {
                 .desirable(form.getDesirable())
                 .benefits(form.getBenefits())
                 .workTime(form.getWorkTime())
-                .companyName(company.getName())
-                .companyLogo(company.getLogo())
+                .companyName(companyToPost.getName())
+                .companyLogo(companyToPost.getLogo())
                 .locationId(location != null ? location.getId() : null)
                 .created_at(savedJob.getCreated_at())
                 .expire_at(savedJob.getExpire_at())
@@ -529,7 +543,7 @@ public class JobController {
 
         List<Candidate> followers = candidateRepository.findAllCandidatesByFavoriteJobId(id);
 
-       
+
         jobCandidateRepository.deleteByJobId(id);
 
         if (job.getLevelJobRelations() != null && !job.getLevelJobRelations().isEmpty()) {

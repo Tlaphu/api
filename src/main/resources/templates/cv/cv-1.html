@@ -11,34 +11,48 @@
             padding: 0;
             font-size: 14px;
             line-height: 1.5;
-            width: 867.56px;
-            margin: 0 auto;
+            /* Giữ nguyên chiều rộng A4, nhưng sẽ được ghi đè bởi .cv-container */
+            width: 100%;
             color: #333;
         }
+
         .cv-container {
-            display: flex;
+            /* THAY ĐỔI QUAN TRỌNG: Sử dụng chiều rộng cố định gần với A4 và xóa flexbox */
+            width: 842px; /* Khoảng 21cm ở 96 DPI */
+            margin: 0 auto;
+            overflow: hidden; /* Quan trọng để chứa các cột float */
+            min-height: 1120px; /* Chiều cao A4 */
             border: 1px solid #eee;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-            min-height: 1120px;
         }
 
         .left-col {
-            width: 30%;
+            /* THAY ĐỔI QUAN TRỌNG: Sử dụng float cho layout 2 cột ổn định hơn trong PDF */
+            float: left;
+            width: 250px; /* Chiều rộng cố định cho cột trái (khoảng 30%) */
             padding: 25px 20px;
-            background-color: #f7f9fa;
+            background-color: #f7f9fa; /* Màu xám nhạt */
             border-right: 1px solid #e0e0e0;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
+            min-height: 1120px; /* Quan trọng để background kéo dài hết trang */
+            box-sizing: border-box; /* Tính padding vào width */
         }
 
         .right-col {
-            width: 70%;
+            /* THAY ĐỔI QUAN TRỌNG: Sử dụng float và width còn lại */
+            float: left;
+            width: 592px; /* 842px - 250px (width left) */
             padding: 25px 30px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
+            box-sizing: border-box;
+            min-height: 1120px;
         }
+
+        /* Clearfix cho các section bên trong, đảm bảo nội dung không bị float */
+        .section {
+            clear: both;
+            margin-bottom: 20px;
+        }
+
+        /* ... (Giữ nguyên các style khác) ... */
 
         .avatar-container {
             text-align: center;
@@ -49,7 +63,7 @@
             height: 90px;
             border-radius: 50%;
             object-fit: cover;
-            border: 2px solid #5a9bd4; /* Màu viền xanh */
+            border: 2px solid #5a9bd4;
         }
         .name { font-size: 18px; font-weight: bold; color: #333; margin-top: 10px; margin-bottom: 3px; text-align: center; }
         .title { font-size: 14px; color: #555; margin-bottom: 15px; text-align: center; }
@@ -57,20 +71,41 @@
         .section-title {
             font-size: 14px;
             font-weight: bold;
-            color: #5a9bd4; /* Màu xanh */
-            border-bottom: 1px solid #dcdcdc; /* Đường kẻ mỏng hơn */
-            padding-bottom: 5px;
+            color: #333;
+            border-bottom: 0;
+            padding-bottom: 0;
             margin-bottom: 10px;
             text-transform: uppercase;
         }
         .section-title.right {
-            color: #333; /* Tiêu đề cột phải màu đen */
+            color: #333;
             border-bottom: 1px solid #ccc;
+            padding-bottom: 5px;
         }
 
         .info-list { list-style: none; padding: 0; margin: 0; font-size: 0.9em; }
         .info-item { margin-bottom: 7px; display: flex; align-items: flex-start; }
-        .info-item .icon { margin-right: 8px; font-size: 1.1em; color: #5a9bd4; } /* Icon xanh */
+        .info-item .icon { margin-right: 8px; font-size: 1.1em; color: #5a9bd4; }
+
+        .skill-list {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+            font-size: 0.9em;
+        }
+        .skill-list li {
+            margin-bottom: 7px;
+            position: relative;
+            padding-left: 15px;
+        }
+        .skill-list li:before {
+            content: "■";
+            font-size: 0.8em;
+            color: #333;
+            position: absolute;
+            left: 0;
+            top: 0;
+        }
 
         .item { margin-bottom: 15px; }
         .item-header { font-weight: bold; margin-bottom: 2px; font-size: 1em; }
@@ -87,17 +122,25 @@
             <div th:if="${cvData.avatar != null}">
                 <img th:src="${cvData.avatar}" alt="Avatar" class="avatar"/>
             </div>
+            <div th:unless="${cvData.avatar != null}" style="
+                width: 90px;
+                height: 90px;
+                border-radius: 50%;
+                border: 2px solid #5a9bd4;
+                margin: 0 auto;
+                background-color: #fff;">
+            </div>
         </div>
         <div class="name" th:text="${cvData.name}">Nguyễn Quỳnh Như</div>
         <div class="title" th:text="${cvData.candidateTitle}">Vị trí ứng tuyển</div>
 
         <div class="section">
-            <div class="section-title">Liên hệ</div>
+            <div class="section-title">LIÊN HỆ</div>
             <ul class="info-list">
-                <li class="info-item"><span class="icon">📧</span> Email: <span th:text="${cvData.email}"></span></li>
-                <li class="info-item"><span class="icon">📞</span> Phone: <span th:text="${cvData.phone}"></span></li>
-                <li class="info-item"><span class="icon">🏠</span> Address: <span th:text="${cvData.address}"></span></li>
-                <li class="info-item"><span class="icon">🎂</span> Birthday: <span th:if="${cvData.dob != null}" th:text="${#dates.format(cvData.dob, 'dd/MM/yyyy')}"></span></li>
+                <li class="info-item"><span class="icon">📧</span> Email: <span th:text="${cvData.email}">quynhnhu@gmail.com</span></li>
+                <li class="info-item"><span class="icon">📞</span> Phone: <span th:text="${cvData.phone}">(034) 6088 5288</span></li>
+                <li class="info-item"><span class="icon">🏠</span> Address: <span th:text="${cvData.address}">Cầu Giấy, Hà Nội</span></li>
+                <li class="info-item"><span class="icon">🎂</span> Birthday: <span th:if="${cvData.dob != null}" th:text="${#dates.format(cvData.dob, 'dd/MM/yyyy')}">18/10/1997</span></li>
 
                 <li class="info-item" th:if="${cvData.link != null and !cvData.link.trim().isEmpty()}">
                     <span class="icon">🔗</span> <a th:href="${cvData.link}" th:text="${cvData.link}" target="_blank">LinkedIn</a>
@@ -106,14 +149,14 @@
         </div>
 
         <div class="section" th:if="${cvData.skills != null and !cvData.skills.isEmpty()}">
-            <div class="section-title">Kỹ Năng</div>
-            <ul class="info-list" style="list-style-type: square; margin-left: 15px;">
-                <li th:each="skill : ${cvData.skills}" th:text="${skill}"></li>
+            <div class="section-title">KỸ NĂNG</div>
+            <ul class="skill-list">
+                <li th:each="skill : ${cvData.skills}" th:utext="${#strings.replace(skill, '\n', '&lt;br/&gt;')}"></li>
             </ul>
         </div>
 
         <div class="section" th:if="${cvData.hobbies != null and !cvData.hobbies.trim().isEmpty()}">
-            <div class="section-title">Sở Thích</div>
+            <div class="section-title">SỞ THÍCH</div>
             <p th:utext="${#strings.replace(cvData.hobbies, '\n', '&lt;br/&gt;')}"></p>
         </div>
 
@@ -122,12 +165,12 @@
     <div class="right-col">
 
         <div class="section" th:if="${cvData.development != null and !cvData.development.trim().isEmpty()}">
-            <div class="section-title right">Mục Tiêu Nghề Nghiệp</div>
+            <div class="section-title right">MỤC TIÊU NGHỀ NGHIỆP</div>
             <p th:utext="${#strings.replace(cvData.development, '\n', '&lt;br/&gt;')}"></p>
         </div>
 
         <div class="section" th:if="${cvData.educations != null and !cvData.educations.isEmpty()}">
-            <div class="section-title right">Học Vấn</div>
+            <div class="section-title right">HỌC VẤN</div>
             <div th:each="i : ${#numbers.sequence(0, cvData.educations.size - 1)}" class="item">
                 <div class="item-header" th:text="${cvData.educations[i]}">Tên Trường</div>
                 <div class="item-period" th:with="
