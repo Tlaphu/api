@@ -126,7 +126,7 @@ public class CandidateCVController {
         }
 
         CandidateCV cvEntity = candidateCVService.getCVById(cvId, candidateId);
-        // Tên file thân thiện hơn, loại bỏ ký tự đặc biệt
+
         String filename = cvEntity.getTitle().replaceAll("[^a-zA-Z0-9_-]", "") + "_CV.pdf";
 
         HttpHeaders headers = new HttpHeaders();
