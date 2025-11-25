@@ -262,6 +262,8 @@ public class AdminServiceImpl implements IAdminService {
                         .gender(account.getGender())
                         .phone(account.getPhone())
                         .dob(account.getDob())
+                        .isPremium(account.isPremium())
+                        .premiumUntil(account.getPremiumUntil())
                         .company(
                                 CompanyResponse.builder()
                                         .id(account.getCompany().getId())
@@ -272,6 +274,7 @@ public class AdminServiceImpl implements IAdminService {
                                         .link_fb(account.getCompany().getLink_fb())
                                         .link_linkedin(account.getCompany().getLink_linkedin())
                                         .logo(account.getCompany().getLogo())
+
                                         .build()
                         )
                         .build()
@@ -297,6 +300,8 @@ public class AdminServiceImpl implements IAdminService {
                 .status(candidate.isStatus())
                 .logo(candidate.getLogo())
                 .isOpen(candidate.getIsOpen())
+                .isPremium(candidate.isPremium())
+                .premiumUntil(candidate.getPremiumUntil())
                 .Title(candidate.getTitle())
                 .description(candidate.getDescription())
                 .experience(candidate.getExperience())
