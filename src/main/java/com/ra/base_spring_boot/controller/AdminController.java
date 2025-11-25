@@ -7,10 +7,7 @@ import com.ra.base_spring_boot.dto.resp.*;
 import com.ra.base_spring_boot.model.Skill;
 import com.ra.base_spring_boot.repository.ICandidateRepository;
 import com.ra.base_spring_boot.repository.ICompanyRepository;
-import com.ra.base_spring_boot.services.IAdminService;
-import com.ra.base_spring_boot.services.IBlacklistedWordService;
-import com.ra.base_spring_boot.services.INotificationService;
-import com.ra.base_spring_boot.services.ISkillService;
+import com.ra.base_spring_boot.services.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -27,6 +24,7 @@ public class AdminController {
     private final ISkillService skillService;
     private final INotificationService notificationService;
     private final IBlacklistedWordService blacklistedWordService;
+    private final ICompanyAuthService companyAuthService;
 
     @PostMapping("/login")
     public ResponseEntity<JwtResponse> login(@RequestBody FormLogin formLogin) {
