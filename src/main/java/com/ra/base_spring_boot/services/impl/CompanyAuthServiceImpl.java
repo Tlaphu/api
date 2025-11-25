@@ -601,4 +601,5 @@ public class CompanyAuthServiceImpl implements ICompanyAuthService {
                                 .collect(Collectors.toList()))
                 .build();
     }
+
 }

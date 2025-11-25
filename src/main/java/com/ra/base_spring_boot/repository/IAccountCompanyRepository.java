@@ -1,11 +1,15 @@
 package com.ra.base_spring_boot.repository;
 
+import com.ra.base_spring_boot.dto.resp.AccountCompanyResponse;
 import com.ra.base_spring_boot.model.AccountCompany;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import com.ra.base_spring_boot.model.Company;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
 public interface IAccountCompanyRepository extends JpaRepository<AccountCompany, Long> {
     boolean existsByEmail(String email);
     Optional<AccountCompany> findByEmail(String email);

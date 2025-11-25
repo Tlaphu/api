@@ -189,11 +189,11 @@ public class AdminServiceImpl implements IAdminService {
         List<AddressCompanyResponse> addresses = addressCompanyRepository.findByCompany(company)
                 .stream()
                 .map(addr -> AddressCompanyResponse.builder()
-                .id(addr.getId())
-                .address(addr.getAddress())
-                .mapUrl(addr.getMap_url())
-                .locationName(addr.getLocation() != null ? addr.getLocation().getName() : null)
-                .build())
+                        .id(addr.getId())
+                        .address(addr.getAddress())
+                        .mapUrl(addr.getMap_url())
+                        .locationName(addr.getLocation() != null ? addr.getLocation().getName() : null)
+                        .build())
                 .collect(Collectors.toList());
 
         return CompanyResponse.builder()
@@ -255,19 +255,26 @@ public class AdminServiceImpl implements IAdminService {
         return accountCompanyRepository.findAll()
                 .stream()
                 .map(account -> AccountCompanyResponse.builder()
-                .id(account.getId())
-                .email(account.getEmail())
-                .fullName(account.getFullName())
-                .status(account.isStatus())
-                .company(
-                        CompanyResponse.builder()
-                                .id(account.getCompany().getId())
-                                .name(account.getCompany().getName())
-                                .email(account.getCompany().getEmail())
-                                .phone(account.getCompany().getPhone())
-                                .build()
-                )
-                .build()
+                        .id(account.getId())
+                        .email(account.getEmail())
+                        .fullName(account.getFullName())
+                        .status(account.isStatus())
+                        .gender(account.getGender())
+                        .phone(account.getPhone())
+                        .dob(account.getDob())
+                        .company(
+                                CompanyResponse.builder()
+                                        .id(account.getCompany().getId())
+                                        .name(account.getCompany().getName())
+                                        .email(account.getCompany().getEmail())
+                                        .phone(account.getCompany().getPhone())
+                                        .link_Github(account.getCompany().getLink_Github())
+                                        .link_fb(account.getCompany().getLink_fb())
+                                        .link_linkedin(account.getCompany().getLink_linkedin())
+                                        .logo(account.getCompany().getLogo())
+                                        .build()
+                        )
+                        .build()
                 ).collect(Collectors.toList());
     }
 
@@ -275,6 +282,8 @@ public class AdminServiceImpl implements IAdminService {
     public void deleteAccountCompany(Long id) {
         accountCompanyRepository.deleteById(id);
     }
+
+
     private CandidateResponse mapCandidateToResponse(Candidate candidate) {
         return CandidateResponse.builder()
                 .id(candidate.getId())
@@ -349,4 +358,5 @@ public class AdminServiceImpl implements IAdminService {
                                 .collect(Collectors.toList()))
                 .build();
     }
+
 }
