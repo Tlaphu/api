@@ -2,52 +2,104 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8"/>
-    <title th:text="${cvData.name} + ' - Template 4 (Fixed Inline Style)'"></title>
+    <title th:text="${cvData.name} + ' - Template 4 (Fixed for PDF)'"></title>
 
     <style>
         /* CSS Cơ bản */
         * { box-sizing: border-box; }
-        body { font-family: 'ArialUnicode', sans-serif; margin: 0; padding: 0; font-size: 14px; line-height: 1.5; color: #333; }
+        body { font-family: 'ArialUnicode', sans-serif; margin: 0; padding: 0; font-size: 13px; line-height: 1.5; color: #333; }
 
-        /* CSS cho các thành phần con */
+        /* CSS cho CV Container và Columns */
+        .cv-container {
+            width: 780px;
+            margin: 0 auto;
+            border: 1px solid #ccc;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+
+            overflow: hidden;
+        }
+
+        /* Tỷ lệ 60% cho cột trái */
+        .left-col {
+            width: 60%;
+            padding: 20px 25px 20px 25px;
+            float: left;
+
+            padding-bottom: 9999px;
+            margin-bottom: -9999px;
+        }
+
+        /* Tỷ lệ 40% cho cột phải */
+        .right-col {
+            width: 40%;
+            /* Padding 0px ngang để tối đa không gian */
+            padding: 20px 0px 20px 20px;
+            background-color: #F8FAFC;
+            border-left: 1px solid #ccc;
+            float: left;
+            display: block;
+
+            padding-bottom: 9999px;
+            margin-bottom: -9999px;
+        }
+
+        /* CSS cho các thành phần con (Giữ nguyên các điều chỉnh xuống dòng an toàn) */
         .header-content { display: flex; align-items: center; gap: 15px; margin-bottom: 25px; }
         .name { font-size: 20px; font-weight: bold; color: #007ACC; margin: 0; }
         .title { font-size: 15px; font-weight: 600; color: #444; margin-top: 5px; }
         .avatar { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 2px solid #ccc; }
-        .section-title { font-size: 15px; font-weight: bold; color: #007ACC; margin-bottom: 8px; border-bottom: 1px solid #007ACC; padding-bottom: 3px; text-transform: uppercase; }
+        .section-title { font-size: 13px; font-weight: bold; color: #007ACC; margin-bottom: 8px; border-bottom: 1px solid #007ACC; padding-bottom: 3px; text-transform: uppercase; }
         .section { margin-bottom: 20px; }
+
+
         .info-list { list-style: none; padding: 0; margin: 0; }
-        .info-item { margin-bottom: 5px; }
+        .info-item {
+            margin-bottom: 5px;
+            font-size: 12px;
+        }
         .item { margin-bottom: 15px; }
-        .item-header { font-weight: bold; margin-bottom: 3px; color: #222; }
-        .item-period { font-size: 0.85em; color: #666; margin-bottom: 3px; }
-        .item-details { margin-left: 0; margin-top: 5px; font-size: 0.9em; }
+        .item-period { font-size: 0.8em; color: #666; margin-bottom: 3px; }
+
+        .item-header {
+            font-weight: bold;
+            margin-bottom: 3px;
+            color: #222;
+            font-size: 13px;
+
+        }
+
+        .item-details {
+            margin-left: 0;
+            margin-top: 5px;
+            font-size: 12px;
+
+        }
+
+
+        .skills-list {
+            list-style-type: square;
+            margin-left: 10px;
+            margin-bottom: 0;
+            padding-left: 0;
+        }
+        .skills-list li {
+            font-size: 12px;
+            line-height: 1.4;
+            margin-bottom: 5px;
+        }
     </style>
 </head>
 <body>
 
-<div class="cv-container" style="
-    width: 870px;
-    margin: 0 auto;
-    display: flex;
-    flex-direction: row;
-    border: 1px solid #ccc;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    background-color: white;
-    min-height: 1120px;
-">
+<div class="cv-container">
 
-    <div class="left-col" style="
-        width: 65%;
-        padding: 20px 25px 20px 25px;
-    ">
-
+    <div class="left-col">
         <div class="header-content">
             <div th:if="${cvData.avatar != null}">
                 <img th:src="${cvData.avatar}" alt="Avatar" class="avatar"/>
             </div>
 
-            <div class="flex-1">
+            <div style="flex: 1;">
                 <h1 class="name" th:text="${cvData.name}">Họ và Tên</h1>
                 <p class="title" th:text="${cvData.candidateTitle}">Chức danh nghề nghiệp</p>
             </div>
@@ -68,7 +120,7 @@
                      th:text="${start} + ' - ' + ${end}">MM/YYYY - Present</div>
 
                 <div class="item-details" th:if="${cvData.experienceInfos.size() > i and cvData.experienceInfos[i] != null}">
-                    <p th:utext="${#strings.replace(cvData.experienceInfos[i], '\n', '&lt;br/&gt;')}"></p>
+                    <p style="line-height: 1.3;" th:utext="${#strings.replace(cvData.experienceInfos[i], '\n', '&lt;br/&gt;')}"></p>
                 </div>
             </div>
         </div>
@@ -83,7 +135,7 @@
                      th:text="${start} + ' - ' + ${end}">YYYY - Current</div>
 
                 <div class="item-details" th:if="${cvData.projectInfos.size() > i and cvData.projectInfos[i] != null}">
-                    <p th:utext="${#strings.replace(cvData.projectInfos[i], '\n', '&lt;br/&gt;')}"></p>
+                    <p style="line-height: 1.3;" th:utext="${#strings.replace(cvData.projectInfos[i], '\n', '&lt;br/&gt;')}"></p>
                     <p th:if="${cvData.projectLinks.size() > i and cvData.projectLinks[i] != 'None'}">
                         Link: <a th:href="${cvData.projectLinks[i]}" th:text="${cvData.projectLinks[i]}">Link dự án</a>
                     </p>
@@ -93,35 +145,26 @@
 
     </div>
 
-    <div class="right-col" style="
-        width: 35%;
-        padding: 20px 20px 20px 20px;
-        background-color: #F8FAFC;
-        border-left: 1px solid #ccc;
-        display: flex;
-        flex-direction: column;
-        gap: 15px;
-    ">
-
+    <div class="right-col">
         <div class="section">
             <div class="section-title">Thông tin cá nhân</div>
             <ul class="info-list">
-                <li class="info-item">Email: <span th:text="${cvData.email}"></span></li>
-                <li class="info-item">Phone: <span th:text="${cvData.phone}"></span></li>
-                <li class="info-item">Address: <span th:text="${cvData.address}"></span></li>
-                <li class="info-item">Date of Birth: <span th:if="${cvData.dob != null}" th:text="${#dates.format(cvData.dob, 'dd/MM/yyyy')}"></span></li>
+                <li class="info-item" style="word-wrap: break-word; font-size: 12px;">Email: <span th:text="${cvData.email}"></span></li>
+                <li class="info-item" style="word-wrap: break-word; font-size: 12px;">Phone: <span th:text="${cvData.phone}"></span></li>
+                <li class="info-item" style="word-wrap: break-word; font-size: 12px;">Address: <span th:text="${cvData.address}"></span></li>
+                <li class="info-item" style="word-wrap: break-word; font-size: 12px;">Date of Birth: <span th:if="${cvData.dob != null}" th:text="${#dates.format(cvData.dob, 'dd/MM/yyyy')}"></span></li>
             </ul>
         </div>
 
         <div class="section" th:if="${cvData.educations != null and !cvData.educations.isEmpty()}">
             <div class="section-title">Học vấn</div>
             <div th:each="i : ${#numbers.sequence(0, cvData.educations.size - 1)}" class="item">
-                <div class="item-header" th:text="${cvData.educations[i]}">Tên trường</div>
+                <div class="item-header" style="word-wrap: break-word; font-size: 13px;" th:text="${cvData.educations[i]}">Tên trường</div>
                 <div class="item-period" th:with="
                          start=${cvData.educationStartDates.size() > i ? cvData.educationStartDates[i] : '?'},
                          end=${cvData.educationEndDates.size() > i ? cvData.educationEndDates[i] : 'Hiện tại'}"
                      th:text="${start} + ' - ' + ${end}">YYYY - Current</div>
-                <div class="item-details">
+                <div class="item-details" style="word-wrap: break-word; font-size: 12px;">
                     <span th:if="${cvData.educationMajors.size() > i}" th:text="${cvData.educationMajors[i]}">Chuyên ngành</span>
                     <span th:if="${cvData.educationGPAs.size() > i}"> | GPA: <span th:text="${cvData.educationGPAs[i]}"></span></span>
                 </div>
@@ -131,7 +174,7 @@
         <div class="section" th:if="${cvData.certificates != null and !cvData.certificates.isEmpty()}">
             <div class="section-title">Chứng chỉ</div>
             <div th:each="i : ${#numbers.sequence(0, cvData.certificates.size - 1)}" class="item">
-                <div class="item-header" th:text="${cvData.certificates[i]}">Tên Chứng chỉ</div>
+                <div class="item-header" style="word-wrap: break-word; font-size: 13px;" th:text="${cvData.certificates[i]}">Tên Chứng chỉ</div>
                 <div class="item-period" th:with="
                          org=${cvData.certificateOrganizations.size() > i ? cvData.certificateOrganizations[i] : 'N/A'}"
                      th:text="'Tổ chức: ' + ${org}">Tổ chức cấp</div>
@@ -140,8 +183,8 @@
 
         <div class="section" th:if="${cvData.skills != null and !cvData.skills.isEmpty()}">
             <div class="section-title">Kỹ năng</div>
-            <ul class="info-list" style="list-style-type: square; margin-left: 15px;">
-                <li th:each="skill : ${cvData.skills}" th:text="${skill}">Kỹ năng chi tiết</li>
+            <ul class="skills-list">
+                <li th:each="skill : ${cvData.skills}" style="word-wrap: break-word; font-size: 12px;" th:text="${skill}">Kỹ năng chi tiết</li>
             </ul>
         </div>
 
