@@ -178,7 +178,7 @@ public class JobController {
             }
         }
 
-        
+
 
         Location location = null;
         Long locationId = form.getLocationId();
