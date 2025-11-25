@@ -42,7 +42,7 @@ public class CandidateAuthServiceImpl implements ICandidateAuthService {
     private final JwtProvider jwtProvider;
     private final EmailService emailService;
     private final ApplicationEventPublisher eventPublisher;
-    private static final String BASE_URL = "http://localhost:8080";
+    private static final String BASE_URL = "http://localhost:5173";
 
     @Override
     public void register(FormRegisterCandidate formRegisterCandidate) {
