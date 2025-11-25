@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,6 +24,7 @@ public class AddressCompanyController {
      *
      */
     @GetMapping
+    @PreAuthorize("hasAuthority('ROLE_COMPANY') or hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<ResponseWrapper<List<AddressCompanyResponse>>> getAll() {
         List<AddressCompanyResponse> addresses = addressCompanyService.getAllForCurrentCompany();
 
@@ -39,6 +41,7 @@ public class AddressCompanyController {
      *
      */
     @PostMapping
+    @PreAuthorize("hasAuthority('ROLE_COMPANY') or hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<ResponseWrapper<AddressCompanyResponse>> create(
             @Valid @RequestBody FormAddressCompany form
     ) {
@@ -57,6 +60,7 @@ public class AddressCompanyController {
      *
      */
     @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('ROLE_COMPANY') or hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<ResponseWrapper<AddressCompanyResponse>> update(
             @PathVariable Long id,
             @Valid @RequestBody FormAddressCompany form
@@ -76,6 +80,7 @@ public class AddressCompanyController {
      *
      */
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('ROLE_COMPANY') or hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<ResponseWrapper<String>> delete(@PathVariable Long id) {
         addressCompanyService.delete(id);
 

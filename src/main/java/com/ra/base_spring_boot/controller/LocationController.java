@@ -4,6 +4,7 @@ import com.ra.base_spring_boot.model.Location;
 import com.ra.base_spring_boot.services.LocationService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Date;
@@ -21,12 +22,14 @@ public class LocationController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAuthority('ROLE_COMPANY') or hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<List<Location>> getAll() {
 
         return ResponseEntity.ok(service.getAll());
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('ROLE_COMPANY') or hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<?> getById(@PathVariable Long id) {
         Location location = service.getById(id);
         if (location == null) {
@@ -36,6 +39,7 @@ public class LocationController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAuthority('ROLE_COMPANY') or hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<Location> create(@RequestBody Location location) {
 
         Date now = new Date();
@@ -48,6 +52,8 @@ public class LocationController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('ROLE_COMPANY') or hasAuthority('ROLE_ADMIN')")
+
     public ResponseEntity<?> update(@PathVariable Long id, @RequestBody Location form) {
         Location existed = service.getById(id);
         if (existed == null) {
@@ -61,6 +67,7 @@ public class LocationController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('ROLE_COMPANY') or hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<?> delete(@PathVariable Long id) {
         Location existed = service.getById(id);
         if (existed == null) {
