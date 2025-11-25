@@ -107,7 +107,7 @@ public class AdminController {
         return skillService.findById(id);
     }
 
-    @PostMapping("/skill/{id}")
+    @PostMapping("/skill")
     public Skill create(@RequestBody Skill skill) {
         return skillService.create(skill);
     }
