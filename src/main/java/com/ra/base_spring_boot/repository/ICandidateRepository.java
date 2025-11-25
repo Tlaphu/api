@@ -32,4 +32,5 @@ public interface ICandidateRepository extends JpaRepository<Candidate, Long> {
     @Query("SELECT c FROM Candidate c JOIN c.favoriteJobs f WHERE f.id = :jobId")
     List<Candidate> findAllCandidatesByFavoriteJobId(@Param("jobId") Long jobId);
     List<Candidate> findByIsPremiumTrueAndPremiumUntilBefore(Date date);
+    List<Candidate> findByStatusFalseAndActivationExpiryDateBefore(Date expirationDate);
 }
