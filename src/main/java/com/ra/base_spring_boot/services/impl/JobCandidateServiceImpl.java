@@ -121,6 +121,10 @@ public class JobCandidateServiceImpl implements JobCandidateService {
      * Phương thức ánh xạ từ JobCandidate Entity sang JobCandidateResponse DTO.
      * ĐÃ BỔ SUNG: Tên công ty, URL và Tiêu đề CV.
      */
+    /**
+     * Phương thức ánh xạ từ JobCandidate Entity sang JobCandidateResponse DTO.
+     * ĐÃ BỔ SUNG: Tên công ty, URL và Tiêu đề CV, và đã sửa lỗi joblocation.
+     */
     private JobCandidateResponse toResponse(JobCandidate entity) {
 
         JobCandidateResponse response = new JobCandidateResponse();
@@ -134,8 +138,19 @@ public class JobCandidateServiceImpl implements JobCandidateService {
             Job job = entity.getJob();
             response.setJobId(job.getId());
             response.setJobTitle(job.getTitle());
-            response.setJobSalary(job.getSalary().toString());
-            // ⭐️ BỔ SUNG: TÊN CÔNG TY ⭐️
+            // Chuyển đổi Double sang String (đã có trong code gốc)
+            response.setJobSalary(job.getSalary() != null ? job.getSalary().toString() : null);
+            response.setJobDescription(job.getDescription());
+            response.setJobBenefits(job.getBenefits());
+
+            // ⭐️ PHẦN ĐÃ SỬA LỖI: Lấy Name từ Location Entity ⭐️
+            if (job.getLocation() != null) {
+                response.setJoblocation(job.getLocation().getName()); // Lấy tên Location
+            } else {
+                response.setJoblocation(null);
+            }
+
+            // BỔ SUNG: TÊN CÔNG TY
             if (job.getCompany() != null) {
                 response.setCompanyName(job.getCompany().getName());
             } else {
@@ -172,7 +187,7 @@ public class JobCandidateServiceImpl implements JobCandidateService {
         }
 
         if (entity.getCandidateCV() != null) {
-            // ⭐️ BỔ SUNG: ID, URL VÀ TIÊU ĐỀ CV ⭐️
+            // BỔ SUNG: ID, URL VÀ TIÊU ĐỀ CV
             response.setCvId(entity.getCandidateCV().getId());
             response.setCvFileUrl(entity.getCandidateCV().getFile_cv());
             response.setCvTitle(entity.getCandidateCV().getTitle());
@@ -185,7 +200,7 @@ public class JobCandidateServiceImpl implements JobCandidateService {
         return response;
     }
 
-    // ... (Giữ nguyên các phương thức khác) ...
+
 
     private String calculateFileHash(MultipartFile file) throws Exception {
         MessageDigest digest = MessageDigest.getInstance("SHA-256");

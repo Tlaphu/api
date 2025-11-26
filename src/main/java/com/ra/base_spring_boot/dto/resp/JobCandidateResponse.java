@@ -19,6 +19,10 @@ public class JobCandidateResponse {
     private String jobTitle;
     private String companyName; // <--- ĐÃ THÊM: Tên Công ty
     private String jobSalary;
+    private String jobRequirement;
+    private String jobDescription;
+    private String jobBenefits;
+    private String joblocation;
     private Long candidateId;
     private String candidateName;
     private String candidateTitle;
