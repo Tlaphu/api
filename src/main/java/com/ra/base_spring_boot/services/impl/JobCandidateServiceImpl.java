@@ -134,7 +134,7 @@ public class JobCandidateServiceImpl implements JobCandidateService {
             Job job = entity.getJob();
             response.setJobId(job.getId());
             response.setJobTitle(job.getTitle());
-
+            response.setJobSalary(job.getSalary().toString());
             // ⭐️ BỔ SUNG: TÊN CÔNG TY ⭐️
             if (job.getCompany() != null) {
                 response.setCompanyName(job.getCompany().getName());
