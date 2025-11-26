@@ -138,14 +138,14 @@ public class JobCandidateServiceImpl implements JobCandidateService {
             Job job = entity.getJob();
             response.setJobId(job.getId());
             response.setJobTitle(job.getTitle());
-            // Chuyển đổi Double sang String (đã có trong code gốc)
+            response.setJobworkTime(job.getWorkTime());
             response.setJobSalary(job.getSalary() != null ? job.getSalary().toString() : null);
             response.setJobDescription(job.getDescription());
             response.setJobBenefits(job.getBenefits());
 
-            // ⭐️ PHẦN ĐÃ SỬA LỖI: Lấy Name từ Location Entity ⭐️
+
             if (job.getLocation() != null) {
-                response.setJoblocation(job.getLocation().getName()); // Lấy tên Location
+                response.setJoblocation(job.getLocation().getName());
             } else {
                 response.setJoblocation(null);
             }

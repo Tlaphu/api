@@ -23,6 +23,7 @@ public class JobCandidateResponse {
     private String jobDescription;
     private String jobBenefits;
     private String joblocation;
+    private String jobworkTime;
     private Long candidateId;
     private String candidateName;
     private String candidateTitle;
