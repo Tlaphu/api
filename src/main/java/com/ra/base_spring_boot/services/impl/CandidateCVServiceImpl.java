@@ -628,42 +628,42 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
     public byte[] generatePdfFromCV(Long cvId, Long candidateId) {
         CandidateCV cvEntity = getCVById(cvId, candidateId);
 
-
         String htmlContent = generateHtmlContent(cvEntity);
 
         try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
 
             PdfRendererBuilder builder = new PdfRendererBuilder();
 
-
-            File fontFile = new File("src/main/resources/fonts/arial.ttf");
-            String fontName = "ArialUnicode";
-
+            // SỬ DỤNG PHÔNG CHỮ ROBOTO (Tên tệp và tên phông chữ tùy chỉnh)
+            File fontFile = new File("src/main/resources/fonts/Roboto-VariableFont_wdth,wght.ttf");
+            String fontName = "Roboto"; // Tên phông chữ sẽ được sử dụng trong CSS (font-family)
 
             String baseUrl = templatePrefix.replace("classpath:", "file:///") + "cv/";
 
             if (fontFile.exists()) {
 
+
                 builder.useFont(fontFile, fontName);
 
 
-                htmlContent = htmlContent.replace("font-family: Arial, sans-serif;", "font-family: " + fontName + ", sans-serif;");
+                htmlContent = htmlContent.replace("font-family: 'ArialUnicode', sans-serif;", "font-family: '" + fontName + "', sans-serif;");
+                htmlContent = htmlContent.replace("font-family: Arial, sans-serif;", "font-family: '" + fontName + "', sans-serif;");
             } else {
 
-                System.err.println("WARNING: Unicode font file (arial.ttf) not found at " + fontFile.getAbsolutePath() + ". Tiếng Việt có thể bị lỗi.");
+                System.err.println("WARNING: Unicode font file (" + fontFile.getName() + ") not found at " + fontFile.getAbsolutePath() + ". Tiếng Việt có thể bị lỗi.");
             }
 
 
             builder.withHtmlContent(htmlContent, baseUrl);
 
-
+            // Xuất PDF
             builder.toStream(os);
             builder.run();
 
             return os.toByteArray();
 
         } catch (IOException e) {
-
+            // Xử lý lỗi trong quá trình biên dịch HTML sang PDF
             throw new RuntimeException("Error during HTML to PDF compilation: " + e.getMessage(), e);
         }
     }
