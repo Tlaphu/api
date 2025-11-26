@@ -11,60 +11,99 @@
             padding: 0;
             font-size: 14px;
             line-height: 1.5;
-            /* Giữ nguyên chiều rộng A4, nhưng sẽ được ghi đè bởi .cv-container */
+
             width: 100%;
             color: #333;
         }
 
         .cv-container {
-            /* THAY ĐỔI QUAN TRỌNG: Sử dụng chiều rộng cố định gần với A4 và xóa flexbox */
-            width: 842px; /* Khoảng 21cm ở 96 DPI */
+
+            width: 842px;
             margin: 0 auto;
-            overflow: hidden; /* Quan trọng để chứa các cột float */
-            min-height: 1120px; /* Chiều cao A4 */
+            overflow: hidden;
+            min-height: 1120px;
             border: 1px solid #eee;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
         }
 
         .left-col {
-            /* THAY ĐỔI QUAN TRỌNG: Sử dụng float cho layout 2 cột ổn định hơn trong PDF */
+
             float: left;
-            width: 250px; /* Chiều rộng cố định cho cột trái (khoảng 30%) */
+            width: 250px;
             padding: 25px 20px;
-            background-color: #f7f9fa; /* Màu xám nhạt */
+            background-color: #f7f9fa;
             border-right: 1px solid #e0e0e0;
-            min-height: 1120px; /* Quan trọng để background kéo dài hết trang */
-            box-sizing: border-box; /* Tính padding vào width */
+            min-height: 1120px;
+            box-sizing: border-box;
         }
 
         .right-col {
-            /* THAY ĐỔI QUAN TRỌNG: Sử dụng float và width còn lại */
+
             float: left;
-            width: 592px; /* 842px - 250px (width left) */
+            width: 592px;
             padding: 25px 30px;
             box-sizing: border-box;
             min-height: 1120px;
         }
 
-        /* Clearfix cho các section bên trong, đảm bảo nội dung không bị float */
+
         .section {
             clear: both;
             margin-bottom: 20px;
         }
 
-        /* ... (Giữ nguyên các style khác) ... */
 
         .avatar-container {
             text-align: center;
             margin-bottom: 20px;
         }
-        .avatar {
+
+
+        .avatar-container-wrapper {
+
+            width: 94px;
+            height: 94px;
+
+
+            padding: 2px;
+
+            border-radius: 50%;
+            overflow: hidden;
+            margin: 0 auto;
+        }
+
+
+        .avatar-background {
+            width: 100%;
+            height: 100%;
+
+            border: 2px solid #5a9bd4;
+            border-radius: 50%;
+
+
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            display: block;
+        }
+
+
+        .no-avatar-frame {
             width: 90px;
             height: 90px;
             border-radius: 50%;
-            object-fit: cover;
             border: 2px solid #5a9bd4;
+            margin: 0 auto;
+            background-color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #5a9bd4;
+            font-size: 14px;
         }
+        /* -------------------------- */
+
+
         .name { font-size: 18px; font-weight: bold; color: #333; margin-top: 10px; margin-bottom: 3px; text-align: center; }
         .title { font-size: 14px; color: #555; margin-bottom: 15px; text-align: center; }
 
@@ -119,16 +158,12 @@
 
     <div class="left-col">
         <div class="avatar-container">
-            <div th:if="${cvData.avatar != null}">
-                <img th:src="${cvData.avatar}" alt="Avatar" class="avatar"/>
+            <div th:if="${cvData.avatar != null}" class="avatar-container-wrapper">
+                <div class="avatar-background" th:style="'background-image: url(' + ${cvData.avatar} + ');'"></div>
             </div>
-            <div th:unless="${cvData.avatar != null}" style="
-                width: 90px;
-                height: 90px;
-                border-radius: 50%;
-                border: 2px solid #5a9bd4;
-                margin: 0 auto;
-                background-color: #fff;">
+
+            <div th:unless="${cvData.avatar != null}" class="no-avatar-frame">
+                Avatar
             </div>
         </div>
         <div class="name" th:text="${cvData.name}">Nguyễn Quỳnh Như</div>

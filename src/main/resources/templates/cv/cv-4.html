@@ -2,14 +2,14 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8"/>
-    <title th:text="${cvData.name} + ' - Template 4 (Fixed for PDF)'"></title>
+    <title th:text="${cvData.name} + ' - Template 4'"></title>
 
     <style>
-        /* CSS Cơ bản */
+
         * { box-sizing: border-box; }
         body { font-family: 'ArialUnicode', sans-serif; margin: 0; padding: 0; font-size: 13px; line-height: 1.5; color: #333; }
 
-        /* CSS cho CV Container và Columns */
+
         .cv-container {
             width: 780px;
             margin: 0 auto;
@@ -19,7 +19,7 @@
             overflow: hidden;
         }
 
-        /* Tỷ lệ 60% cho cột trái */
+
         .left-col {
             width: 60%;
             padding: 20px 25px 20px 25px;
@@ -29,10 +29,10 @@
             margin-bottom: -9999px;
         }
 
-        /* Tỷ lệ 40% cho cột phải */
+
         .right-col {
             width: 40%;
-            /* Padding 0px ngang để tối đa không gian */
+
             padding: 20px 0px 20px 20px;
             background-color: #F8FAFC;
             border-left: 1px solid #ccc;
@@ -43,11 +43,57 @@
             margin-bottom: -9999px;
         }
 
-        /* CSS cho các thành phần con (Giữ nguyên các điều chỉnh xuống dòng an toàn) */
+
         .header-content { display: flex; align-items: center; gap: 15px; margin-bottom: 25px; }
         .name { font-size: 20px; font-weight: bold; color: #007ACC; margin: 0; }
         .title { font-size: 15px; font-weight: 600; color: #444; margin-top: 5px; }
-        .avatar { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 2px solid #ccc; }
+
+
+
+        .avatar-container-wrapper {
+
+            width: 84px;
+            height: 84px;
+
+
+            padding: 2px;
+
+            border-radius: 50%;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .avatar-background {
+            width: 100%;
+            height: 100%;
+
+            border: 2px solid #ccc;
+            border-radius: 50%;
+
+
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            display: block;
+        }
+
+
+        .no-avatar-frame {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 2px solid #ccc;
+
+            background-color: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+            font-size: 12px;
+            flex-shrink: 0;
+        }
+
+
         .section-title { font-size: 13px; font-weight: bold; color: #007ACC; margin-bottom: 8px; border-bottom: 1px solid #007ACC; padding-bottom: 3px; text-transform: uppercase; }
         .section { margin-bottom: 20px; }
 
@@ -95,8 +141,12 @@
 
     <div class="left-col">
         <div class="header-content">
-            <div th:if="${cvData.avatar != null}">
-                <img th:src="${cvData.avatar}" alt="Avatar" class="avatar"/>
+
+            <div th:if="${cvData.avatar != null}" class="avatar-container-wrapper">
+                <div class="avatar-background" th:style="'background-image: url(' + ${cvData.avatar} + ');'"></div>
+            </div>
+            <div th:unless="${cvData.avatar != null}" class="no-avatar-frame">
+                Avatar
             </div>
 
             <div style="flex: 1;">

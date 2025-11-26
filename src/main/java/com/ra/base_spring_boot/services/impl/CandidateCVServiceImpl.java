@@ -11,11 +11,16 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.io.File;
+
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+
 import com.ra.base_spring_boot.exception.HttpForbiden;
+
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -44,7 +49,8 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
     // INJECT THYMELAFF TEMPLATE ENGINE
     @Qualifier("pdfTemplateEngine")
     private final TemplateEngine templateEngine;
-
+    @Value("${spring.thymeleaf.prefix:classpath:/templates/}")
+    private String templatePrefix;
     @Value("${file.upload.cv-dir:./uploads/cv_files/}")
     private String UPLOAD_DIR;
     private static final SimpleDateFormat YEAR_FORMAT = new SimpleDateFormat("yyyy");
@@ -172,9 +178,10 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
         cvEntity.setDescription(cvForm.getDescription() != null ? cvForm.getDescription() : candidate.getDescription());
         cvEntity.setDevelopment(cvForm.getDevelopment() != null ? cvForm.getDevelopment() : candidate.getTitle());
         cvEntity.setCandidateTitle(cvForm.getCandidateTitle() != null ? cvForm.getCandidateTitle() : candidate.getTitle());
-        cvEntity.setHobbies(cvForm.getHobbies()!= null ? cvForm.getHobbies() : cvEntity.getHobbies());
+        cvEntity.setHobbies(cvForm.getHobbies() != null ? cvForm.getHobbies() : cvEntity.getHobbies());
         cvEntity.setAvatar(cvForm.getAvatar() != null ? cvForm.getAvatar() : cvEntity.getAvatar());
     }
+
     @Override
     @Transactional
     public CandidateCV setCvPublicStatus(Long cvId, Long candidateId, Boolean isPublic) {
@@ -621,15 +628,19 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
     public byte[] generatePdfFromCV(Long cvId, Long candidateId) {
         CandidateCV cvEntity = getCVById(cvId, candidateId);
 
+
         String htmlContent = generateHtmlContent(cvEntity);
 
         try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
 
             PdfRendererBuilder builder = new PdfRendererBuilder();
 
-            File fontFile = new File("src/main/resources/fonts/arial.ttf");
 
+            File fontFile = new File("src/main/resources/fonts/arial.ttf");
             String fontName = "ArialUnicode";
+
+
+            String baseUrl = templatePrefix.replace("classpath:", "file:///") + "cv/";
 
             if (fontFile.exists()) {
 
@@ -637,12 +648,16 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
 
 
                 htmlContent = htmlContent.replace("font-family: Arial, sans-serif;", "font-family: " + fontName + ", sans-serif;");
+            } else {
+
+                System.err.println("WARNING: Unicode font file (arial.ttf) not found at " + fontFile.getAbsolutePath() + ". Tiếng Việt có thể bị lỗi.");
             }
 
-            builder.withHtmlContent(htmlContent, "file:///base/");
+
+            builder.withHtmlContent(htmlContent, baseUrl);
+
 
             builder.toStream(os);
-
             builder.run();
 
             return os.toByteArray();
@@ -683,6 +698,7 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
             throw new RuntimeException(errorMessage, e);
         }
     }
+
     @Override
     public CandidateCV getPublicCVById(Long cvId) {
         return candidateCVRepository.findById(cvId)
@@ -690,17 +706,20 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
                 .orElseThrow(() -> new HttpBadRequest("Public CV not found with ID: " + cvId));
 
     }
+
     @Override
     public List<CandidateCV> getCVsByPublicStatus(boolean isPublic) {
         // Gọi Repository với cú pháp đúng của JPA
         return candidateCVRepository.findByIsPublic(isPublic);
     }
+
     @Override
     @Transactional(readOnly = true)
     public List<CandidateCV> getAllPublicCVsByCandidateId(Long candidateId) {
         // Gọi phương thức Repository mới
         return candidateCVRepository.findByCandidate_IdAndIsPublic(candidateId, true);
     }
+
     private Date getStartOfMonth(Date date) {
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(date);

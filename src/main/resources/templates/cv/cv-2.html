@@ -11,18 +11,18 @@
             padding: 0;
             font-size: 14px;
             line-height: 1.5;
-            max-width: 867.56px; /* A4 width */
+            max-width: 867.56px;
             margin: 0 auto;
             color: #333;
         }
         .cv-container {
             border: 1px solid #eee;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-            min-height: 1120px; /* A4 height */
+            min-height: 1120px;
             background-color: #fff;
         }
 
-        /* HEADER SECTION: AVATAR TRÁI, TEXT PHẢI */
+
         .header-section {
             display: flex;
             align-items: center;
@@ -31,40 +31,79 @@
             border-bottom: 1px solid #eee;
             margin-bottom: 15px;
         }
+
+
+
         .avatar-wrapper {
-            width: 120px;
-            height: 120px;
+            width: 124px;
+            height: 124px;
+
             border-radius: 50%;
             overflow: hidden;
             flex-shrink: 0;
             margin-right: 25px;
-            border: 2px solid #b91c1c;
+
+
         }
-        .avatar {
+
+        .avatar-background {
             width: 100%;
             height: 100%;
-            object-fit: cover;
+
+
+            padding: 2px;
+
+
+            box-sizing: border-box;
+
+
+            border: 2px solid #b91c1c;
+            border-radius: 50%;
+
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
         }
+
+
+        .no-avatar-frame {
+            width: 100%;
+            height: 100%;
+            background-color: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+            font-size: 0.7em;
+
+            border-radius: 50%;
+            border: 2px solid #b91c1c;
+            box-sizing: border-box;
+        }
+
+
+
         .name-title-objective {
             flex-grow: 1;
         }
-        /* ĐÃ SỬA: KHÔI PHỤC KHOẢNG CÁCH DỌC VÀ SỬ DỤNG LẠI H1/H2 (Ưu tiên) */
+
+
         .name {
             font-size: 22px;
             font-weight: bold;
             color: #b91c1c;
-            margin: 0 0 5px 0; /* Khoảng cách giữa tên và chức danh */
+            margin: 0 0 5px 0;
             padding: 0;
         }
         .title {
             font-size: 16px;
             font-weight: 600;
             color: #444;
-            margin: 0 0 15px 0; /* Khoảng cách giữa chức danh và mục tiêu */
+            margin: 0 0 15px 0;
             padding: 0;
         }
 
-        /* Đảm bảo tiêu đề mục tiêu kéo dài hết */
+
         .objective-title {
             font-weight: bold;
             color: #b91c1c;
@@ -80,7 +119,7 @@
 
         .main-content { padding: 20px 30px; }
 
-        /* BỐ CỤC 3 CỘT LỚN: SỬ DỤNG TABLE CHUẨN (CỰC KỲ ỔN ĐỊNH) */
+
         .three-col-table {
             width: 100%;
             border-collapse: collapse;
@@ -92,14 +131,17 @@
             vertical-align: top;
             font-size: 0.9em;
         }
+
+
         .three-col-table .col-separator {
             width: 1px;
-            background-color: #eee;
+            background-color: transparent;
             padding: 0;
         }
         .three-col-table .last-col {
             padding-right: 0;
         }
+
         .three-col-table tr {
             border-bottom: 1px solid #ddd;
         }
@@ -151,10 +193,11 @@
     <div class="header-section">
 
         <div class="avatar-wrapper">
-            <div th:if="${cvData.avatar != null}">
-                <img th:src="${cvData.avatar}" alt="Avatar" class="avatar"/>
+            <div th:if="${cvData.avatar != null}"
+                 class="avatar-background"
+                 th:style="'background-image: url(' + ${cvData.avatar} + ');'">
             </div>
-            <div th:unless="${cvData.avatar != null}" style="width: 100%; height: 100%; background-color: #f0f0f0; display: flex; align-items: center; justify-content: center; color: #666; font-size: 0.7em;">
+            <div th:unless="${cvData.avatar != null}" class="no-avatar-frame">
                 Avatar
             </div>
         </div>
@@ -250,7 +293,7 @@
             <div class="section-title">KỸ NĂNG</div>
             <div th:if="${cvData.skills != null and !cvData.skills.isEmpty()}">
                 <ul class="info-list" style="display: flex; flex-wrap: wrap; gap: 10px; list-style: none; padding: 0;">
-                    <li th:each="skill : ${cvData.skills}" style="border: 1px solid #ccc; padding: 3px 8px; border-radius: 3px; font-size: 0.9em;" th:text="${skill}"></li>
+                    <li th:each="skill : ${cvData.skills}" style="padding: 3px 8px; font-size: 0.9em;" th:text="${skill}"></li>
                 </ul>
             </div>
             <p th:unless="${cvData.skills != null and !cvData.skills.isEmpty()}" class="placeholder-text">Chưa có kỹ năng</p>
