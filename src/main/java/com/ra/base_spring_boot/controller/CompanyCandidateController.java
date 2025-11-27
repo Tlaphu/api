@@ -1,19 +1,21 @@
 package com.ra.base_spring_boot.controller;
 
-import com.ra.base_spring_boot.dto.resp.JobCandidateResponse;
 import com.ra.base_spring_boot.exception.HttpBadRequest;
+import com.ra.base_spring_boot.model.AccountCompany;
 import com.ra.base_spring_boot.security.jwt.JwtProvider;
 import com.ra.base_spring_boot.services.ICandidateCVService;
-import com.ra.base_spring_boot.model.AccountCompany;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
-import java.util.NoSuchElementException;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/v1/company/cv")
 @RequiredArgsConstructor
@@ -23,38 +25,39 @@ public class CompanyCandidateController {
     private final ICandidateCVService candidateCVService;
     private final JwtProvider jwtProvider;
 
+    /**
+     * Lấy companyId từ token (chỉ khi user là COMPANY)
+     */
     private Long getCurrentCompanyId() {
         AccountCompany company = jwtProvider.getCurrentAccountCompany();
         if (company == null) {
-            throw new NoSuchElementException("Company not authenticated.");
+            throw new HttpBadRequest("Cần đăng nhập bằng tài khoản Công ty.");
         }
         return company.getId();
     }
 
-
+    /**
+     * API tải CV – admin tải tất cả, company tải CV ứng viên apply vào job của công ty
+     */
     @GetMapping("/{cvId}/download")
     public ResponseEntity<byte[]> downloadCandidateCv(@PathVariable Long cvId) {
-        Long companyId = getCurrentCompanyId();
 
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
-        byte[] pdfBytes = candidateCVService.downloadCvForCompany(cvId, companyId);
+        Long companyId = auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))
+                ? null                // ADMIN → bỏ check quyền
+                : getCurrentCompanyId(); // COMPANY → bắt buộc check quyền
 
-        if (pdfBytes == null || pdfBytes.length == 0) {
-            throw new HttpBadRequest("Failed to retrieve CV content.");
-        }
+        
+        byte[] fileBytes = candidateCVService.downloadCvForCompany(cvId, companyId);
+
 
         HttpHeaders headers = new HttpHeaders();
-
-        String filename = "CV_" + cvId + ".pdf";
-
         headers.setContentType(MediaType.APPLICATION_PDF);
-        headers.setContentDispositionFormData("inline", filename);
-        headers.setContentLength(pdfBytes.length);
+        headers.setContentDispositionFormData("inline", "CV_" + cvId + ".pdf");
+        headers.setContentLength(fileBytes.length);
 
-        return new ResponseEntity<>(
-                pdfBytes,
-                headers,
-                HttpStatus.OK
-        );
+        return new ResponseEntity<>(fileBytes, headers, HttpStatus.OK);
     }
 }

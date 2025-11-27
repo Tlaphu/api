@@ -6,13 +6,11 @@
 
     <style>
         body {
-
             font-family: 'Roboto', sans-serif;
             margin: 0;
             padding: 0;
             font-size: 14px;
             line-height: 1.5;
-
             width: 100%;
             color: #333;
         }
@@ -44,18 +42,15 @@
             min-height: 1120px;
         }
 
-
         .section {
             clear: both;
             margin-bottom: 20px;
         }
 
-
         .avatar-container {
             text-align: center;
             margin-bottom: 20px;
         }
-
 
         .avatar-container-wrapper {
             width: 94px;
@@ -65,7 +60,6 @@
             overflow: hidden;
             margin: 0 auto;
         }
-
 
         .avatar-background {
             width: 100%;
@@ -77,7 +71,6 @@
             background-repeat: no-repeat;
             display: block;
         }
-
 
         .no-avatar-frame {
             width: 90px;
@@ -92,11 +85,23 @@
             color: #5a9bd4;
             font-size: 14px;
         }
+
         /* -------------------------- */
 
-
-        .name { font-size: 18px; font-weight: bold; color: #333; margin-top: 10px; margin-bottom: 3px; text-align: center; }
-        .title { font-size: 14px; color: #555; margin-bottom: 15px; text-align: center; }
+        .name {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-top: 10px;
+            margin-bottom: 3px;
+            text-align: center;
+        }
+        .title {
+            font-size: 14px;
+            color: #555;
+            margin-bottom: 15px;
+            text-align: center;
+        }
 
         .section-title {
             font-size: 14px;
@@ -115,7 +120,6 @@
 
         .info-list { list-style: none; padding: 0; margin: 0; font-size: 0.9em; }
         .info-item { margin-bottom: 7px; display: flex; align-items: flex-start; }
-        .info-item .icon { margin-right: 8px; font-size: 1.1em; color: #5a9bd4; }
 
         .skill-list {
             list-style-type: none;
@@ -125,16 +129,10 @@
         }
         .skill-list li {
             margin-bottom: 7px;
-            position: relative;
-            padding-left: 15px;
+            padding-left: 0;  /* bỏ padding-left vì không cần bullet */
         }
         .skill-list li:before {
-            content: "■";
-            font-size: 0.8em;
-            color: #333;
-            position: absolute;
-            left: 0;
-            top: 0;
+            content: ""; /* ⚡ XÓA DẤU CHẤM */
         }
 
         .item { margin-bottom: 15px; }
@@ -157,19 +155,21 @@
                 Avatar
             </div>
         </div>
+
         <div class="name" th:text="${cvData.name}">Nguyễn Quỳnh Như</div>
         <div class="title" th:text="${cvData.candidateTitle}">Vị trí ứng tuyển</div>
 
         <div class="section">
             <div class="section-title">LIÊN HỆ</div>
             <ul class="info-list">
-                <li class="info-item"><span class="icon">📧</span> Email: <span th:text="${cvData.email}">quynhnhu@gmail.com</span></li>
-                <li class="info-item"><span class="icon">📞</span> Phone: <span th:text="${cvData.phone}">(034) 6088 5288</span></li>
-                <li class="info-item"><span class="icon">🏠</span> Address: <span th:text="${cvData.address}">Cầu Giấy, Hà Nội</span></li>
-                <li class="info-item"><span class="icon">🎂</span> Birthday: <span th:if="${cvData.dob != null}" th:text="${#dates.format(cvData.dob, 'dd/MM/yyyy')}">18/10/1997</span></li>
-
+                <li class="info-item"> Email: <span th:text="${cvData.email}">quynhnhu@gmail.com</span></li>
+                <li class="info-item"> Phone: <span th:text="${cvData.phone}">(034) 6088 5288</span></li>
+                <li class="info-item">Address: <span th:text="${cvData.address}">Cầu Giấy, Hà Nội</span></li>
+                <li class="info-item"> Birthday:
+                    <span th:if="${cvData.dob != null}" th:text="${#dates.format(cvData.dob, 'dd/MM/yyyy')}">18/10/1997</span>
+                </li>
                 <li class="info-item" th:if="${cvData.link != null and !cvData.link.trim().isEmpty()}">
-                    <span class="icon">🔗</span> <a th:href="${cvData.link}" th:text="${cvData.link}" target="_blank">LinkedIn</a>
+                    <a th:href="${cvData.link}" th:text="${cvData.link}" target="_blank">LinkedIn</a>
                 </li>
             </ul>
         </div>
@@ -199,9 +199,9 @@
             <div class="section-title right">HỌC VẤN</div>
             <div th:each="i : ${#numbers.sequence(0, cvData.educations.size - 1)}" class="item">
                 <div class="item-header" th:text="${cvData.educations[i]}">Tên Trường</div>
-                <div class="item-period" th:with="
-                         start=${cvData.educationStartDates.size() > i ? cvData.educationStartDates[i] : '?'},
-                         end=${cvData.educationEndDates.size() > i ? cvData.educationEndDates[i] : 'Hiện tại'}"
+                <div class="item-period"
+                     th:with="start=${cvData.educationStartDates.size() > i ? cvData.educationStartDates[i] : '?'},
+                              end=${cvData.educationEndDates.size() > i ? cvData.educationEndDates[i] : 'Hiện tại'}"
                      th:text="${start} + ' - ' + ${end}"></div>
                 <div class="item-details" th:if="${cvData.educationMajors.size() > i}" th:text="'Chuyên ngành: ' + ${cvData.educationMajors[i]}"></div>
             </div>
@@ -211,11 +211,11 @@
             <div class="section-title right">KINH NGHIỆM LÀM VIỆC</div>
             <div th:each="i : ${#numbers.sequence(0, cvData.experiences.size - 1)}" class="item">
                 <div class="item-header" th:text="${cvData.experiences[i]}">Vị trí @ Công ty</div>
-                <div class="item-period" th:with="
-                         start=${cvData.experienceStartDates.size() > i ? cvData.experienceStartDates[i] : '?'},
-                         end=${cvData.experienceEndDates.size() > i ? cvData.experienceEndDates[i] : 'Hiện tại'}"
+                <div class="item-period"
+                     th:with="start=${cvData.experienceStartDates.size() > i ? cvData.experienceStartDates[i] : '?'},
+                              end=${cvData.experienceEndDates.size() > i ? cvData.experienceEndDates[i] : 'Hiện tại'}"
                      th:text="${start} + ' - ' + ${end}"></div>
-                <div class="item-details" th:utext="${#strings.replace(cvData.experienceInfos[i], '\n', '&lt;br/&gt;')}">Mô tả công việc</div>
+                <div class="item-details" th:utext="${#strings.replace(cvData.experienceInfos[i], '\n', '&lt;br/&gt;')}"></div>
             </div>
         </div>
 
@@ -223,11 +223,11 @@
             <div class="section-title right">HOẠT ĐỘNG</div>
             <div th:each="i : ${#numbers.sequence(0, cvData.projects.size - 1)}" class="item">
                 <div class="item-header" th:text="${cvData.projects[i]}">Tên Dự án/Hoạt động</div>
-                <div class="item-period" th:with="
-                         start=${cvData.projectStartDates.size() > i ? cvData.projectStartDates[i] : '?'},
-                         end=${cvData.projectEndDates.size() > i ? cvData.projectEndDates[i] : 'Hiện tại'}"
+                <div class="item-period"
+                     th:with="start=${cvData.projectStartDates.size() > i ? cvData.projectStartDates[i] : '?'},
+                              end=${cvData.projectEndDates.size() > i ? cvData.projectEndDates[i] : 'Hiện tại'}"
                      th:text="${start} + ' - ' + ${end}"></div>
-                <div class="item-details" th:utext="${#strings.replace(cvData.projectInfos[i], '\n', '&lt;br/&gt;')}">Mô tả</div>
+                <div class="item-details" th:utext="${#strings.replace(cvData.projectInfos[i], '\n', '&lt;br/&gt;')}"></div>
             </div>
         </div>
 
@@ -235,9 +235,9 @@
             <div class="section-title right">CHỨNG CHỈ</div>
             <div th:each="i : ${#numbers.sequence(0, cvData.certificates.size - 1)}" class="item">
                 <div class="item-header" th:text="${cvData.certificates[i]}">Tên Chứng chỉ</div>
-                <div class="item-period" th:with="
-                         org=${cvData.certificateOrganizations.size() > i ? cvData.certificateOrganizations[i] : 'N/A'}"
-                     th:text="'Tổ chức: ' + ${org}">Tổ chức cấp</div>
+                <div class="item-period"
+                     th:with="org=${cvData.certificateOrganizations.size() > i ? cvData.certificateOrganizations[i] : 'N/A'}"
+                     th:text="'Tổ chức: ' + ${org}"></div>
             </div>
         </div>
 

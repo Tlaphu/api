@@ -196,42 +196,47 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
     @Override
     public byte[] downloadCvForCompany(Long cvId, Long companyId) {
 
+
         CandidateCV cvEntity = candidateCVRepository.findById(cvId)
                 .orElseThrow(() -> new NoSuchElementException("CV not found with id: " + cvId));
 
-        List<JobCandidate> applications = jobCandidateRepository.findByCandidateCVId(cvId);
 
-        boolean hasPermission = applications.stream()
-                .anyMatch(app -> app.getJob().getCompany().getId().equals(companyId));
+        if (companyId != null) {
+            List<JobCandidate> applications = jobCandidateRepository.findByCandidateCVId(cvId);
 
-        if (!hasPermission) {
-            throw new HttpForbiden("Access Denied: This CV is not associated with any of your company's job applications.");
+            boolean hasPermission = applications.stream()
+                    .anyMatch(app -> app.getJob().getCompany().getId().equals(companyId));
+
+            if (!hasPermission) {
+                throw new HttpForbiden("Access Denied: This CV is not associated with your company.");
+            }
         }
 
+
         if (cvEntity.getIs_upload_file() != null && !cvEntity.getIs_upload_file()) {
-
             return generatePdfFromCV(cvId, cvEntity.getCandidate().getId());
+        }
 
-        } else {
-            String filePathString = cvEntity.getFile_cv();
-            if (filePathString == null || filePathString.isEmpty()) {
-                throw new HttpBadRequest("File CV path is missing. Cannot retrieve uploaded file.");
-            }
 
-            try {
-                Path filePath = Paths.get(filePathString);
+        String filePathString = cvEntity.getFile_cv();
+        if (filePathString == null || filePathString.isEmpty()) {
+            throw new HttpBadRequest("File CV path is missing.");
+        }
 
+        try {
+            Path filePath = Paths.get(filePathString);
+
+            if (!Files.exists(filePath)) {
+                filePath = Paths.get(UPLOAD_DIR, filePathString);
                 if (!Files.exists(filePath)) {
-                    filePath = Paths.get(UPLOAD_DIR, filePathString);
-                    if (!Files.exists(filePath)) {
-                        throw new IOException("CV file not found (Check if file path in DB is correct: " + filePathString + ")");
-                    }
+                    throw new IOException("CV file not found: " + filePathString);
                 }
-
-                return Files.readAllBytes(filePath);
-            } catch (IOException e) {
-                throw new RuntimeException("Failed to read CV file: " + e.getMessage(), e);
             }
+
+            return Files.readAllBytes(filePath);
+
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to read CV file", e);
         }
     }
 
