@@ -67,11 +67,10 @@ public class VNPayServiceImpl implements VNPayService {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Logic chuyển đổi từ Entity PaymentTransaction sang DTO (Bao gồm thông tin người mua)
-     */
+
     private TransactionResponseDTO convertToDto(PaymentTransaction transaction) {
         TransactionResponseDTO dto = new TransactionResponseDTO();
+        Date premiumDate = null; // Khởi tạo biến lưu ngày hết hạn
 
         // 1. Sao chép các trường trực tiếp
         dto.setId(transaction.getId());
@@ -82,7 +81,10 @@ public class VNPayServiceImpl implements VNPayService {
         dto.setVnpayTxnRef(transaction.getVnpayTxnRef());
         dto.setPaymentDate(transaction.getPaymentDate());
 
-        // 2. Lấy thông tin gói đăng ký
+
+        premiumDate = transaction.getPremiumUntil();
+
+       
         if (transaction.getSubscriptionPlan() != null) {
             dto.setSubscriptionPlanName(transaction.getSubscriptionPlan().getName());
             dto.setSubscriptionDurationDays(transaction.getSubscriptionPlan().getDurationInDays());
@@ -97,6 +99,11 @@ public class VNPayServiceImpl implements VNPayService {
             dto.setUserIdentifier(transaction.getCandidate().getName());
             dto.setUserId(transaction.getCandidate().getId());
 
+            // Nếu PremiumUntil của Transaction NULL, lấy từ Candidate
+            if (premiumDate == null) {
+                premiumDate = transaction.getCandidate().getPremiumUntil();
+            }
+
         } else if (transaction.getAccountCompany() != null) {
             dto.setUserType("Company");
             // Lấy tên công ty
@@ -107,15 +114,22 @@ public class VNPayServiceImpl implements VNPayService {
             dto.setUserIdentifier(companyName);
             dto.setUserId(transaction.getAccountCompany().getId());
 
+            // Nếu PremiumUntil của Transaction NULL, lấy từ AccountCompany
+            if (premiumDate == null) {
+                premiumDate = transaction.getAccountCompany().getPremiumUntil();
+            }
+
         } else {
             dto.setUserType("Unknown");
             dto.setUserIdentifier("N/A");
             dto.setUserId(null);
         }
 
+        // Gán giá trị PremiumUntil cuối cùng (có thể là NULL, từ Transaction, hoặc từ User Entity)
+        dto.setPremiumUntil(premiumDate);
+
         return dto;
     }
-
     // --- PHƯƠNG THỨC MỚI CHO ADMIN END ---
 
 
@@ -198,7 +212,6 @@ public class VNPayServiceImpl implements VNPayService {
         String vnp_ResponseCode = params.get("vnp_ResponseCode");
         String vnp_TxnRef = params.get("vnp_TxnRef");
 
-
         params.remove("vnp_SecureHash");
         Map<String, String> sortedParams = VNPayUtil.sortParams(params);
         String hashData;
@@ -209,7 +222,6 @@ public class VNPayServiceImpl implements VNPayService {
         }
         String generatedHash = VNPayUtil.hmacSHA512(vnpayProperties.getHashSecret(), hashData);
 
-
         if (!generatedHash.equals(vnp_SecureHash)) {
             return false;
         }
@@ -217,28 +229,28 @@ public class VNPayServiceImpl implements VNPayService {
         PaymentTransaction transaction = transactionRepository.findByVnpayTxnRef(vnp_TxnRef)
                 .orElse(null);
 
-
         if (transaction == null) {
             return false;
         }
 
         String currentStatus = transaction.getTransactionStatus();
         if ("SUCCESS".equals(currentStatus) || "FAILED".equals(currentStatus)) {
-
             return "00".equals(vnp_ResponseCode) && "SUCCESS".equals(currentStatus);
         }
 
-
         if ("00".equals(vnp_ResponseCode)) {
 
-            transaction.setTransactionStatus("SUCCESS"); // Đổi sang SUCCESS
+            // Cập nhật trạng thái và ngày thanh toán
+            transaction.setTransactionStatus("SUCCESS");
             transaction.setPaymentDate(new Date());
-            transactionRepository.save(transaction);
 
             int durationInDays = transaction.getSubscriptionPlan().getDurationInDays();
 
             Calendar c = Calendar.getInstance();
             Date currentDate = getCurrentDateWithoutTime();
+            Date newPremiumUntil = null; // Khởi tạo biến lưu ngày hết hạn
+
+            boolean isCompanyFirstTimePurchase = false;
 
             if (transaction.getCandidate() != null) {
 
@@ -252,8 +264,9 @@ public class VNPayServiceImpl implements VNPayService {
                 }
 
                 c.add(Calendar.DATE, durationInDays);
-                Date newPremiumUntil = c.getTime();
+                newPremiumUntil = c.getTime();
 
+                // Cập nhật Candidate và lưu
                 candidate.setPremium(true);
                 candidate.setStatus(true);
                 candidate.setPremiumUntil(newPremiumUntil);
@@ -264,41 +277,52 @@ public class VNPayServiceImpl implements VNPayService {
                 AccountCompany principalAccount = transaction.getAccountCompany();
                 Date currentPremiumUntil = principalAccount.getPremiumUntil();
 
-                boolean isFirstTimePurchase = (currentPremiumUntil == null || currentPremiumUntil.before(currentDate));
+                isCompanyFirstTimePurchase = (currentPremiumUntil == null || currentPremiumUntil.before(currentDate));
 
-                if (isFirstTimePurchase) {
+                if (isCompanyFirstTimePurchase) {
                     c.setTime(currentDate);
                 } else {
                     c.setTime(currentPremiumUntil);
                 }
 
                 c.add(Calendar.DATE, durationInDays);
-                Date newPremiumUntil = c.getTime();
+                newPremiumUntil = c.getTime();
 
+                // Cập nhật AccountCompany và lưu
                 principalAccount.setPremium(true);
                 principalAccount.setPremiumUntil(newPremiumUntil);
-
                 principalAccount.setStatus(true);
                 accountCompanyRepository.save(principalAccount);
-
-                // Extend and unlock sub-accounts upon renewal
-                if (!isFirstTimePurchase) {
-                    unlockAndExtendSubAccounts(principalAccount, newPremiumUntil);
-                }
-
-                // Create sub-accounts only for the first-time purchase
-                if (isFirstTimePurchase) {
-                    createExtraAccounts(principalAccount, principalAccount.getCompany());
-                }
 
             } else {
                 return false;
             }
 
+
+            if (newPremiumUntil != null) {
+                transaction.setPremiumUntil(newPremiumUntil);
+            }
+            transactionRepository.save(transaction);
+
+
+            if (transaction.getAccountCompany() != null) {
+                AccountCompany principalAccount = transaction.getAccountCompany();
+
+
+                if (!isCompanyFirstTimePurchase) {
+                    unlockAndExtendSubAccounts(principalAccount, newPremiumUntil);
+                }
+
+
+                if (isCompanyFirstTimePurchase) {
+                    createExtraAccounts(principalAccount, principalAccount.getCompany());
+                }
+            }
+
             return true;
         } else {
 
-            // Payment Failed
+
             transaction.setTransactionStatus("FAILED");
             transactionRepository.save(transaction);
             return false;

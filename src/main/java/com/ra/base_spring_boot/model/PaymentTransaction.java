@@ -49,7 +49,8 @@ public class PaymentTransaction {
 
     private String vnpayOrderInfo;
     private String vnpayTxnRef;
-
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date premiumUntil;
     @Temporal(TemporalType.TIMESTAMP)
     private Date paymentDate;
 
