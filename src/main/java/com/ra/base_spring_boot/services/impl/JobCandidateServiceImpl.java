@@ -142,7 +142,7 @@ public class JobCandidateServiceImpl implements JobCandidateService {
             response.setJobSalary(job.getSalary() != null ? job.getSalary().toString() : null);
             response.setJobDescription(job.getDescription());
             response.setJobBenefits(job.getBenefits());
-
+            response.setJobRequirement(job.getRequirements() != null ? job.getRequirements().toString() : null);
 
             if (job.getLocation() != null) {
                 response.setJoblocation(job.getLocation().getName());
