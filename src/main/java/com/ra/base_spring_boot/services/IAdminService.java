@@ -27,9 +27,11 @@ public interface IAdminService {
 
     void deleteAccountCompany(Long id);
 
+    boolean activateCompanyAccount(Long id);
+
+    // AddressCompany Management
     List<AddressCompanyResponse> getAllByCompanyId(Long companyId);
     AddressCompanyResponse create(Long companyId, FormAddressCompany form);
     AddressCompanyResponse update(Long id, FormAddressCompany form);
     void delete(Long id);
-    boolean activateCompanyAccount(Long id);
 }

@@ -1,5 +1,6 @@
 package com.ra.base_spring_boot.services.impl;
 
+import com.ra.base_spring_boot.dto.req.FormAddressCompany; // ĐÃ THÊM IMPORT
 import com.ra.base_spring_boot.dto.req.FormLogin;
 import com.ra.base_spring_boot.dto.req.FormUpdateCompany;
 import com.ra.base_spring_boot.dto.resp.*;
@@ -16,12 +17,13 @@ import com.ra.base_spring_boot.security.jwt.JwtProvider;
 import com.ra.base_spring_boot.security.principle.MyAdminDetails;
 import com.ra.base_spring_boot.services.IAdminService;
 import com.ra.base_spring_boot.services.EmailService;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.crypto.password.PasswordEncoder; // Đã thêm
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import com.ra.base_spring_boot.dto.req.FormUpdateProfile;
 
@@ -33,7 +35,6 @@ import java.util.stream.Collectors;
 @Service
 public class AdminServiceImpl implements IAdminService {
 
-
     private static final String DEFAULT_PASSWORD = "Welcome123!";
 
     private final AuthenticationManager adminAuthManager;
@@ -42,8 +43,6 @@ public class AdminServiceImpl implements IAdminService {
     private final IAccountCompanyRepository accountCompanyRepository;
     private final IAddressCompanyRepository addressCompanyRepository;
     private final ICandidateRepository candidateRepository;
-
-
     private final EmailService emailService;
     private final PasswordEncoder passwordEncoder;
 
@@ -95,56 +94,37 @@ public class AdminServiceImpl implements IAdminService {
     }
 
     @Override
-    public boolean activateCompanyAccount(Long id) { // 👈 Sửa từ 'void' thành 'boolean'
+    public boolean activateCompanyAccount(Long id) {
 
-        // 1. Tìm tài khoản và xử lý lỗi
         AccountCompany account = accountCompanyRepository.findById(id)
                 .orElseThrow(() -> new HttpBadRequest("Company Account not found"));
 
         boolean wasActive = account.isStatus();
-        boolean newStatus = !wasActive; // Giá trị cần trả về
+        boolean newStatus = !wasActive;
         account.setStatus(newStatus);
 
-        // --- Xử lý khi TẮT (Deactivate) ---
         if (!newStatus) {
-            // newStatus = false
-
-            // Khi tài khoản bị TẮT, xóa token để đảm bảo người dùng không thể đăng nhập.
             account.setVerificationToken(null);
             accountCompanyRepository.save(account);
-
-            return newStatus; // 👈 Trả về false
+            return newStatus;
         }
 
-        // --- Xử lý khi BẬT (Activate) (newStatus = true) ---
-
-        // Đảm bảo token xác minh được xóa khi tài khoản được kích hoạt
         account.setVerificationToken(null);
 
-        // Kiểm tra: Đây có phải là lần kích hoạt đầu tiên và cần gửi mật khẩu mặc định?
         if (account.getPassword() == null) {
 
-            // Trường hợp LẦN ĐẦU: Đặt mật khẩu mặc định và gửi email
             account.setPassword(passwordEncoder.encode(DEFAULT_PASSWORD));
-
             accountCompanyRepository.save(account);
 
-            // Gửi email chứa thông tin đăng nhập mặc định
             emailService.sendLoginCredentialsEmail(
                     account.getEmail(),
                     account.getFullName(),
                     DEFAULT_PASSWORD
             );
-
         } else {
-
-            // Trường hợp LẦN 2 trở lên: Giữ lại mật khẩu cũ.
             accountCompanyRepository.save(account);
-
-            // KHÔNG gửi email mật khẩu mặc định.
         }
-
-        return newStatus; // 👈 Trả về true (vì newStatus = true)
+        return newStatus;
     }
 
     @Override
@@ -249,7 +229,6 @@ public class AdminServiceImpl implements IAdminService {
         candidateRepository.delete(candidate);
     }
 
-
     @Override
     public List<AccountCompanyResponse> findAllAccountsCompany() {
         return accountCompanyRepository.findAll()
@@ -282,8 +261,35 @@ public class AdminServiceImpl implements IAdminService {
     }
 
     @Override
+    @Transactional
     public void deleteAccountCompany(Long id) {
-        accountCompanyRepository.deleteById(id);
+        // Cập nhật logic: Tìm account trước khi xóa để xử lý ngoại lệ đồng nhất
+        AccountCompany account = accountCompanyRepository.findById(id)
+                .orElseThrow(() -> new HttpBadRequest("Account Company not found"));
+
+        accountCompanyRepository.delete(account);
+    }
+
+    // --- Triển khai các phương thức Address Company mới ---
+
+    @Override
+    public List<AddressCompanyResponse> getAllByCompanyId(Long companyId) {
+        throw new UnsupportedOperationException("Not implemented yet");
+    }
+
+    @Override
+    public AddressCompanyResponse create(Long companyId, FormAddressCompany form) {
+        throw new UnsupportedOperationException("Not implemented yet");
+    }
+
+    @Override
+    public AddressCompanyResponse update(Long id, FormAddressCompany form) {
+        throw new UnsupportedOperationException("Not implemented yet");
+    }
+
+    @Override
+    public void delete(Long id) {
+        throw new UnsupportedOperationException("Not implemented yet");
     }
 
 
@@ -363,5 +369,4 @@ public class AdminServiceImpl implements IAdminService {
                                 .collect(Collectors.toList()))
                 .build();
     }
-
 }
