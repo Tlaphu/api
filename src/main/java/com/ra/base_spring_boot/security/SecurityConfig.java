@@ -148,7 +148,9 @@ public class SecurityConfig {
 
                         .requestMatchers("/api/v1/admin/**").hasAuthority(RoleName.ROLE_ADMIN.toString())
                         .requestMatchers("/api/v1/candidate/**").hasAuthority(RoleName.ROLE_CANDIDATE.toString())
-                        .requestMatchers("/api/v1/company/**").hasAuthority(RoleName.ROLE_COMPANY.toString())
+                        .requestMatchers("/api/v1/company/**")
+                        .hasAnyAuthority(RoleName.ROLE_COMPANY.toString(), RoleName.ROLE_ADMIN.toString())
+
                         .requestMatchers("/api/v1/job-candidates/**")
                         .hasAnyAuthority(RoleName.ROLE_ADMIN.toString(), RoleName.ROLE_COMPANY.toString(), RoleName.ROLE_CANDIDATE.toString())
                         .anyRequest().authenticated()

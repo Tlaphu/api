@@ -11,11 +11,16 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.io.File;
+
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+
 import com.ra.base_spring_boot.exception.HttpForbiden;
+
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -44,7 +49,8 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
     // INJECT THYMELAFF TEMPLATE ENGINE
     @Qualifier("pdfTemplateEngine")
     private final TemplateEngine templateEngine;
-
+    @Value("${spring.thymeleaf.prefix:classpath:/templates/}")
+    private String templatePrefix;
     @Value("${file.upload.cv-dir:./uploads/cv_files/}")
     private String UPLOAD_DIR;
     private static final SimpleDateFormat YEAR_FORMAT = new SimpleDateFormat("yyyy");
@@ -172,9 +178,10 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
         cvEntity.setDescription(cvForm.getDescription() != null ? cvForm.getDescription() : candidate.getDescription());
         cvEntity.setDevelopment(cvForm.getDevelopment() != null ? cvForm.getDevelopment() : candidate.getTitle());
         cvEntity.setCandidateTitle(cvForm.getCandidateTitle() != null ? cvForm.getCandidateTitle() : candidate.getTitle());
-        cvEntity.setHobbies(cvForm.getHobbies()!= null ? cvForm.getHobbies() : cvEntity.getHobbies());
+        cvEntity.setHobbies(cvForm.getHobbies() != null ? cvForm.getHobbies() : cvEntity.getHobbies());
         cvEntity.setAvatar(cvForm.getAvatar() != null ? cvForm.getAvatar() : cvEntity.getAvatar());
     }
+
     @Override
     @Transactional
     public CandidateCV setCvPublicStatus(Long cvId, Long candidateId, Boolean isPublic) {
@@ -189,42 +196,47 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
     @Override
     public byte[] downloadCvForCompany(Long cvId, Long companyId) {
 
+
         CandidateCV cvEntity = candidateCVRepository.findById(cvId)
                 .orElseThrow(() -> new NoSuchElementException("CV not found with id: " + cvId));
 
-        List<JobCandidate> applications = jobCandidateRepository.findByCandidateCVId(cvId);
 
-        boolean hasPermission = applications.stream()
-                .anyMatch(app -> app.getJob().getCompany().getId().equals(companyId));
+        if (companyId != null) {
+            List<JobCandidate> applications = jobCandidateRepository.findByCandidateCVId(cvId);
 
-        if (!hasPermission) {
-            throw new HttpForbiden("Access Denied: This CV is not associated with any of your company's job applications.");
+            boolean hasPermission = applications.stream()
+                    .anyMatch(app -> app.getJob().getCompany().getId().equals(companyId));
+
+            if (!hasPermission) {
+                throw new HttpForbiden("Access Denied: This CV is not associated with your company.");
+            }
         }
 
+
         if (cvEntity.getIs_upload_file() != null && !cvEntity.getIs_upload_file()) {
-
             return generatePdfFromCV(cvId, cvEntity.getCandidate().getId());
+        }
 
-        } else {
-            String filePathString = cvEntity.getFile_cv();
-            if (filePathString == null || filePathString.isEmpty()) {
-                throw new HttpBadRequest("File CV path is missing. Cannot retrieve uploaded file.");
-            }
 
-            try {
-                Path filePath = Paths.get(filePathString);
+        String filePathString = cvEntity.getFile_cv();
+        if (filePathString == null || filePathString.isEmpty()) {
+            throw new HttpBadRequest("File CV path is missing.");
+        }
 
+        try {
+            Path filePath = Paths.get(filePathString);
+
+            if (!Files.exists(filePath)) {
+                filePath = Paths.get(UPLOAD_DIR, filePathString);
                 if (!Files.exists(filePath)) {
-                    filePath = Paths.get(UPLOAD_DIR, filePathString);
-                    if (!Files.exists(filePath)) {
-                        throw new IOException("CV file not found (Check if file path in DB is correct: " + filePathString + ")");
-                    }
+                    throw new IOException("CV file not found: " + filePathString);
                 }
-
-                return Files.readAllBytes(filePath);
-            } catch (IOException e) {
-                throw new RuntimeException("Failed to read CV file: " + e.getMessage(), e);
             }
+
+            return Files.readAllBytes(filePath);
+
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to read CV file", e);
         }
     }
 
@@ -627,28 +639,36 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
 
             PdfRendererBuilder builder = new PdfRendererBuilder();
 
-            File fontFile = new File("src/main/resources/fonts/arial.ttf");
+            // SỬ DỤNG PHÔNG CHỮ ROBOTO (Tên tệp và tên phông chữ tùy chỉnh)
+            File fontFile = new File("src/main/resources/fonts/Roboto-VariableFont_wdth,wght.ttf");
+            String fontName = "Roboto"; // Tên phông chữ sẽ được sử dụng trong CSS (font-family)
 
-            String fontName = "ArialUnicode";
+            String baseUrl = templatePrefix.replace("classpath:", "file:///") + "cv/";
 
             if (fontFile.exists()) {
+
 
                 builder.useFont(fontFile, fontName);
 
 
-                htmlContent = htmlContent.replace("font-family: Arial, sans-serif;", "font-family: " + fontName + ", sans-serif;");
+                htmlContent = htmlContent.replace("font-family: 'ArialUnicode', sans-serif;", "font-family: '" + fontName + "', sans-serif;");
+                htmlContent = htmlContent.replace("font-family: Arial, sans-serif;", "font-family: '" + fontName + "', sans-serif;");
+            } else {
+
+                System.err.println("WARNING: Unicode font file (" + fontFile.getName() + ") not found at " + fontFile.getAbsolutePath() + ". Tiếng Việt có thể bị lỗi.");
             }
 
-            builder.withHtmlContent(htmlContent, "file:///base/");
 
+            builder.withHtmlContent(htmlContent, baseUrl);
+
+            // Xuất PDF
             builder.toStream(os);
-
             builder.run();
 
             return os.toByteArray();
 
         } catch (IOException e) {
-
+            // Xử lý lỗi trong quá trình biên dịch HTML sang PDF
             throw new RuntimeException("Error during HTML to PDF compilation: " + e.getMessage(), e);
         }
     }
@@ -683,6 +703,7 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
             throw new RuntimeException(errorMessage, e);
         }
     }
+
     @Override
     public CandidateCV getPublicCVById(Long cvId) {
         return candidateCVRepository.findById(cvId)
@@ -690,17 +711,20 @@ public class CandidateCVServiceImpl implements ICandidateCVService {
                 .orElseThrow(() -> new HttpBadRequest("Public CV not found with ID: " + cvId));
 
     }
+
     @Override
     public List<CandidateCV> getCVsByPublicStatus(boolean isPublic) {
         // Gọi Repository với cú pháp đúng của JPA
         return candidateCVRepository.findByIsPublic(isPublic);
     }
+
     @Override
     @Transactional(readOnly = true)
     public List<CandidateCV> getAllPublicCVsByCandidateId(Long candidateId) {
         // Gọi phương thức Repository mới
         return candidateCVRepository.findByCandidate_IdAndIsPublic(candidateId, true);
     }
+
     private Date getStartOfMonth(Date date) {
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(date);

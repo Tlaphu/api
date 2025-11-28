@@ -32,6 +32,7 @@ import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.NoSuchElementException;
+
 @Service
 public class JobCandidateServiceImpl implements JobCandidateService {
 
@@ -116,6 +117,14 @@ public class JobCandidateServiceImpl implements JobCandidateService {
                 .build();
     }
 
+    /**
+     * Phương thức ánh xạ từ JobCandidate Entity sang JobCandidateResponse DTO.
+     * ĐÃ BỔ SUNG: Tên công ty, URL và Tiêu đề CV.
+     */
+    /**
+     * Phương thức ánh xạ từ JobCandidate Entity sang JobCandidateResponse DTO.
+     * ĐÃ BỔ SUNG: Tên công ty, URL và Tiêu đề CV, và đã sửa lỗi joblocation.
+     */
     private JobCandidateResponse toResponse(JobCandidate entity) {
 
         JobCandidateResponse response = new JobCandidateResponse();
@@ -129,6 +138,26 @@ public class JobCandidateServiceImpl implements JobCandidateService {
             Job job = entity.getJob();
             response.setJobId(job.getId());
             response.setJobTitle(job.getTitle());
+            response.setJobworkTime(job.getWorkTime());
+            response.setJobSalary(job.getSalary() != null ? job.getSalary().toString() : null);
+            response.setJobDescription(job.getDescription());
+            response.setJobBenefits(job.getBenefits());
+            response.setJobRequirement(job.getRequirements() != null ? job.getRequirements().toString() : null);
+
+            if (job.getLocation() != null) {
+                response.setJoblocation(job.getLocation().getName());
+            } else {
+                response.setJoblocation(null);
+            }
+
+            // BỔ SUNG: TÊN CÔNG TY
+            if (job.getCompany() != null) {
+                response.setCompanyName(job.getCompany().getName());
+            } else {
+                response.setCompanyName(null);
+            }
+        } else {
+            response.setCompanyName(null);
         }
 
         if (entity.getCandidate() != null) {
@@ -144,7 +173,6 @@ public class JobCandidateServiceImpl implements JobCandidateService {
 
             if (skills != null && !skills.isEmpty()) {
 
-                // Đoạn code này là nơi gọi sc.getSkill().getName() và cần transaction
                 String allSkillNames = skills.stream()
                         .map(sc -> sc.getSkill() != null ? sc.getSkill().getName() : "")
                         .filter(name -> !name.isEmpty())
@@ -153,21 +181,27 @@ public class JobCandidateServiceImpl implements JobCandidateService {
 
                 response.setSkillcandidateName(allSkillNames);
 
-                // Bỏ qua skillcandidateId (vì nó đã bị xóa logic)
-
             } else {
                 response.setSkillcandidateName(null);
             }
         }
 
         if (entity.getCandidateCV() != null) {
+            // BỔ SUNG: ID, URL VÀ TIÊU ĐỀ CV
             response.setCvId(entity.getCandidateCV().getId());
+            response.setCvFileUrl(entity.getCandidateCV().getFile_cv());
+            response.setCvTitle(entity.getCandidateCV().getTitle());
         } else {
             response.setCvId(null);
+            response.setCvFileUrl(null);
+            response.setCvTitle(null);
         }
 
         return response;
     }
+
+
+
     private String calculateFileHash(MultipartFile file) throws Exception {
         MessageDigest digest = MessageDigest.getInstance("SHA-256");
         byte[] hash = digest.digest(file.getBytes());

@@ -35,6 +35,7 @@ public class Candidate {
     @Builder.Default
     private boolean status = false;
     private String verificationToken;
+
     @Column(unique = true) 
     private String resetToken;
     private String Title;
@@ -108,4 +109,6 @@ public class Candidate {
     @OneToMany(mappedBy = "candidate", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private Set<ProjectCandidate> projectCandidates = new HashSet<>();
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date activationExpiryDate;
 }

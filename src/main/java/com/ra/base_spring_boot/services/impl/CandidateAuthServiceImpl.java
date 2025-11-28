@@ -42,22 +42,31 @@ public class CandidateAuthServiceImpl implements ICandidateAuthService {
     private final JwtProvider jwtProvider;
     private final EmailService emailService;
     private final ApplicationEventPublisher eventPublisher;
-    private static final String BASE_URL = "http://localhost:8080/api/v1/auth/candidate";
+    private static final String BASE_URL = "http://localhost:5173";
 
     @Override
     public void register(FormRegisterCandidate formRegisterCandidate) {
+
         if (candidateRepository.existsByEmail(formRegisterCandidate.getEmail())) {
             throw new HttpBadRequest("Email is already registered");
         }
+
 
         if (!formRegisterCandidate.getPassword().equals(formRegisterCandidate.getConfirmPassword())) {
             throw new HttpBadRequest("Passwords do not match");
         }
 
+
         Set<Role> roles = new HashSet<>();
         roles.add(roleService.findByRoleName(RoleName.ROLE_CANDIDATE));
 
+
         String verificationToken = UUID.randomUUID().toString();
+
+
+        long tenMinutesInMillis = 10 * 60 * 1000;
+        Date expiryDate = new Date(System.currentTimeMillis() + tenMinutesInMillis);
+
 
         Candidate candidate = Candidate.builder()
                 .name(formRegisterCandidate.getName())
@@ -69,12 +78,16 @@ public class CandidateAuthServiceImpl implements ICandidateAuthService {
                 .updated_at(new Date())
                 .isOpen(1)
                 .verificationToken(verificationToken)
+
+                .activationExpiryDate(expiryDate)
                 .status(false)
                 .build();
 
+
         candidateRepository.save(candidate);
 
-        String confirmationLink = BASE_URL + "/verify?token=" + verificationToken;
+
+        String confirmationLink = BASE_URL + "/verify-candidate?token=" + verificationToken;
 
         emailService.sendVerificationEmail(
                 formRegisterCandidate.getEmail(),

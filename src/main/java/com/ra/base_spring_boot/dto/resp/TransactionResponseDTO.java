@@ -23,6 +23,7 @@ public class TransactionResponseDTO {
     private String vnpayTxnRef;
     private Date paymentDate;
 
+    private Date premiumUntil;
 
     private String subscriptionPlanName;
     private Integer subscriptionDurationDays;
