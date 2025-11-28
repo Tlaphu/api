@@ -203,6 +203,7 @@ public class AdminServiceImpl implements IAdminService {
                 .website(company.getWebsite())
                 .link_fb(company.getLink_fb())
                 .link_linkedin(company.getLink_linkedin())
+                .link_Github(company.getLink_Github())
                 .follower(company.getFollower())
                 .size(company.getSize())
                 .description(company.getDescription())
