@@ -252,6 +252,7 @@ public class CompanyAuthServiceImpl implements ICompanyAuthService {
         company.setDescription(form.getDescription());
         company.setCompanyPolicy(form.getCompanyPolicy());
         company.setUpdated_at(new Date());
+        company.setSize(form.getSize());
 
         companyRepository.save(company);
     }
