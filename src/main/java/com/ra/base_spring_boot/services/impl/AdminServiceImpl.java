@@ -275,7 +275,7 @@ public class AdminServiceImpl implements IAdminService {
                                         .link_fb(account.getCompany().getLink_fb())
                                         .link_linkedin(account.getCompany().getLink_linkedin())
                                         .logo(account.getCompany().getLogo())
-
+                                        .website(account.getCompany().getWebsite())
                                         .build()
                         )
                         .build()
