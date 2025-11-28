@@ -16,12 +16,13 @@ import com.ra.base_spring_boot.security.jwt.JwtProvider;
 import com.ra.base_spring_boot.security.principle.MyAdminDetails;
 import com.ra.base_spring_boot.services.IAdminService;
 import com.ra.base_spring_boot.services.EmailService;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.crypto.password.PasswordEncoder; // Đã thêm
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import com.ra.base_spring_boot.dto.req.FormUpdateProfile;
 
@@ -95,41 +96,31 @@ public class AdminServiceImpl implements IAdminService {
     }
 
     @Override
-    public boolean activateCompanyAccount(Long id) { // 👈 Sửa từ 'void' thành 'boolean'
+    public boolean activateCompanyAccount(Long id) {
 
-        // 1. Tìm tài khoản và xử lý lỗi
         AccountCompany account = accountCompanyRepository.findById(id)
                 .orElseThrow(() -> new HttpBadRequest("Company Account not found"));
 
         boolean wasActive = account.isStatus();
-        boolean newStatus = !wasActive; // Giá trị cần trả về
+        boolean newStatus = !wasActive;
         account.setStatus(newStatus);
 
-        // --- Xử lý khi TẮT (Deactivate) ---
         if (!newStatus) {
-            // newStatus = false
 
-            // Khi tài khoản bị TẮT, xóa token để đảm bảo người dùng không thể đăng nhập.
             account.setVerificationToken(null);
             accountCompanyRepository.save(account);
 
-            return newStatus; // 👈 Trả về false
+            return newStatus;
         }
 
-        // --- Xử lý khi BẬT (Activate) (newStatus = true) ---
-
-        // Đảm bảo token xác minh được xóa khi tài khoản được kích hoạt
         account.setVerificationToken(null);
 
-        // Kiểm tra: Đây có phải là lần kích hoạt đầu tiên và cần gửi mật khẩu mặc định?
         if (account.getPassword() == null) {
 
-            // Trường hợp LẦN ĐẦU: Đặt mật khẩu mặc định và gửi email
             account.setPassword(passwordEncoder.encode(DEFAULT_PASSWORD));
 
             accountCompanyRepository.save(account);
 
-            // Gửi email chứa thông tin đăng nhập mặc định
             emailService.sendLoginCredentialsEmail(
                     account.getEmail(),
                     account.getFullName(),
@@ -138,13 +129,10 @@ public class AdminServiceImpl implements IAdminService {
 
         } else {
 
-            // Trường hợp LẦN 2 trở lên: Giữ lại mật khẩu cũ.
             accountCompanyRepository.save(account);
-
-            // KHÔNG gửi email mật khẩu mặc định.
         }
 
-        return newStatus; // 👈 Trả về true (vì newStatus = true)
+        return newStatus;
     }
 
     @Override
@@ -282,8 +270,13 @@ public class AdminServiceImpl implements IAdminService {
     }
 
     @Override
+    @Transactional
     public void deleteAccountCompany(Long id) {
-        accountCompanyRepository.deleteById(id);
+
+        AccountCompany account = accountCompanyRepository.findById(id)
+                .orElseThrow(() -> new HttpBadRequest("Không tìm thấy tài khoản công ty"));
+
+        accountCompanyRepository.delete(account);
     }
 
 
@@ -363,5 +356,4 @@ public class AdminServiceImpl implements IAdminService {
                                 .collect(Collectors.toList()))
                 .build();
     }
-
 }

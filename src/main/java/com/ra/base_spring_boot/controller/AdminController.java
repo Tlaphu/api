@@ -5,8 +5,6 @@ import com.ra.base_spring_boot.dto.req.FormUpdateCompany;
 import com.ra.base_spring_boot.dto.req.FormUpdateProfile;
 import com.ra.base_spring_boot.dto.resp.*;
 import com.ra.base_spring_boot.model.Skill;
-import com.ra.base_spring_boot.repository.ICandidateRepository;
-import com.ra.base_spring_boot.repository.ICompanyRepository;
 import com.ra.base_spring_boot.services.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -26,11 +24,13 @@ public class AdminController {
     private final IBlacklistedWordService blacklistedWordService;
     private final ICompanyAuthService companyAuthService;
 
+    // --- Authentication ---
     @PostMapping("/login")
     public ResponseEntity<JwtResponse> login(@RequestBody FormLogin formLogin) {
         return ResponseEntity.ok(adminService.login(formLogin));
     }
 
+    // --- Company Management ---
     @GetMapping("/companies")
     public ResponseEntity<List<CompanyResponse>> getAllCompanies() {
         return ResponseEntity.ok(adminService.findAll());
@@ -49,6 +49,7 @@ public class AdminController {
         adminService.deleteCompany(id);
         return ResponseEntity.ok("Company deleted successfully");
     }
+
 
     @GetMapping("/candidates")
     public ResponseEntity<List<CandidateResponse>> getAllCandidates() {
@@ -69,6 +70,7 @@ public class AdminController {
         return ResponseEntity.ok("Candidate deleted successfully");
     }
 
+   
     @GetMapping("/companies/accounts")
     public ResponseEntity<List<AccountCompanyResponse>> getAllAccountsCompany() {
         return ResponseEntity.ok(adminService.findAllAccountsCompany());
@@ -76,14 +78,13 @@ public class AdminController {
 
     @DeleteMapping("/companies/accounts/{id}")
     public ResponseEntity<?> deleteAccountCompany(@PathVariable Long id) {
+        // Sử dụng phương thức chuẩn hóa: deleteAccountCompany(id)
         adminService.deleteAccountCompany(id);
-        return ResponseEntity.ok("Account company deleted successfully");
+        return ResponseEntity.ok("Company account deleted successfully");
     }
 
-
-    @PutMapping("/companies/accounts/status/{id}") // Đổi tên endpoint
+    @PutMapping("/companies/accounts/status/{id}")
     public ResponseEntity<String> toggleCompanyAccountStatus(@PathVariable Long id) {
-        // Gọi service và nhận lại trạng thái mới
         boolean isNowActive = adminService.activateCompanyAccount(id);
 
         String message;
@@ -95,6 +96,8 @@ public class AdminController {
 
         return ResponseEntity.ok(message);
     }
+
+    // --- Skill Management ---
     @GetMapping("/skill")
     public List<Skill> getAll() {
         return skillService.findAll();
@@ -120,10 +123,14 @@ public class AdminController {
         skillService.delete(id);
         return "Deleted skill with id: " + id;
     }
-    @GetMapping("/admin/notifications")
+
+    // --- Notification Management ---
+    @GetMapping("/notifications")
     public ResponseEntity<?> getAllAdminNotifications() {
         return ResponseEntity.ok(notificationService.getAllNotificationsForAdmin());
     }
+
+    // --- Blacklisted Word Management ---
     @GetMapping("/words")
     public List<String> listWords() {
         return blacklistedWordService.findAllWords();
@@ -141,5 +148,4 @@ public class AdminController {
         blacklistedWordService.removeById(id);
         return ResponseEntity.ok().build();
     }
-
 }

@@ -84,7 +84,7 @@ public class VNPayServiceImpl implements VNPayService {
 
         premiumDate = transaction.getPremiumUntil();
 
-       
+
         if (transaction.getSubscriptionPlan() != null) {
             dto.setSubscriptionPlanName(transaction.getSubscriptionPlan().getName());
             dto.setSubscriptionDurationDays(transaction.getSubscriptionPlan().getDurationInDays());
