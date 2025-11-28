@@ -1,12 +1,10 @@
 package com.ra.base_spring_boot.services;
 
+import com.ra.base_spring_boot.dto.req.FormAddressCompany;
 import com.ra.base_spring_boot.dto.req.FormLogin;
 import com.ra.base_spring_boot.dto.req.FormUpdateCompany;
 import com.ra.base_spring_boot.dto.req.FormUpdateProfile;
-import com.ra.base_spring_boot.dto.resp.AccountCompanyResponse;
-import com.ra.base_spring_boot.dto.resp.CandidateResponse;
-import com.ra.base_spring_boot.dto.resp.CompanyResponse;
-import com.ra.base_spring_boot.dto.resp.JwtResponse;
+import com.ra.base_spring_boot.dto.resp.*;
 
 import java.util.List;
 
@@ -29,6 +27,9 @@ public interface IAdminService {
 
     void deleteAccountCompany(Long id);
 
-
+    List<AddressCompanyResponse> getAllByCompanyId(Long companyId);
+    AddressCompanyResponse create(Long companyId, FormAddressCompany form);
+    AddressCompanyResponse update(Long id, FormAddressCompany form);
+    void delete(Long id);
     boolean activateCompanyAccount(Long id);
 }

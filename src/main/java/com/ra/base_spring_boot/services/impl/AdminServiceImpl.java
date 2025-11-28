@@ -1,17 +1,12 @@
 package com.ra.base_spring_boot.services.impl;
 
+import com.ra.base_spring_boot.dto.req.FormAddressCompany;
 import com.ra.base_spring_boot.dto.req.FormLogin;
 import com.ra.base_spring_boot.dto.req.FormUpdateCompany;
 import com.ra.base_spring_boot.dto.resp.*;
 import com.ra.base_spring_boot.exception.HttpBadRequest;
-import com.ra.base_spring_boot.model.Admin;
-import com.ra.base_spring_boot.model.Candidate;
-import com.ra.base_spring_boot.model.Company;
-import com.ra.base_spring_boot.model.AccountCompany;
-import com.ra.base_spring_boot.repository.IAccountCompanyRepository;
-import com.ra.base_spring_boot.repository.IAddressCompanyRepository;
-import com.ra.base_spring_boot.repository.ICandidateRepository;
-import com.ra.base_spring_boot.repository.ICompanyRepository;
+import com.ra.base_spring_boot.model.*;
+import com.ra.base_spring_boot.repository.*;
 import com.ra.base_spring_boot.security.jwt.JwtProvider;
 import com.ra.base_spring_boot.security.principle.MyAdminDetails;
 import com.ra.base_spring_boot.services.IAdminService;
@@ -42,6 +37,7 @@ public class AdminServiceImpl implements IAdminService {
     private final IAccountCompanyRepository accountCompanyRepository;
     private final IAddressCompanyRepository addressCompanyRepository;
     private final ICandidateRepository candidateRepository;
+    private final ILocationRepository locationRepository;
 
 
     private final EmailService emailService;
@@ -53,7 +49,7 @@ public class AdminServiceImpl implements IAdminService {
             ICompanyRepository companyRepository,
             IAccountCompanyRepository accountCompanyRepository,
             IAddressCompanyRepository addressCompanyRepository,
-            ICandidateRepository candidateRepository,
+            ICandidateRepository candidateRepository, ILocationRepository locationRepository,
             EmailService emailService,
             PasswordEncoder passwordEncoder
     ) {
@@ -63,6 +59,7 @@ public class AdminServiceImpl implements IAdminService {
         this.accountCompanyRepository = accountCompanyRepository;
         this.addressCompanyRepository = addressCompanyRepository;
         this.candidateRepository = candidateRepository;
+        this.locationRepository = locationRepository;
         this.emailService = emailService;
         this.passwordEncoder = passwordEncoder;
     }
@@ -184,6 +181,7 @@ public class AdminServiceImpl implements IAdminService {
         companyRepository.save(company);
         return toResponse(company);
     }
+
 
     private CompanyResponse toResponse(Company company) {
         List<AddressCompanyResponse> addresses = addressCompanyRepository.findByCompany(company)
@@ -363,5 +361,68 @@ public class AdminServiceImpl implements IAdminService {
                                 .collect(Collectors.toList()))
                 .build();
     }
+    @Override
+    public List<AddressCompanyResponse> getAllByCompanyId(Long companyId) {
+        Company company = companyRepository.findById(companyId)
+                .orElseThrow(() -> new HttpBadRequest("Company not found with id: " + companyId));
 
+        return addressCompanyRepository.findByCompany(company)
+                .stream()
+                .map(this::toAddressResponse)
+                .toList();
+    }
+
+    @Override
+    public AddressCompanyResponse create(Long companyId, FormAddressCompany form) {
+        Company company = companyRepository.findById(companyId)
+                .orElseThrow(() -> new HttpBadRequest("Company not found with id: " + companyId));
+
+        Location location = locationRepository.findById(form.getLocationId())
+                .orElseThrow(() -> new HttpBadRequest("Location not found with id: " + form.getLocationId()));
+
+        AddressCompany address = AddressCompany.builder()
+                .company(company)
+                .address(form.getAddress())
+                .map_url(form.getMapUrl())
+                .location(location)
+                .build();
+
+        addressCompanyRepository.save(address);
+        return toAddressResponse(address);
+    }
+
+    @Override
+    public AddressCompanyResponse update(Long id, FormAddressCompany form) {
+        AddressCompany address = addressCompanyRepository.findById(id)
+                .orElseThrow(() -> new HttpBadRequest("Address not found with id: " + id));
+
+        if (form.getLocationId() != null) {
+            Location location = locationRepository.findById(form.getLocationId())
+                    .orElseThrow(() -> new HttpBadRequest("Location not found with id: " + form.getLocationId()));
+            address.setLocation(location);
+        }
+
+        address.setAddress(form.getAddress());
+        address.setMap_url(form.getMapUrl());
+
+        addressCompanyRepository.save(address);
+        return toAddressResponse(address);
+    }
+
+    @Override
+    public void delete(Long id) {
+        AddressCompany address = addressCompanyRepository.findById(id)
+                .orElseThrow(() -> new HttpBadRequest("Address not found with id: " + id));
+
+        addressCompanyRepository.delete(address);
+    }
+
+    private AddressCompanyResponse toAddressResponse(AddressCompany entity) {
+        return AddressCompanyResponse.builder()
+                .id(entity.getId())
+                .address(entity.getAddress())
+                .mapUrl(entity.getMap_url())
+                .locationName(entity.getLocation() != null ? entity.getLocation().getName() : null)
+                .build();
+    }
 }

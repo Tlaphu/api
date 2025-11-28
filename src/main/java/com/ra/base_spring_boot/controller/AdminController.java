@@ -1,5 +1,6 @@
 package com.ra.base_spring_boot.controller;
 
+import com.ra.base_spring_boot.dto.req.FormAddressCompany;
 import com.ra.base_spring_boot.dto.req.FormLogin;
 import com.ra.base_spring_boot.dto.req.FormUpdateCompany;
 import com.ra.base_spring_boot.dto.req.FormUpdateProfile;
@@ -95,6 +96,7 @@ public class AdminController {
 
         return ResponseEntity.ok(message);
     }
+
     @GetMapping("/skill")
     public List<Skill> getAll() {
         return skillService.findAll();
@@ -120,17 +122,19 @@ public class AdminController {
         skillService.delete(id);
         return "Deleted skill with id: " + id;
     }
+
     @GetMapping("/admin/notifications")
     public ResponseEntity<?> getAllAdminNotifications() {
         return ResponseEntity.ok(notificationService.getAllNotificationsForAdmin());
     }
+
     @GetMapping("/words")
     public List<String> listWords() {
         return blacklistedWordService.findAllWords();
     }
 
     @PostMapping("/words")
-    public ResponseEntity<?> addWord(@RequestBody Map<String,String> body) {
+    public ResponseEntity<?> addWord(@RequestBody Map<String, String> body) {
         String w = body.get("word");
         blacklistedWordService.addWord(w);
         return ResponseEntity.ok().build();
@@ -140,6 +144,47 @@ public class AdminController {
     public ResponseEntity<?> remove(@PathVariable Long id) {
         blacklistedWordService.removeById(id);
         return ResponseEntity.ok().build();
+    }
+
+    /**
+     * Lấy danh sách địa chỉ theo Company ID
+     */
+    @GetMapping("/{companyId}/addresses")
+    public ResponseEntity<List<AddressCompanyResponse>> getAll(
+            @PathVariable Long companyId
+    ) {
+        return ResponseEntity.ok(adminService.getAllByCompanyId(companyId));
+    }
+
+    /**
+     * Admin tạo mới địa chỉ cho một Company
+     */
+    @PostMapping("/{companyId}/addresses")
+    public ResponseEntity<AddressCompanyResponse> create(
+            @PathVariable Long companyId,
+            @RequestBody FormAddressCompany form
+    ) {
+        return ResponseEntity.ok(adminService.create(companyId, form));
+    }
+
+    /**
+     * Admin cập nhật địa chỉ
+     */
+    @PutMapping("/addresses/{addressId}")
+    public ResponseEntity<AddressCompanyResponse> update(
+            @PathVariable Long addressId,
+            @RequestBody FormAddressCompany form
+    ) {
+        return ResponseEntity.ok(adminService.update(addressId, form));
+    }
+
+    /**
+     * Admin xóa địa chỉ
+     */
+    @DeleteMapping("/addresses/{addressId}")
+    public ResponseEntity<?> deleteAddress(@PathVariable Long addressId) {
+        adminService.delete(addressId);
+        return ResponseEntity.ok("Deleted successfully");
     }
 
 }
