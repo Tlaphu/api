@@ -177,6 +177,7 @@ public class AdminServiceImpl implements IAdminService {
         company.setDescription(form.getDescription());
         company.setCompanyPolicy(form.getCompanyPolicy());
         company.setUpdated_at(new java.util.Date());
+        company.setSize(form.getSize());
 
         companyRepository.save(company);
         return toResponse(company);
