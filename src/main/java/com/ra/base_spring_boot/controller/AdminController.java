@@ -1,5 +1,6 @@
 package com.ra.base_spring_boot.controller;
 
+import com.ra.base_spring_boot.dto.req.FormAddressCompany;
 import com.ra.base_spring_boot.dto.req.FormLogin;
 import com.ra.base_spring_boot.dto.req.FormUpdateCompany;
 import com.ra.base_spring_boot.dto.req.FormUpdateProfile;
@@ -141,5 +142,23 @@ public class AdminController {
         blacklistedWordService.removeById(id);
         return ResponseEntity.ok().build();
     }
+    /**
+     * Admin cập nhật địa chỉ
+     */
+    @PutMapping("/addresses/{addressId}")
+    public ResponseEntity<AddressCompanyResponse> update(
+            @PathVariable Long addressId,
+            @RequestBody FormAddressCompany form
+    ) {
+        return ResponseEntity.ok(adminService.update(addressId, form));
+    }
 
+    /**
+     * Admin xóa địa chỉ
+     */
+    @DeleteMapping("/addresses/{addressId}")
+    public ResponseEntity<?> deleteAddress(@PathVariable Long addressId) {
+        adminService.delete(addressId);
+        return ResponseEntity.ok("Deleted successfully");
+    }
 }
