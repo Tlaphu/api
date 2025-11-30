@@ -2,6 +2,7 @@ package com.ra.base_spring_boot.services.impl;
 
 import com.ra.base_spring_boot.dto.req.*;
 import com.ra.base_spring_boot.dto.resp.*;
+import com.ra.base_spring_boot.event.NotificationEvent;
 import com.ra.base_spring_boot.exception.HttpBadRequest;
 import com.ra.base_spring_boot.model.*;
 import com.ra.base_spring_boot.model.constants.RoleName;
@@ -13,6 +14,7 @@ import com.ra.base_spring_boot.services.IRoleService;
 import com.ra.base_spring_boot.services.EmailService;
 import com.ra.base_spring_boot.repository.ICandidateRepository;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -43,6 +45,8 @@ public class CompanyAuthServiceImpl implements ICompanyAuthService {
     private final EmailService emailService;
     private final ICandidateRepository candidateRepository;
     private final JobRepository jobRepository;
+    private final ApplicationEventPublisher eventPublisher;
+
 
 
     public CompanyAuthServiceImpl(
@@ -54,7 +58,7 @@ public class CompanyAuthServiceImpl implements ICompanyAuthService {
             ITypeCompanyRepository typeCompanyRepository,
             @Qualifier("companyAuthManager") AuthenticationManager companyAuthManager,
             JwtProvider jwtProvider,
-            EmailService emailService, ICandidateRepository candidateRepository, JobRepository jobRepository
+            EmailService emailService, ICandidateRepository candidateRepository, JobRepository jobRepository, ApplicationEventPublisher eventPublisher
     ) {
         this.roleService = roleService;
         this.accountCompanyRepository = accountCompanyRepository;
@@ -67,6 +71,7 @@ public class CompanyAuthServiceImpl implements ICompanyAuthService {
         this.emailService = emailService;
         this.candidateRepository = candidateRepository;
         this.jobRepository = jobRepository;
+        this.eventPublisher = eventPublisher;
     }
 
     @Override
@@ -111,6 +116,19 @@ public class CompanyAuthServiceImpl implements ICompanyAuthService {
                 .address(form.getAddress())
                 .build();
         addressCompanyRepository.save(address);
+
+            eventPublisher.publishEvent(new NotificationEvent(
+                    this,
+                    "Đăng ký công ty mới",
+                    "Công ty " + company.getName() + " vừa đăng ký tài khoản và đang chờ duyệt.",
+                    "NEW_COMPANY_REGISTER",
+                    1L,        // receiverId
+                    "ADMIN",              // receiverType
+                    "/admin/company-verify/" + company.getId(),  // link để admin duyệt
+                    "SYSTEM",             // senderType
+                    null                  // senderId
+            ));
+
 
         System.out.println("✅ New Company Account registered successfully, pending Admin approval: " + form.getEmail());
     }
