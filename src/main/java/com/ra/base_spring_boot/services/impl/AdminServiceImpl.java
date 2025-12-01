@@ -5,14 +5,8 @@ import com.ra.base_spring_boot.dto.req.FormLogin;
 import com.ra.base_spring_boot.dto.req.FormUpdateCompany;
 import com.ra.base_spring_boot.dto.resp.*;
 import com.ra.base_spring_boot.exception.HttpBadRequest;
-import com.ra.base_spring_boot.model.Admin;
-import com.ra.base_spring_boot.model.Candidate;
-import com.ra.base_spring_boot.model.Company;
-import com.ra.base_spring_boot.model.AccountCompany;
-import com.ra.base_spring_boot.repository.IAccountCompanyRepository;
-import com.ra.base_spring_boot.repository.IAddressCompanyRepository;
-import com.ra.base_spring_boot.repository.ICandidateRepository;
-import com.ra.base_spring_boot.repository.ICompanyRepository;
+import com.ra.base_spring_boot.model.*;
+import com.ra.base_spring_boot.repository.*;
 import com.ra.base_spring_boot.security.jwt.JwtProvider;
 import com.ra.base_spring_boot.security.principle.MyAdminDetails;
 import com.ra.base_spring_boot.services.IAdminService;
@@ -45,6 +39,7 @@ public class AdminServiceImpl implements IAdminService {
     private final ICandidateRepository candidateRepository;
     private final EmailService emailService;
     private final PasswordEncoder passwordEncoder;
+    private final ILocationRepository locationRepository;
 
     public AdminServiceImpl(
             @Qualifier("adminAuthManager") AuthenticationManager adminAuthManager,
@@ -54,7 +49,7 @@ public class AdminServiceImpl implements IAdminService {
             IAddressCompanyRepository addressCompanyRepository,
             ICandidateRepository candidateRepository,
             EmailService emailService,
-            PasswordEncoder passwordEncoder
+            PasswordEncoder passwordEncoder, ILocationRepository locationRepository
     ) {
         this.adminAuthManager = adminAuthManager;
         this.jwtProvider = jwtProvider;
@@ -64,6 +59,7 @@ public class AdminServiceImpl implements IAdminService {
         this.candidateRepository = candidateRepository;
         this.emailService = emailService;
         this.passwordEncoder = passwordEncoder;
+        this.locationRepository = locationRepository;
     }
 
     @Override
@@ -126,6 +122,17 @@ public class AdminServiceImpl implements IAdminService {
         }
         return newStatus;
     }
+    @Override
+    public List<AddressCompanyResponse> getAllByCompanyId(Long companyId) {
+        Company company = companyRepository.findById(companyId)
+                .orElseThrow(() -> new HttpBadRequest("Company not found"));
+
+        return addressCompanyRepository.findByCompany(company)
+                .stream()
+                .map(this::toAddressResponse)
+                .collect(Collectors.toList());
+    }
+
 
     @Override
     public List<CompanyResponse> findAll() {
@@ -273,23 +280,57 @@ public class AdminServiceImpl implements IAdminService {
     // --- Triển khai các phương thức Address Company mới ---
 
     @Override
-    public List<AddressCompanyResponse> getAllByCompanyId(Long companyId) {
-        throw new UnsupportedOperationException("Not implemented yet");
-    }
-
-    @Override
     public AddressCompanyResponse create(Long companyId, FormAddressCompany form) {
-        throw new UnsupportedOperationException("Not implemented yet");
+        Company company = companyRepository.findById(companyId)
+                .orElseThrow(() -> new HttpBadRequest("Company not found with id: " + companyId));
+
+        Location location = locationRepository.findById(form.getLocationId())
+                .orElseThrow(() -> new HttpBadRequest("Location not found with id: " + form.getLocationId()));
+
+        AddressCompany address = AddressCompany.builder()
+                .company(company)
+                .address(form.getAddress())
+                .map_url(form.getMapUrl())
+                .location(location)
+                .build();
+
+        addressCompanyRepository.save(address);
+        return toAddressResponse(address);
     }
 
     @Override
     public AddressCompanyResponse update(Long id, FormAddressCompany form) {
-        throw new UnsupportedOperationException("Not implemented yet");
+        AddressCompany address = addressCompanyRepository.findById(id)
+                .orElseThrow(() -> new HttpBadRequest("Address not found with id: " + id));
+
+        if (form.getLocationId() != null) {
+            Location location = locationRepository.findById(form.getLocationId())
+                    .orElseThrow(() -> new HttpBadRequest("Location not found with id: " + form.getLocationId()));
+            address.setLocation(location);
+        }
+
+        address.setAddress(form.getAddress());
+        address.setMap_url(form.getMapUrl());
+
+        addressCompanyRepository.save(address);
+        return toAddressResponse(address);
     }
 
     @Override
     public void delete(Long id) {
-        throw new UnsupportedOperationException("Not implemented yet");
+        AddressCompany address = addressCompanyRepository.findById(id)
+                .orElseThrow(() -> new HttpBadRequest("Address not found with id: " + id));
+
+        addressCompanyRepository.delete(address);
+    }
+
+    private AddressCompanyResponse toAddressResponse(AddressCompany entity) {
+        return AddressCompanyResponse.builder()
+                .id(entity.getId())
+                .address(entity.getAddress())
+                .mapUrl(entity.getMap_url())
+                .locationName(entity.getLocation() != null ? entity.getLocation().getName() : null)
+                .build();
     }
 
 
