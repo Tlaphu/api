@@ -165,6 +165,7 @@ public class AdminServiceImpl implements IAdminService {
         company.setLink_fb(form.getLinkFb());
         company.setLink_linkedin(form.getLinkLinkedin());
         company.setLink_Github(form.getLink_Github());
+        company.setSize(form.getSize());
         company.setDescription(form.getDescription());
         company.setCompanyPolicy(form.getCompanyPolicy());
         company.setUpdated_at(new java.util.Date());

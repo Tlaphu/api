@@ -265,6 +265,7 @@ public class CompanyAuthServiceImpl implements ICompanyAuthService {
         company.setWebsite(form.getWebsite());
         company.setLogo(form.getLogo());
         company.setLink_fb(form.getLinkFb());
+        company.setSize(form.getSize());
         company.setLink_linkedin(form.getLinkLinkedin());
         company.setLink_Github(form.getLink_Github());
         company.setDescription(form.getDescription());
