@@ -8,6 +8,8 @@ import lombok.Builder.Default;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import org.springframework.format.annotation.DateTimeFormat;
+
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -39,6 +41,7 @@ public class CandidateCV {
     private Date updated_at;
 
     private String name;
+    @DateTimeFormat(pattern = "yyyy-MM-dd")
     private Date dob;
     private String email;
     private String phone;
