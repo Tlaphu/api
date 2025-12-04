@@ -6,7 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.util.Date;
 import java.util.List;
-
+import org.springframework.format.annotation.DateTimeFormat;
 
 @Data
 @NoArgsConstructor
@@ -17,7 +17,8 @@ public class FormCandidateCV {
     private String title;
     private String template;
     private String name;
-    private Date dob; // Cần parse '15/05/1995' thành Date
+    @DateTimeFormat(pattern = "yyyy-MM-dd")
+    private Date dob;
     private String email;
     private String phone;
     private String address;
